@@ -1,0 +1,8 @@
+{
+  "name": "forge-bedrock-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": { "start": "node server.mjs" },
+  "dependencies": { "@aws-sdk/client-bedrock-runtime": "^3.900.0", "@strands-agents/sdk": "^1.0.0", "dotenv": "^16.4.7" }
+}
