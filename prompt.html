@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prompt Workspace</title>
+  <style>
+    :root { font-family: "Segoe UI", Arial, sans-serif; color: #1f2937; }
+    * { box-sizing: border-box; }
+    body { min-height: 100vh; margin: 0; padding: 1rem; background: radial-gradient(circle at 84% 13%, #ec6c4e 0 9%, transparent 28%), radial-gradient(circle at 16% 83%, #5c57df 0 10%, transparent 30%), linear-gradient(155deg, #10172b, #332853); background-attachment: fixed; display: grid; place-items: center; }
+    main { position: relative; width: min(640px, 100%); padding: clamp(1.25rem, 5vw, 2rem); border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; box-shadow: 0 8px 20px rgb(15 23 42 / 18%); }
+    h1 { margin: 0 0 0.4rem; font-size: clamp(1.8rem, 8vw, 2.5rem); line-height: 1.1; }
+    p { line-height: 1.5; overflow-wrap: anywhere; }
+    a { display: inline-block; padding: 0.35rem 0; color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .response-composer { margin: 1.5rem 0 1.25rem; padding: clamp(1rem, 4vw, 1.5rem); background: #f7f8ff; border: 1px solid #e0e5ff; border-radius: 16px; }
+    .response-composer__eyebrow { margin: 0 0 0.3rem; color: #5263b8; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+    .response-composer h2 { margin: 0; color: #202b55; font-size: clamp(1.35rem, 5vw, 1.8rem); }
+    .response-composer__header > p:last-child { margin: 0.45rem 0 0; color: #667085; font-size: 0.86rem; }
+    .prompt-card { margin-top: 1.25rem; padding: 1rem; background: #fff; border: 1px solid #dfe4f4; border-radius: 10px; }
+    .prompt-card label { display: block; margin-bottom: 0.45rem; color: #344054; font-size: 0.82rem; font-weight: 700; }
+    .prompt-preview { display: flex; flex-wrap: wrap; align-content: flex-start; gap: 0.4rem; min-height: 7rem; padding: 0.75rem; color: #000; background: #fcfcff; border: 1px solid #cfd6ed; border-radius: 7px; font: inherit; font-size: 1.2rem; line-height: 1.5; }
+    .prompt-preview.is-empty { color: #8791aa; }
+    .prompt-token { padding: 0.35rem 0.1rem; color: #000; background: transparent; border: 0; cursor: pointer; font: inherit; font-size: 1.2rem; }
+    .prompt-token:hover { color: #9f1239; text-decoration: line-through; }
+    .prompt-card__hint { margin: 0.5rem 0 0.8rem; color: #8791aa; font-size: 0.72rem; }
+    .prompt-palette { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.8rem; }
+    .prompt-palette button { flex: 1 1 calc(25% - 0.35rem); min-width: 0; min-height: 42px; overflow: hidden; padding: 0.55rem 0.7rem; color: #5263b8; background: #eef0ff; border: 1px solid #d9ddff; border-radius: 7px; cursor: pointer; font: inherit; font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
+    .prompt-palette button:hover { background: #e0e5ff; }
+    .prompt-palette button.is-selected { color: #fff; background: #5263b8; border-color: #4352a0; box-shadow: 0 0 0 2px #c7d2fe; }
+    .prompt-palette button.is-selected:hover { background: #4352a0; }
+    .prompt-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .prompt-actions button { flex: 1 1 0; min-width: 0; min-height: 42px; padding: 0.55rem 0.8rem; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 0.82rem; font-weight: 700; }
+    .prompt-clear { color: #5263b8; background: #eef0ff; }
+    .prompt-clear:hover { background: #e0e5ff; }
+    .page-navigation { position: absolute; top: 1rem; right: 1.25rem; display: flex; gap: 1rem; }
+    @media (max-width: 560px) { body { padding: 12px; } .prompt-card { padding: 0.8rem; } .prompt-actions button { flex: 1 1 100%; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="response-composer" aria-labelledby="response-composer-title">
+      <div class="response-composer__header">
+        <p class="response-composer__eyebrow">Word Order Republic</p>
+      </div>
+      <div class="prompt-card">
+        <div id="prompt-input" class="prompt-preview is-empty" role="status" aria-label="Selected prompt" aria-live="polite">Click word buttons below to begin.</div>
+        <p id="prompt-hint" class="prompt-card__hint">Click words to highlight them for the prompt.</p>
+        <div id="prompt-palette" class="prompt-palette" aria-label="Your word palette"></div>
+        <div class="prompt-actions">
+          <button class="prompt-clear" id="clear-prompt" type="button">Clear prompt</button>
+        </div>
+      </div>
+    </section>
+    <nav class="page-navigation" aria-label="Page navigation">
+      <a href="index.html">Back Home</a>
+    </nav>
+  </main>
+  <script>
+    const input = document.querySelector('#prompt-input');
+    const hint = document.querySelector('#prompt-hint');
+    const paletteDisplay = document.querySelector('#prompt-palette');
+    const defaults = ['river'];
+    const promptWordsStorageKey = 'prompt-words';
+    let promptWords = [];
+    let lastWordClickAt = 0;
+
+    try {
+      const savedPromptWords = JSON.parse(localStorage.getItem(promptWordsStorageKey) || 'null');
+      const availableWords = getPalette();
+      if (Array.isArray(savedPromptWords)) {
+        promptWords = [...new Set(savedPromptWords.filter((word) => typeof word === 'string' && availableWords.includes(word)))];
+      }
+    } catch {
+      // Use an empty prompt if storage is unavailable.
+    }
+
+    function savePromptWords() {
+      try { localStorage.setItem(promptWordsStorageKey, JSON.stringify(promptWords)); } catch { /* Storage is optional. */ }
+    }
+
+    function syncPromptWordsWithPalette() {
+      const availableWords = getPalette();
+      const filteredWords = promptWords.filter((word) => availableWords.includes(word));
+      if (filteredWords.length !== promptWords.length) {
+        promptWords = filteredWords;
+        savePromptWords();
+        renderPrompt();
+      }
+    }
+
+    function getPalette() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('garden-words') || 'null');
+        return Array.isArray(saved) && saved.length ? saved : defaults;
+      } catch { return defaults; }
+    }
+
+    function renderPalette() {
+      paletteDisplay.replaceChildren(...getPalette().map((word) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = word;
+        button.classList.toggle('is-selected', promptWords.includes(word));
+        button.addEventListener('click', () => {
+          const now = Date.now();
+          if (now - lastWordClickAt < 300) return;
+          lastWordClickAt = now;
+          if (promptWords.includes(word)) {
+            promptWords = promptWords.filter((selectedWord) => selectedWord !== word);
+          } else {
+            promptWords.push(word);
+          }
+          savePromptWords();
+          renderPalette();
+          renderPrompt();
+        });
+        return button;
+      }));
+    }
+
+    function renderPrompt() {
+      if (!promptWords.length) {
+        input.textContent = 'Highlight words below to create a prompt.';
+      } else {
+        const wordItems = promptWords.map((word, index) => ({ word, index }));
+        input.replaceChildren(...wordItems.map(({ word, index }) => {
+          const token = document.createElement('button');
+          token.className = 'prompt-token';
+          token.type = 'button';
+          token.textContent = word;
+          token.setAttribute('aria-label', `Remove ${word}`);
+          token.addEventListener('click', () => {
+            promptWords.splice(index, 1);
+            savePromptWords();
+            renderPalette();
+            renderPrompt();
+          });
+          return token;
+        }));
+      }
+      input.classList.toggle('is-empty', promptWords.length === 0);
+      hint.textContent = `${promptWords.length} word${promptWords.length === 1 ? '' : 's'} highlighted · Click to toggle selection.`;
+    }
+
+    document.querySelector('#clear-prompt').addEventListener('click', () => {
+      promptWords = [];
+      savePromptWords();
+      renderPalette();
+      renderPrompt();
+    });
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'garden-words') {
+        renderPalette();
+        syncPromptWordsWithPalette();
+      }
+    });
+
+    renderPalette();
+    renderPrompt();
+  </script>
+</body>
+</html>
