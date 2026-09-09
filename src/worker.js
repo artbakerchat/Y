@@ -82,6 +82,7 @@ async function askBedrock(message, env) {
 async function serveAsset(request, env) {
   const url = new URL(request.url);
   let pathname = url.pathname === '/' ? '/index.html' : url.pathname;
+  if (pathname !== '/' && !pathname.includes('.')) pathname = `${pathname.replace(/\/+$/, '')}.html`;
   if (!/^\/[a-zA-Z0-9._/-]+$/.test(pathname) || pathname.includes('..')) return new Response('Not found.', { status: 404 });
   const key = pathname.slice(1);
   const object = await env.ASSETS.get(key);
