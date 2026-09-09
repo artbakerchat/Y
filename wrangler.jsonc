@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "larboard",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "vars": {
+    "AWS_REGION": "ca-central-1",
+    "BEDROCK_MODEL_ID": "ca.amazon.nova-lite-v1:0",
+    "MODEL_REQUESTS_ENABLED": "false"
+  },
+  "r2_buckets": [
+    {
+      "binding": "ASSETS",
+      "bucket_name": "larboard-assets"
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "larboard.ca",
+      "custom_domain": true
+    }
+  ]
+}
