@@ -39,7 +39,7 @@ async function askBedrock(message, env) {
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
   const body = JSON.stringify({
-    system: [{ text: 'You are Larboard, a concise and practical product-building agent. Give useful next steps and be transparent when uncertain.' }],
+    system: [{ text: 'You are Larboard, a concise and practical product-building agent. Give useful next steps and be transparent when uncertain. For neighborhoods, nonprofits, schools, libraries, food banks, and other local organizations, think group-first: optimize for collective benefit, low setup burden, privacy by default, accessibility, and clear human handoff. Be warm and respectful, especially when people may be under hardship. Do not invent local policies, schedules, or contact details; say what is unknown and suggest the right person or source to verify it.' }],
     messages: [{ role: 'user', content: [{ text: message }] }],
     inferenceConfig: { maxTokens: 700, temperature: 0.5 },
   });

@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Billing Barcodes</title>
+		<style>
+			:root {
+				color: #182236;
+				background: #eef2f7;
+				font-family: Arial, sans-serif;
+			}
+
+			* { box-sizing: border-box; }
+
+			body { margin: 0; padding: 2rem; }
+
+			.billing-barcode-container {
+				display: grid;
+				grid-template-columns: repeat(2, minmax(0, 1fr));
+				gap: 1rem;
+				width: min(48rem, 100%);
+				margin: 0 auto;
+			}
+
+			.billing-barcode-card {
+				padding: 1.25rem;
+				border: 1px solid #ccd5e2;
+				border-radius: 0.5rem;
+				background: #fff;
+			}
+
+			.billing-barcode-card h2 {
+				margin: 0 0 1rem;
+				font-size: 1rem;
+			}
+
+			.billing-code-slots {
+				display: grid;
+				grid-template-columns: repeat(5, 1fr);
+				gap: 0.5rem;
+			}
+
+			.billing-code-slot {
+				width: 100%;
+				height: 3.5rem;
+				border: 1px solid #53627a;
+				border-radius: 0.25rem;
+				color: #182236;
+				font: inherit;
+				font-size: 1.4rem;
+				text-align: center;
+			}
+
+			.billing-barcode-value {
+				margin: 0.65rem 0 0;
+				color: #53627a;
+				font-size: 0.9rem;
+				letter-spacing: 0.14em;
+				text-align: center;
+			}
+
+			.billing-note-page {
+				position: relative;
+				width: min(48rem, 100%);
+				min-height: 297mm;
+				margin: 2rem auto 0;
+				padding: 1.5rem;
+				border: 1px solid #ccd5e2;
+				background: #fff;
+			}
+
+			.billing-note-header {
+				margin-bottom: 1rem;
+			}
+
+			.billing-note-page h1 {
+				margin: 0;
+				font-size: 1.1rem;
+			}
+
+			.billing-note-images {
+				position: absolute;
+				top: 1.5rem;
+				right: 1.5rem;
+				display: grid;
+				grid-template-columns: 40mm;
+				gap: 0.5rem;
+			}
+
+			.billing-note-image {
+				display: grid;
+				position: relative;
+				width: 40mm;
+				height: 40mm;
+				place-items: center;
+				border: 1px dashed #53627a;
+				color: #53627a;
+				cursor: pointer;
+				overflow: hidden;
+			}
+
+			.billing-note-image img {
+				display: none;
+				width: 100%;
+				height: 100%;
+				object-fit: contain;
+			}
+
+			.billing-note-image.has-image { border-style: solid; }
+			.billing-note-image.has-image span { display: none; }
+			.billing-note-image.has-image img { display: block; }
+			.billing-note-image input { display: none; }
+			.billing-note-actions {
+				position: absolute;
+				top: calc(1.5rem + 130mm + 0.5rem);
+				right: 1.5rem;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-end;
+				gap: 0.5rem;
+				justify-content: flex-end;
+				margin: 0;
+			}
+
+			.billing-note-actions button {
+				padding: 0.45rem 0.7rem;
+				border: 1px solid #53627a;
+				border-radius: 0.25rem;
+				background: #fff;
+				color: #182236;
+				cursor: pointer;
+			}
+
+			.billing-note {
+				min-height: calc(297mm - 6rem);
+				outline: none;
+				color: #182236;
+				font-size: 1rem;
+				line-height: 1.6;
+				white-space: pre-wrap;
+			}
+
+			.billing-note:empty::before {
+				content: 'Type or paste text here';
+				color: #9aa6b8;
+			}
+
+			.print-page-header,
+			.print-page-footer {
+				display: none;
+			}
+
+			@media (max-width: 600px) {
+				body { padding: 1rem; }
+				.billing-barcode-container { grid-template-columns: 1fr; }
+			}
+
+			@media print {
+				@page { size: A4 portrait; margin: 0; }
+				body { padding: 12mm 0; background: #fff; }
+				.print-page-header,
+				.print-page-footer {
+					position: fixed;
+					left: 15mm;
+					right: 15mm;
+					display: flex;
+					justify-content: space-between;
+					color: #53627a;
+					font-size: 8pt;
+				}
+				.print-page-header { top: 4mm; border-bottom: 0.5pt solid #ccd5e2; padding-bottom: 2mm; }
+				.print-page-footer { bottom: 4mm; border-top: 0.5pt solid #ccd5e2; padding-top: 2mm; }
+				.billing-barcode-container {
+					width: 180mm;
+					gap: 3mm;
+					margin: 0 auto;
+				}
+				.billing-barcode-card { break-inside: avoid; }
+				.billing-barcode-card { padding: 3mm; }
+				.billing-barcode-card h2 { margin-bottom: 2mm; font-size: 9pt; }
+				.billing-code-slots { gap: 2mm; }
+				.billing-code-slot { height: 12mm; font-size: 12pt; }
+				.billing-barcode-value { margin-top: 2mm; font-size: 8pt; }
+				.billing-note-page {
+					width: 210mm;
+					height: 172mm;
+					min-height: 172mm;
+					margin: 0;
+					padding: 15mm;
+					border: 0;
+					page-break-before: auto;
+					break-before: auto;
+				}
+				.billing-note-images { top: 15mm; right: 15mm; }
+				.billing-note-actions { top: calc(15mm + 130mm + 0.5rem); right: 15mm; }
+				.billing-note-actions { display: none; }
+				.billing-note-image { border: 0; }
+				.billing-note { min-height: 0; }
+			}
+		</style>
+	</head>
+	<body>
+		<header class="print-page-header"><span>Billing Codes and Notes</span><span>Page 1</span></header>
+		<main class="billing-barcode-container" aria-label="Billing barcodes">
+			<article class="billing-barcode-card">
+				<h2>Billing barcode 1</h2>
+				<div class="billing-code-slots" data-code="11113" aria-label="Billing barcode 1 digits"></div>
+				<p class="billing-barcode-value">11113</p>
+			</article>
+			<article class="billing-barcode-card">
+				<h2>Billing barcode 2</h2>
+				<div class="billing-code-slots" data-code="43421" aria-label="Billing barcode 2 digits"></div>
+				<p class="billing-barcode-value">43421</p>
+			</article>
+			<article class="billing-barcode-card">
+				<h2>Billing barcode 3</h2>
+				<div class="billing-code-slots" data-code="11101" aria-label="Billing barcode 3 digits"></div>
+				<p class="billing-barcode-value">11101</p>
+			</article>
+			<article class="billing-barcode-card">
+				<h2>Billing barcode 4</h2>
+				<div class="billing-code-slots" data-code="12113" aria-label="Billing barcode 4 digits"></div>
+				<p class="billing-barcode-value">12113</p>
+			</article>
+			<article class="billing-barcode-card">
+				<h2>Payment - Debit Card</h2>
+				<div class="billing-code-slots" data-code="" aria-label="Payment - Debit Card digits"></div>
+				<p class="billing-barcode-value"></p>
+			</article>
+			<article class="billing-barcode-card">
+				<h2>Payment - Credit</h2>
+				<div class="billing-code-slots" data-code="" aria-label="Payment - Credit digits"></div>
+				<p class="billing-barcode-value"></p>
+			</article>
+		</main>
+		<section class="billing-note-page" aria-labelledby="billingNoteTitle">
+			<div class="billing-note-header">
+				<h1 id="billingNoteTitle">Notes / Text</h1>
+			</div>
+			<div class="billing-note-images" aria-label="Image uploads">
+				<label class="billing-note-image" title="Upload image"><img alt="Uploaded note image"><span>Upload</span><input type="file" accept="image/*"></label>
+				<label class="billing-note-image" title="Upload image"><img alt="Uploaded note image"><span>Upload</span><input type="file" accept="image/*"></label>
+				<label class="billing-note-image" title="Upload image"><img alt="Uploaded note image"><span>Upload</span><input type="file" accept="image/*"></label>
+			</div>
+			<div class="billing-note-actions">
+				<button type="button" id="downloadNote">Download note</button>
+				<button type="button" id="removeNewestImage" hidden>Remove newest image</button>
+			</div>
+			<div class="billing-note" contenteditable="true" role="textbox" aria-label="A4 printable text area"></div>
+		</section>
+		<footer class="print-page-footer"><span>Billing record</span><span>Confidential</span></footer>
+		<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+		<script>
+			const noteStorageKey = 'billing-printer-note';
+			const imageStorageKey = 'billing-printer-image';
+			const imageUploadTimeKey = 'billing-printer-image-uploaded-at';
+			const draftMaxAge = 48 * 60 * 60 * 1000;
+			const maximumImageSize = 2 * 1024 * 1024;
+			const note = document.querySelector('.billing-note');
+			const downloadNote = document.querySelector('#downloadNote');
+			const removeNewestImage = document.querySelector('#removeNewestImage');
+			const noteImageFrames = document.querySelectorAll('.billing-note-image');
+			const updateRemoveNewestImage = () => {
+				removeNewestImage.hidden = ![...noteImageFrames]
+					.some((frame) => frame.classList.contains('has-image'));
+			};
+			const readDraftValue = (key) => {
+				try {
+					const record = JSON.parse(localStorage.getItem(key) || 'null');
+					if (!record || !Object.hasOwn(record, 'value') || !Number.isFinite(Number(record.savedAt)) || Date.now() - Number(record.savedAt) >= draftMaxAge) {
+						localStorage.removeItem(key);
+						return null;
+					}
+					return record.value;
+				} catch {
+					localStorage.removeItem(key);
+					return null;
+				}
+			};
+			const writeDraftValue = (key, value) => localStorage.setItem(key, JSON.stringify({ value, savedAt: Date.now() }));
+
+			note.innerHTML = readDraftValue(noteStorageKey) || '';
+			noteImageFrames.forEach((frame, index) => {
+				const image = frame.querySelector('img');
+				const input = frame.querySelector('input');
+				const savedImage = readDraftValue(`${imageStorageKey}-${index}`);
+				if (savedImage) {
+					image.src = savedImage;
+					frame.classList.add('has-image');
+				}
+				input.addEventListener('change', () => {
+					const imageFile = input.files[0];
+					if (!imageFile) return;
+					if (imageFile.size > maximumImageSize) {
+						alert('Images must be 2 MB or smaller.');
+						input.value = '';
+						return;
+					}
+					const reader = new FileReader();
+					reader.addEventListener('load', () => {
+						image.src = reader.result;
+						frame.classList.add('has-image');
+						writeDraftValue(`${imageStorageKey}-${index}`, reader.result);
+						writeDraftValue(`${imageUploadTimeKey}-${index}`, Date.now());
+						updateRemoveNewestImage();
+					});
+					reader.readAsDataURL(imageFile);
+				});
+			});
+			updateRemoveNewestImage();
+			removeNewestImage.addEventListener('click', () => {
+				const occupiedFrames = [...noteImageFrames].filter((frame) => frame.classList.contains('has-image'));
+				const newestFrame = occupiedFrames.reduce((newest, frame) => {
+					const newestIndex = [...noteImageFrames].indexOf(newest);
+					const frameIndex = [...noteImageFrames].indexOf(frame);
+					const newestTime = Number(readDraftValue(`${imageUploadTimeKey}-${newestIndex}`)) || newestIndex;
+					const frameTime = Number(readDraftValue(`${imageUploadTimeKey}-${frameIndex}`)) || frameIndex;
+					return frameTime > newestTime ? frame : newest;
+				});
+				const newestIndex = [...noteImageFrames].indexOf(newestFrame);
+				newestFrame.querySelector('img').removeAttribute('src');
+				newestFrame.querySelector('input').value = '';
+				newestFrame.classList.remove('has-image');
+				localStorage.removeItem(`${imageStorageKey}-${newestIndex}`);
+				localStorage.removeItem(`${imageUploadTimeKey}-${newestIndex}`);
+				updateRemoveNewestImage();
+			});
+				note.addEventListener('input', () => writeDraftValue(noteStorageKey, note.innerHTML));
+			downloadNote.addEventListener('click', async () => {
+				const imageSources = [...noteImageFrames]
+					.map((frame) => frame.querySelector('img').getAttribute('src'));
+				const imageExtension = (imageSource) => {
+					const mimeType = imageSource.match(/^data:(image\/[a-z+]+);/i)?.[1];
+					return mimeType === 'image/jpeg' ? 'jpg' : mimeType?.split('/')[1] || 'png';
+				};
+				const imageMarkup = imageSources.map((imageSource, index) => {
+					if (!imageSource) return '<span class="note-image-placeholder"></span>';
+					return `<img class="note-image" src="img/image-${index + 1}.${imageExtension(imageSource)}" alt="Uploaded note image">`;
+				}).join('');
+				const noteDocument = `<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Billing note</title>
+		<style>
+			body { margin: 0; color: #182236; font-family: Arial, sans-serif; }
+			.note-header { position: absolute; top: 15mm; right: 15mm; display: grid; grid-template-columns: 40mm; gap: 0.5rem; }
+			.note-image { width: 40mm; height: 40mm; object-fit: contain; }
+			.note-image-placeholder { width: 40mm; height: 40mm; }
+			.note { position: relative; box-sizing: border-box; width: 210mm; min-height: 297mm; margin: 0 auto; padding: 15mm; font-size: 1rem; line-height: 1.6; white-space: pre-wrap; }
+			@media screen { .note { border: 1px solid #ccd5e2; } }
+		</style>
+	</head>
+	<body><main class="note"><header class="note-header">${imageMarkup}</header>${note.innerHTML}</main></body>
+</html>`;
+				const archive = new JSZip();
+				archive.file('billing-note.html', noteDocument);
+				await Promise.all(imageSources.map(async (imageSource, index) => {
+					if (!imageSource) return;
+					const imageFile = await fetch(imageSource).then((response) => response.blob());
+					archive.file(`img/image-${index + 1}.${imageExtension(imageSource)}`, imageFile);
+				}));
+				const noteFile = await archive.generateAsync({ type: 'blob' });
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(noteFile);
+				link.download = 'billing-note.zip';
+				link.click();
+				URL.revokeObjectURL(link.href);
+			});
+
+			document.querySelectorAll('.billing-code-slots').forEach((slots) => {
+				const value = slots.dataset.code;
+				const valueDisplay = slots.closest('.billing-barcode-card').querySelector('.billing-barcode-value');
+				for (let index = 0; index < 5; index += 1) {
+					const slot = document.createElement('input');
+					slot.className = 'billing-code-slot';
+					slot.type = 'text';
+					slot.inputMode = 'numeric';
+					slot.maxLength = 1;
+					slot.value = value[index] || '';
+					slot.setAttribute('aria-label', `Digit ${index + 1}`);
+					slot.addEventListener('input', () => {
+						slot.value = slot.value.replace(/\D/g, '').slice(0, 1);
+						valueDisplay.textContent = [...slots.querySelectorAll('input')].map((input) => input.value).join('');
+						if (slot.value && slot.nextElementSibling) slot.nextElementSibling.focus();
+					});
+					slot.addEventListener('keydown', (event) => {
+						if (/^\d$/.test(event.key)) {
+							event.preventDefault();
+							slot.value = event.key;
+							valueDisplay.textContent = [...slots.querySelectorAll('input')].map((input) => input.value).join('');
+							if (slot.nextElementSibling) slot.nextElementSibling.focus();
+							return;
+						}
+						if (event.key === 'Backspace' && !slot.value && slot.previousElementSibling) {
+							event.preventDefault();
+							slot.previousElementSibling.focus();
+						}
+					});
+					slots.appendChild(slot);
+				}
+			});
+		</script>
+	</body>
+</html>
+    
