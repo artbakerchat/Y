@@ -33,6 +33,7 @@
     .prompt-actions button { flex: 1 1 0; min-width: 0; min-height: 42px; padding: 0.55rem 0.8rem; border: 0; border-radius: 7px; cursor: pointer; font: inherit; font-size: 0.82rem; font-weight: 700; }
     .prompt-clear { color: #5263b8; background: #eef0ff; }
     .prompt-clear:hover { background: #e0e5ff; }
+    .prompt-clear:disabled { cursor: wait; opacity: 0.7; }
     .page-navigation { position: absolute; top: 1rem; right: 1.25rem; display: flex; gap: 1rem; }
     @media (max-width: 560px) { body { padding: 12px; } .prompt-card { padding: 0.8rem; } .prompt-actions button { flex: 1 1 100%; } }
   </style>
@@ -50,6 +51,7 @@
         <div class="prompt-actions">
           <button class="prompt-clear" id="clear-prompt" type="button">Clear prompt</button>
         </div>
+        <p id="prompt-copy-status" class="prompt-card__hint" role="status" aria-live="polite"></p>
       </div>
     </section>
     <nav class="page-navigation" aria-label="Page navigation">
@@ -60,7 +62,9 @@
     const input = document.querySelector('#prompt-input');
     const hint = document.querySelector('#prompt-hint');
     const paletteDisplay = document.querySelector('#prompt-palette');
-    const defaults = ['river'];
+    const clearPromptButton = document.querySelector('#clear-prompt');
+    const copyStatus = document.querySelector('#prompt-copy-status');
+    const defaults = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean', 'wander', 'spark', 'gravity', 'money', 'book', 'Glimmer', 'compass', 'voyage', 'solitude', 'prism', 'nectar', 'blossom', 'fossil', 'zenith', 'vortex', 'mirage', 'starlight', 'ember', 'cyclone', 'glacier', 'radiance', 'labyrinth', 'aurora', 'thistle', 'apple', 'Nebula', 'crisp', 'whisper', 'avalanche', 'horizon', 'velvet', 'mosaic', 'thunder', 'marble', 'cascade', 'echo', 'lantern', 'silver', 'standard', 'puzzle', 'orbit', 'shadow', 'flicker', 'autumn', 'rhythm', 'canvas'];
     const promptWordsStorageKey = 'prompt-words';
     let promptWords = [];
     let lastWordClickAt = 0;
@@ -143,11 +147,41 @@
       hint.textContent = `${promptWords.length} word${promptWords.length === 1 ? '' : 's'} highlighted · Click to toggle selection.`;
     }
 
-    document.querySelector('#clear-prompt').addEventListener('click', () => {
+    async function copyPromptText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const copyTarget = document.createElement('textarea');
+      copyTarget.value = text;
+      copyTarget.setAttribute('readonly', '');
+      copyTarget.style.position = 'fixed';
+      copyTarget.style.opacity = '0';
+      document.body.append(copyTarget);
+      copyTarget.select();
+      const copied = document.execCommand('copy');
+      copyTarget.remove();
+      if (!copied) throw new Error('Clipboard copy was not available.');
+    }
+
+    clearPromptButton.addEventListener('click', async () => {
+      const promptText = promptWords.join('|');
+      clearPromptButton.disabled = true;
+      copyStatus.textContent = '';
+
+      try {
+        if (promptText) await copyPromptText(promptText);
+        copyStatus.textContent = promptText ? 'Prompt copied to clipboard.' : 'Prompt is already clear.';
+      } catch {
+        copyStatus.textContent = 'Could not copy the prompt. Please check your browser permissions.';
+      }
+
       promptWords = [];
       savePromptWords();
       renderPalette();
       renderPrompt();
+      clearPromptButton.disabled = false;
     });
 
     window.addEventListener('storage', (event) => {

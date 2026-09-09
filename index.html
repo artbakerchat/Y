@@ -313,7 +313,7 @@
     const treadmillWords = document.querySelectorAll('.running-machine-card__words span');
     const wordList = document.querySelector('#word-list');
     const clearGardenButton = document.querySelector('#clear-garden-button');
-    const defaultGardenWords = ['river'];
+    const defaultGardenWords = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean', 'wander', 'spark', 'gravity', 'money', 'book', 'Glimmer', 'compass', 'voyage', 'solitude', 'prism', 'nectar', 'blossom', 'fossil', 'zenith', 'vortex', 'mirage', 'starlight', 'ember', 'cyclone', 'glacier', 'radiance', 'labyrinth', 'aurora', 'thistle', 'apple', 'Nebula', 'crisp', 'whisper', 'avalanche', 'horizon', 'velvet', 'mosaic', 'thunder', 'marble', 'cascade', 'echo', 'lantern', 'silver', 'standard', 'puzzle', 'orbit', 'shadow', 'flicker', 'autumn', 'rhythm', 'canvas'];
     let gardenWords = [...defaultGardenWords];
     let draggedGardenItem = null;
     const previousWordCenters = new Map();
@@ -336,7 +336,14 @@
     }
 
     function addSearchWordsToGarden(query) {
-      const additions = query.split(/\s+/).filter((word) => word && word.length <= 32);
+      const additions = query.includes('|')
+        ? [...new Set(query.split('|').map((word) => word.trim()).filter((word) => word && word.length <= 32))].slice(0, 52)
+        : (() => {
+          const words = query.split(/\s+/).filter(Boolean).slice(0, 3);
+          return words.length && words.every((word) => word.length <= 32)
+            ? [words.join(' ')]
+            : [];
+        })();
       let updatedGardenWords = [...getGardenWords()];
 
       try {
@@ -418,10 +425,9 @@
     }
 
     clearGardenButton.addEventListener('click', () => {
-      const firstWords = gardenWords.slice(0, 3);
-      if (!firstWords.length) return;
-      gardenWords.slice(3).forEach(removeWordFromPrompt);
-      gardenWords = firstWords;
+      const defaultWordSet = new Set(defaultGardenWords);
+      gardenWords.filter((word) => !defaultWordSet.has(word)).forEach(removeWordFromPrompt);
+      gardenWords = [...defaultGardenWords];
       saveGardenWords();
       renderGardenPalette();
       syncGardenWords();
@@ -479,6 +485,7 @@
 
     input.addEventListener('keydown', (event) => {
       if (event.key !== ' ') return;
+      if (input.value.includes('|')) return;
       const wordsInInput = input.value.trim().split(/\s+/).filter(Boolean);
       if (wordsInInput.length < 3) return;
       event.preventDefault();
