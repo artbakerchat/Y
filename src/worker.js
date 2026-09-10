@@ -54,7 +54,7 @@ async function invokeAgentCore(message, palette, env, request) {
   const encodedArn = encodeURIComponent(runtimeArn);
   const path = `/runtimes/${encodedArn}/invocations`;
   const query = 'qualifier=DEFAULT';
-  const body = JSON.stringify({ prompt: message, palette });
+  const body = JSON.stringify({ prompt: message, palette, toolPolicy: { source: 'word_palette_only', allowedTools: ['lookup_word_palette'] } });
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -88,7 +88,7 @@ async function invokeAgentCore(message, palette, env, request) {
   return { answer: typeof answer === 'string' ? answer : JSON.stringify(answer), agent: true, runtime: 'agentcore' };
 }
 
-async function askBedrock(message, env) {
+async function askBedrock(message, palette, env) {
   const region = env.AWS_REGION || 'ca-central-1';
   const modelId = env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
   const service = 'bedrock';
@@ -96,7 +96,7 @@ async function askBedrock(message, env) {
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
   const body = JSON.stringify({
-    system: [{ text: 'You are Larboard, a concise and practical product-building agent. Give useful next steps and be transparent when uncertain. For neighborhoods, nonprofits, schools, libraries, food banks, and other local organizations, think group-first: optimize for collective benefit, low setup burden, privacy by default, accessibility, and clear human handoff. Be warm and respectful, especially when people may be under hardship. Do not invent local policies, schedules, or contact details; say what is unknown and suggest the right person or source to verify it.' }],
+    system: [{ text: `You are Larboard. The user’s word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use only listed palette words as source data. If the user asks for a question using the palette, output exactly one natural-sounding, grammatically complete question and nothing else. Use one or more palette words naturally; function words needed for grammar are allowed. Do not invent palette entries or add a preamble.` }],
     messages: [{ role: 'user', content: [{ text: message }] }],
     inferenceConfig: { maxTokens: 700, temperature: 0.5 },
   });
@@ -162,12 +162,12 @@ export default {
       if (url.pathname === '/api/ask' && request.method === 'POST') {
         if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
         const body = await request.json();
-        const message = typeof body?.message === 'string' ? body.message.trim() : '';
+        const message = typeof body?.prompt === 'string' ? body.prompt.trim() : typeof body?.message === 'string' ? body.message.trim() : '';
         if (!message) return json({ error: 'Message is required.' }, 400);
         if (message.length > 4000) return json({ error: 'Message is too long.' }, 413);
         if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
         if (env.AGENTCORE_RUNTIME_ARN) return json(await invokeAgentCore(message, Array.isArray(body?.palette) ? body.palette.filter((word) => typeof word === 'string').slice(0, 52) : [], env, request));
-        return json(await askBedrock(message, env));
+        return json(await askBedrock(message, Array.isArray(body?.palette) ? body.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter(Boolean).slice(0, 52) : [], env));
       }
       if (request.method !== 'GET') return json({ error: 'Method not allowed.' }, 405);
       return await serveAsset(request, env);

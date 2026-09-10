@@ -16,8 +16,8 @@ let strands;
 try { strands = await import('@strands-agents/sdk'); } catch { strands = null; }
 
 async function askWithBedrock(message, palette = []) {
-  const paletteContext = palette.length ? ` The user’s current word palette is: ${palette.join(', ')}.` : '';
-  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge, a concise and practical product-building agent. Give useful next steps and be transparent when you are uncertain. Use the user’s word palette when relevant and never invent palette entries.${paletteContext}` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
+  const paletteContext = palette.length ? ` The user’s current word palette is: ${palette.join(', ')}.` : ' The user’s word palette is empty.';
+  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge. Use only the user’s word palette as source data. Do not use external facts, invent entries, or claim a word is in the palette unless it is listed.${paletteContext} If the user asks for a question using the palette, output exactly one natural-sounding, grammatically complete question and nothing else. Use one or more palette words naturally; function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
   const response = await client.send(command);
   return response.output?.message?.content?.map((part) => part.text || '').join('') || 'The model returned an empty response.';
 }
@@ -40,7 +40,7 @@ async function ask(message, palette = []) {
   if (strands?.Agent) {
     const paletteTool = createPaletteLookupTool(palette);
     const agent = new strands.Agent({
-      systemPrompt: 'You are Forge, a concise and practical product-building agent. When the user asks about their saved words or wants an answer grounded in their word palette, call lookup_word_palette and use its returned data. Do not claim to have looked up palette data unless the tool returned it.',
+      systemPrompt: 'You are Forge. Use only the user’s word palette as source data. For every request that depends on saved words or the palette, call lookup_word_palette first and use only its returned data. Do not use external facts, invent entries, or claim a word is in the palette unless the tool returned it. If the user asks for a question using the palette, output exactly one natural-sounding, grammatically complete question and nothing else. Use one or more palette words naturally; function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.',
       ...(paletteTool ? { tools: [paletteTool] } : {}),
     });
     const result = await agent.invoke(message);
@@ -55,7 +55,7 @@ async function body(req) { let data = ''; for await (const chunk of req) data +=
 const server = http.createServer(async (req, res) => {
   try {
     if (req.method === 'GET' && req.url === '/api/health') return send(res, 200, { ok: true, region, model: modelId });
-    if (req.method === 'POST' && req.url === '/api/ask') { const payload = await body(req); const message = payload?.message; const palette = Array.isArray(payload?.palette) ? payload.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter(Boolean).slice(0, 52) : []; if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'Message is required.' }); if (message.length > 4000) return send(res, 413, { error: 'Message is too long.' }); return send(res, 200, await ask(message.trim(), palette)); }
+    if (req.method === 'POST' && req.url === '/api/ask') { const payload = await body(req); const message = typeof payload?.prompt === 'string' ? payload.prompt : payload?.message; const palette = Array.isArray(payload?.palette) ? payload.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter(Boolean).slice(0, 52) : []; if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'Prompt is required.' }); if (message.length > 4000) return send(res, 413, { error: 'Prompt is too long.' }); return send(res, 200, await ask(message.trim(), palette)); }
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' });
     const pathname = req.url.split('?')[0];
     const cleanPath = legacyHtmlRoutes[pathname];
