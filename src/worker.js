@@ -47,6 +47,47 @@ async function signingKey(secret, date, region, service) {
   return hmac(serviceKey, 'aws4_request');
 }
 
+async function invokeAgentCore(message, palette, env, request) {
+  const region = env.AWS_REGION || 'ca-central-1';
+  const runtimeArn = env.AGENTCORE_RUNTIME_ARN;
+  const host = env.AGENTCORE_RUNTIME_HOST || `bedrock-agentcore.${region}.amazonaws.com`;
+  const encodedArn = encodeURIComponent(runtimeArn);
+  const path = `/runtimes/${encodedArn}/invocations`;
+  const query = 'qualifier=DEFAULT';
+  const body = JSON.stringify({ prompt: message, palette });
+  const payloadHash = await sha256Hex(body);
+  const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
+  const date = amzDate.slice(0, 8);
+  const sessionId = request.headers.get('X-Amzn-Bedrock-AgentCore-Runtime-Session-Id') || crypto.randomUUID();
+  const sessionToken = env.AWS_SESSION_TOKEN?.trim();
+  const canonicalHeaderLines = [`content-type:application/json`, `host:${host}`, `x-amz-content-sha256:${payloadHash}`, `x-amz-date:${amzDate}`, `x-amzn-bedrock-agentcore-runtime-session-id:${sessionId}`];
+  if (sessionToken) canonicalHeaderLines.push(`x-amz-security-token:${sessionToken}`);
+  const signedHeaders = sessionToken ? 'content-type;host;x-amz-content-sha256;x-amz-date;x-amzn-bedrock-agentcore-runtime-session-id;x-amz-security-token' : 'content-type;host;x-amz-content-sha256;x-amz-date;x-amzn-bedrock-agentcore-runtime-session-id';
+  const canonicalRequest = ['POST', path.replaceAll('%', '%25'), query, `${canonicalHeaderLines.join('\n')}\n`, signedHeaders, payloadHash].join('\n');
+  const credentialScope = `${date}/${region}/bedrock-agentcore/aws4_request`;
+  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256Hex(canonicalRequest)].join('\n');
+  const signatureBytes = await hmac(await signingKey(env.AWS_SECRET_ACCESS_KEY, date, region, 'bedrock-agentcore'), stringToSign);
+  const signature = [...signatureBytes].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  const authorization = `AWS4-HMAC-SHA256 Credential=${env.AWS_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
+  const response = await fetch(`https://${host}${path}?${query}`, {
+    method: 'POST',
+    headers: {
+      authorization,
+      'content-type': 'application/json',
+      host,
+      'x-amz-content-sha256': payloadHash,
+      'x-amz-date': amzDate,
+      'x-amzn-bedrock-agentcore-runtime-session-id': sessionId,
+      ...(sessionToken ? { 'x-amz-security-token': sessionToken } : {}),
+    },
+    body,
+  });
+  if (!response.ok) throw new Error(`AgentCore request failed (${response.status}): ${(await response.text()).slice(0, 240)}`);
+  const result = await response.json();
+  const answer = result.output?.message?.content?.map((part) => part.text || '').join('') || result.output || result.response || result.text || 'AgentCore returned an empty response.';
+  return { answer: typeof answer === 'string' ? answer : JSON.stringify(answer), agent: true, runtime: 'agentcore' };
+}
+
 async function askBedrock(message, env) {
   const region = env.AWS_REGION || 'ca-central-1';
   const modelId = env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
@@ -119,12 +160,13 @@ export default {
         return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0' });
       }
       if (url.pathname === '/api/ask' && request.method === 'POST') {
-        if (env.MODEL_REQUESTS_ENABLED !== 'true') return json({ error: 'Model requests are temporarily disabled.' }, 503);
+        if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
         const body = await request.json();
         const message = typeof body?.message === 'string' ? body.message.trim() : '';
         if (!message) return json({ error: 'Message is required.' }, 400);
         if (message.length > 4000) return json({ error: 'Message is too long.' }, 413);
         if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
+        if (env.AGENTCORE_RUNTIME_ARN) return json(await invokeAgentCore(message, Array.isArray(body?.palette) ? body.palette.filter((word) => typeof word === 'string').slice(0, 52) : [], env, request));
         return json(await askBedrock(message, env));
       }
       if (request.method !== 'GET') return json({ error: 'Method not allowed.' }, 405);
