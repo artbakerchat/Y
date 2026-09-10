@@ -32,33 +32,9 @@ function sessionHeaders(sessionId) { return { 'Set-Cookie': `larboard_session=${
 
 async function askWithBedrock(message, palette = []) {
   const paletteContext = palette.length ? ` The user’s current word palette is: ${palette.join(', ')}.` : ' The user’s word palette is empty.';
-  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge. Use only the user’s word palette as source data. Do not use external facts, invent entries, or claim a word is in the palette unless it is listed.${paletteContext} If the user asks for a question using the palette, create a different, original question—not a repetition, quotation, or close paraphrase of the user’s wording. Base the question on the overall theme, relationships, or combined imagery of the palette rather than on one isolated word. Output exactly one natural-sounding, grammatically complete question and nothing else. Include relevant palette words naturally, and use synonyms or related expressions when they help make the question distinct. Function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
+  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge, a warm and easygoing conversation partner. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. Use the user’s word palette as inspiration when relevant:${paletteContext} Never invent palette entries or present guesses as facts.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
   const response = await client.send(command);
   return response.output?.message?.content?.map((part) => part.text || '').join('') || 'The model returned an empty response.';
-}
-
-function createPaletteLookupTool(palette) {
-  if (!strands?.tool) return null;
-  return strands.tool({
-    name: 'lookup_word_palette',
-    description: 'Look up the user’s saved word palette. Use this when the user asks about their palette, saved words, or wants ideas grounded in those words.',
-    inputSchema: { type: 'object', properties: { query: { type: 'string', description: 'A word or topic to find in the palette; use an empty string to list all words.' } }, required: ['query'] },
-    callback: (input) => {
-      const query = typeof input?.query === 'string' ? input.query.trim().toLowerCase() : '';
-      const matches = palette.filter((word) => !query || word.toLowerCase().includes(query));
-      return JSON.stringify({ query, matches, count: matches.length, source: 'user word palette' });
-    },
-  });
-}
-
-function clarificationQuestion(message) {
-  return 'Before I reason about that, what outcome would be most useful to you?';
-}
-
-function createClarificationHook(questionState) {
-  const eventType = strands?.BeforeInvocationEvent;
-  if (!eventType) return null;
-  return { eventType, callback: (event) => { questionState.question = clarificationQuestion(questionState.message); event.cancel = questionState.question; } };
 }
 
 async function ask(message, palette = [], pendingPrompt = '') {
@@ -66,25 +42,13 @@ async function ask(message, palette = [], pendingPrompt = '') {
     message = `Original request: ${pendingPrompt}\n\nUser clarification: ${message}`;
   }
   if (strands?.Agent) {
-    const paletteTool = createPaletteLookupTool(palette);
-    const questionState = { message };
     const agent = new strands.Agent({
-      systemPrompt: 'You are Forge. Use only the user’s word palette as source data. For every request that depends on saved words or the palette, call lookup_word_palette first and use only its returned data. Do not use external facts, invent entries, or claim a word is in the palette unless the tool returned it. If the user asks for a question using the palette, create a different, original question—not a repetition, quotation, or close paraphrase of the user’s wording. Base the question on the overall theme, relationships, or combined imagery of the palette rather than on one isolated word. Output exactly one natural-sounding, grammatically complete question and nothing else. Include relevant palette words naturally, and use synonyms or related expressions when they help make the question distinct. Function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.',
-      ...(paletteTool ? { tools: [paletteTool] } : {}),
+      systemPrompt: `You are Forge, a warm and easygoing conversation partner. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. The user’s current word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
     });
-    if (!pendingPrompt) {
-      const hook = createClarificationHook(questionState);
-      if (hook && typeof agent.addHook === 'function') agent.addHook(hook.eventType, hook.callback);
-    }
     let result;
-    try { result = await agent.invoke(message); } catch (error) {
-      if (!pendingPrompt && questionState.question) return { answer: questionState.question, agent: true, clarification: true };
-      throw error;
-    }
-    if (!pendingPrompt && questionState.question) return { answer: questionState.question, agent: true, clarification: true };
+    try { result = await agent.invoke(message); } catch (error) { throw error; }
     return { answer: result.toString?.() || result.text || String(result), agent: true };
   }
-  if (!pendingPrompt) return { answer: clarificationQuestion(message), agent: false, clarification: true };
   return { answer: await askWithBedrock(message, palette), agent: false };
 }
 

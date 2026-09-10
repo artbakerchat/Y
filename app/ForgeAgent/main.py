@@ -6,7 +6,7 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from strands import Agent, tool
+from strands import Agent
 
 
 app = BedrockAgentCoreApp()
@@ -114,24 +114,15 @@ def _save_messages(session_id: str, messages: list[dict[str, str]]) -> None:
 def _agent_for_palette(palette: list[str]) -> Agent:
     palette_text = ", ".join(palette) if palette else "(empty)"
 
-    @tool
-    def lookup_word_palette(query: str = "") -> str:
-        """Look up words in the user's saved word palette."""
-        needle = query.strip().lower()
-        matches = [word for word in palette if not needle or needle in word.lower()]
-        return f"Palette matches for {query!r}: {matches}"
-
     return Agent(
         system_prompt=(
-            "You are Forge. Use only the user's word palette as source data. "
-            "For requests that depend on saved words, call lookup_word_palette first. "
-            "Do not invent palette entries or use external facts. If the user asks for "
-            "a question using the palette, return exactly one natural-sounding, "
-            "grammatically complete question and nothing else. Make it original rather "
-            "than repeating or closely paraphrasing the user's wording. "
+            "You are Forge, a warm and easygoing conversation partner. "
+            "Talk to the user like a thoughtful, helpful person. Use plain language, "
+            "keep replies natural and concise, and ask a gentle follow-up when it helps. "
+            "Use the user's word palette as inspiration when relevant. "
+            "Never invent palette entries or present guesses as facts. "
             f"The current palette is: {palette_text}."
-        ),
-        tools=[lookup_word_palette],
+        )
     )
 
 

@@ -75,7 +75,7 @@ async function invokeAgentCore(message, palette, env, request) {
   const encodedArn = encodeURIComponent(runtimeArn);
   const path = `/runtimes/${encodedArn}/invocations`;
   const query = 'qualifier=DEFAULT';
-  const body = JSON.stringify({ prompt: message, palette, toolPolicy: { source: 'word_palette_only', allowedTools: ['lookup_word_palette'] } });
+  const body = JSON.stringify({ prompt: message, palette });
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -117,7 +117,7 @@ async function askBedrock(message, palette, env) {
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
   const body = JSON.stringify({
-    system: [{ text: `You are Larboard. The user’s word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use only listed palette words as source data. If the user asks for a question using the palette, create a different, original question—not a repetition, quotation, or close paraphrase of the user’s wording. Base the question on the overall theme, relationships, or combined imagery of the palette rather than on one isolated word. Output exactly one natural-sounding, grammatically complete question and nothing else. Include relevant palette words naturally, and use synonyms or related expressions when they help make the question distinct. Function words needed for grammar are allowed. Do not invent palette entries or add a preamble.` }],
+    system: [{ text: `You are Forge, a warm and easygoing conversation partner. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. The user’s word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.` }],
     messages: [{ role: 'user', content: [{ text: message }] }],
     inferenceConfig: { maxTokens: 700, temperature: 0.5 },
   });
