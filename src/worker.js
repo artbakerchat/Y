@@ -1,3 +1,5 @@
+import { buildTools as buildEditableTools } from '../tools/index.js';
+
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -186,7 +188,7 @@ async function bedrockConverse(env, { system, messages, toolConfig, maxTokens = 
 // Plain JS functions the agent can invoke via Bedrock toolConfig.
 // Each entry: spec (Bedrock tool spec) + fn (local implementation).
 // ---------------------------------------------------------------------------
-function buildTools(palette) {
+function legacyBuildTools(palette) {
   return [
     {
       spec: {
@@ -431,7 +433,7 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
 //           Post-response steering check, return answer     (Module 3 Steering)
 // ---------------------------------------------------------------------------
 async function askBedrock(message, palette, history, env) {
-  const tools = buildTools(palette);
+  const tools = buildEditableTools(palette);
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
 
   // Step 1: Skills - inject relevant procedure into system prompt.

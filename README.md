@@ -83,6 +83,16 @@ Set the required AWS credentials and runtime variables as encrypted Worker secre
 
 The Worker signs both AgentCore and Bedrock requests with AWS Signature Version 4.
 
+## Edit skills
+
+The editable skill source files live in [`skills/`](skills/). Update the Markdown files locally, commit them, and push to `main`. The GitHub Actions workflow uploads every `skills/*.md` file to the `skills/` prefix in R2 before deploying the Worker.
+
+Skill content controls the procedure given to the agent. Skill activation is still controlled by `SKILL_INDEX` in [`src/worker.js`](src/worker.js), so add or change keywords there when a skill should activate for different prompts.
+
+R2 is checked before the Worker's inline fallback skills. This means the committed Markdown files become the production source of truth after the deployment workflow runs.
+
+Agent tools follow the same source-controlled workflow. Executable tools live as JavaScript modules in [`tools/`](tools/); edit an existing module or add one and register it in [`tools/index.js`](tools/index.js). Pushing to `main` bundles the updated tool code into the Worker deployment. Tool descriptions and input schemas are exposed to Bedrock, while implementations execute inside the Worker, so review new tools carefully before deployment.
+
 ## AgentCore runtime
 
 The Python runtime is configured in [`agentcore/agentcore.json`](agentcore/agentcore.json), with code in [`app/ForgeAgent/`](app/ForgeAgent/). Its dependencies are declared in [`app/ForgeAgent/pyproject.toml`](app/ForgeAgent/pyproject.toml).
