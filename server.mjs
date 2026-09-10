@@ -11,7 +11,7 @@ const region = process.env.AWS_REGION || 'ca-central-1';
 const modelId = process.env.BEDROCK_MODEL_ID || 'amazon.nova-micro-v1:0';
 const stateDir = join(root, '.data', 'sessions');
 const stateTtlMs = 48 * 60 * 60 * 1000;
-const dailyRequestLimit = 20;
+const dailyRequestLimit = 8;
 const maxRequestWords = 52;
 const maxWordCharacters = 16;
 const redirectRateLimit = 20;
@@ -40,7 +40,9 @@ async function askWithBedrock(message, palette = []) {
   return response.output?.message?.content?.map((part) => part.text || '').join('') || 'The model returned an empty response.';
 }
 
-async function ask(message, palette = [], pendingPrompt = '') {
+async function ask(message, palette = [], pendingPrompt = '', requestsRemaining = dailyRequestLimit) {
+  const specialistInstruction = `Answer as a focused word specialist: stay on the user's topic and help with meaning, nuance, connotation, etymology, tone, or precise/poetic word choice. Avoid generic life coaching or broad brainstorming. Ask at most one concise follow-up question when needed. This session allows at most ${dailyRequestLimit} model requests per day; stay useful within the current turn.\n\n`;
+  message = specialistInstruction + message;
   if (pendingPrompt) {
     message = `Original request: ${pendingPrompt}\n\nUser clarification: ${message}`;
   }

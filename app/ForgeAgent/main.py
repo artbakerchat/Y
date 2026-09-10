@@ -111,14 +111,17 @@ def _save_messages(session_id: str, messages: list[dict[str, str]]) -> None:
         })
 
 
-def _agent_for_palette(palette: list[str]) -> Agent:
+def _agent_for_palette(palette: list[str], requests_remaining: int) -> Agent:
     palette_text = ", ".join(palette) if palette else "(empty)"
 
     return Agent(
         system_prompt=(
-            "You are Forge, a warm and easygoing conversation partner. "
-            "Talk to the user like a thoughtful, helpful person. Use plain language, "
-            "keep replies natural and concise, and ask a gentle follow-up when it helps. "
+            "You are Forge, a focused word specialist and conversation partner. "
+            "Help the user explore meaning, nuance, connotation, etymology, tone, "
+            "and poetic or precise word choice. Stay tightly on the user's topic; "
+            "do not drift into generic life coaching or broad brainstorming. Use plain language, "
+            "give concrete examples when useful, and ask at most one concise follow-up question when needed. "
+            f"This session has a daily limit of 8 model requests; {requests_remaining} remain after this turn. "
             "Use the user's word palette as inspiration when relevant. "
             "Never invent palette entries or present guesses as facts. "
             f"The current palette is: {palette_text}."
@@ -129,13 +132,14 @@ def _agent_for_palette(palette: list[str]) -> Agent:
 @app.entrypoint
 async def invoke(payload: dict[str, Any], context: Any):
     prompt = _prompt_from(payload)
+    requests_remaining = max(0, min(8, int(payload.get("requests_remaining", 8))))
     session_id = _session_id(context)
     palette = _load_palette(session_id, _palette_from(payload))
     messages = _load_messages(session_id)
     history = "\n".join(f"{item['role']}: {item['content']}" for item in messages)
     agent_prompt = f"Conversation history:\n{history}\n\nCurrent request: {prompt}" if history else prompt
     log.info("Invoking ForgeAgent with %d palette words and %d stored messages", len(palette), len(messages))
-    agent = _agent_for_palette(palette)
+    agent = _agent_for_palette(palette, requests_remaining)
 
     events = []
     async for event in agent.stream_async(agent_prompt):

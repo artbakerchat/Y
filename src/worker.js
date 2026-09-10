@@ -33,7 +33,7 @@ const CANONICAL_HTML_ROUTES = {
 
 const encoder = new TextEncoder();
 const STATE_TTL_MS = 48 * 60 * 60 * 1000;
-const DAILY_REQUEST_LIMIT = 20;
+const DAILY_REQUEST_LIMIT = 8;
 const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
@@ -84,14 +84,14 @@ async function signingKey(secret, date, region, service) {
   return hmac(serviceKey, 'aws4_request');
 }
 
-async function invokeAgentCore(message, palette, history, env, request) {
+async function invokeAgentCore(message, palette, history, env, request, requestsRemaining) {
   const region = env.AWS_REGION || 'ca-central-1';
   const runtimeArn = env.AGENTCORE_RUNTIME_ARN;
   const host = env.AGENTCORE_RUNTIME_HOST || `bedrock-agentcore.${region}.amazonaws.com`;
   const encodedArn = encodeURIComponent(runtimeArn);
   const path = `/runtimes/${encodedArn}/invocations`;
   const query = 'qualifier=DEFAULT';
-  const body = JSON.stringify({ prompt: message, palette });
+  const body = JSON.stringify({ prompt: message, palette, requests_remaining: requestsRemaining });
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -432,14 +432,15 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
 // Step 5  stopReason === 'end_turn':
 //           Post-response steering check, return answer     (Module 3 Steering)
 // ---------------------------------------------------------------------------
-async function askBedrock(message, palette, history, env) {
+async function askBedrock(message, palette, history, env, requestsRemaining) {
   const tools = buildEditableTools(palette);
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
 
   // Step 1: Skills - inject relevant procedure into system prompt.
   const skill = await resolveSkill(message, env);
   const systemText = [
-    'You are Forge, a warm and easygoing conversation partner. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help.',
+    'You are Forge, a focused word specialist and conversation partner. Help the user explore meaning, nuance, connotation, etymology, tone, and poetic or precise word choice. Stay tightly on the user\'s topic; do not drift into generic life coaching or broad brainstorming. Use plain language, give concrete examples when useful, and ask at most one concise follow-up question when needed.',
+    `This session has a daily limit of ${DAILY_REQUEST_LIMIT} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
     `The user's word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
     skill ? `\n\nActive skill - follow these steps:\n${skill}` : '',
   ].filter(Boolean).join(' ');
@@ -592,8 +593,8 @@ export default {
 
         // Route to AgentCore if configured, otherwise run the local agent loop.
         const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, request)
-          : await askBedrock(message, state.palette, state.messages, env);
+          ? await invokeAgentCore(message, state.palette, state.messages, env, request, DAILY_REQUEST_LIMIT - state.rate.count - 1)
+          : await askBedrock(message, state.palette, state.messages, env, DAILY_REQUEST_LIMIT - state.rate.count - 1);
 
         state.rate.count += 1;
         state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }];

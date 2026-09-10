@@ -69,7 +69,7 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 - `POST /api/state` — saves palette and workspace state.
 - `POST /api/ask` — sends a prompt to the configured agent path.
 
-Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each session has a daily limit of 20 model requests.
+Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each session has a daily limit of 8 model requests.
 
 ## Cloudflare deployment
 
