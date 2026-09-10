@@ -16,8 +16,8 @@ const redirectRateLimit = 20;
 const redirectRateWindowMs = 60 * 1000;
 const redirectRateBuckets = new Map();
 const client = new BedrockRuntimeClient({ region });
-const htmlRoutes = { '/': 'index.html', '/guide': 'guide.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html' };
-const legacyHtmlAssets = { '/index.html': 'index.html', '/guide.html': 'guide.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html' };
+const htmlRoutes = { '/': 'index.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html' };
+const legacyHtmlAssets = { '/index.html': 'index.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html' };
 let strands;
 try { strands = await import('@strands-agents/sdk'); } catch { strands = null; }
 

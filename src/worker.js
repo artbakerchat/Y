@@ -7,7 +7,6 @@ const CONTENT_TYPES = {
 
 const HTML_ROUTES = {
   '/': 'index.html',
-  '/guide': 'guide.html',
   '/pinball': 'pinball.html',
   '/prompt': 'prompt.html',
   '/pricing': 'pricing.html',
@@ -15,7 +14,6 @@ const HTML_ROUTES = {
 
 const LEGACY_HTML_ASSETS = {
   '/index.html': 'index.html',
-  '/guide.html': 'guide.html',
   '/pinball.html': 'pinball.html',
   '/prompt.html': 'prompt.html',
   '/pricing.html': 'pricing.html',
