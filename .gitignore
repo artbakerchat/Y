@@ -40,6 +40,12 @@ build/Release
 # Dependency directories
 node_modules/
 .data/
+agentcore/.env.local
+agentcore/.cli/
+agentcore/cdk/node_modules/
+agentcore/cdk/cdk.out/
+__pycache__/
+*.py[cod]
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
