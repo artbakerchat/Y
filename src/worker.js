@@ -81,8 +81,9 @@ async function askBedrock(message, env) {
 
 async function serveAsset(request, env) {
   const url = new URL(request.url);
-  let pathname = url.pathname === '/' ? '/index.html' : url.pathname;
-  const cleanPath = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' }[pathname];
+  const originalPathname = url.pathname;
+  let pathname = originalPathname === '/' ? '/index.html' : originalPathname;
+  const cleanPath = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' }[originalPathname];
   if (cleanPath) return Response.redirect(new URL(cleanPath, url), 301);
   if (pathname !== '/' && !pathname.includes('.')) pathname = `${pathname.replace(/\/+$/, '')}.html`;
   if (!/^\/[a-zA-Z0-9._/-]+$/.test(pathname) || pathname.includes('..')) return new Response('Not found.', { status: 404 });
@@ -100,10 +101,6 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
-      if (url.protocol === 'http:') {
-        url.protocol = 'https:';
-        return Response.redirect(url, 301);
-      }
       if (url.pathname === '/api/health' && request.method === 'GET') {
         return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0' });
       }
