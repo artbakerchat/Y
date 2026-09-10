@@ -10,7 +10,7 @@ const encoder = new TextEncoder();
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' },
+    headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'strict-transport-security': 'max-age=31536000; includeSubDomains' },
   });
 }
 
@@ -89,7 +89,7 @@ async function serveAsset(request, env) {
   const key = pathname.slice(1);
   const object = await env.ASSETS.get(key);
   if (!object) return new Response('Not found.', { status: 404 });
-  const headers = new Headers({ 'cache-control': key === 'index.html' ? 'no-cache' : 'public, max-age=3600' });
+  const headers = new Headers({ 'cache-control': key === 'index.html' ? 'no-cache' : 'public, max-age=3600', 'strict-transport-security': 'max-age=31536000; includeSubDomains' });
   const extension = key.slice(key.lastIndexOf('.'));
   headers.set('content-type', CONTENT_TYPES[extension] || object.httpMetadata?.contentType || 'application/octet-stream');
   if (object.httpEtag) headers.set('etag', object.httpEtag);
@@ -100,6 +100,10 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
+      if (url.protocol === 'http:') {
+        url.protocol = 'https:';
+        return Response.redirect(url, 301);
+      }
       if (url.pathname === '/api/health' && request.method === 'GET') {
         return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0' });
       }
