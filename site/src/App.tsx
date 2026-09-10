@@ -2,7 +2,7 @@ import { FormEvent, KeyboardEvent, useEffect, useState } from 'react';
 
 type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
-type State = { palette?: string[]; messages?: Message[] };
+type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string };
 
 const starterWords = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean'];
 const stopWords = new Set('a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(' '));
@@ -36,6 +36,14 @@ export default function App() {
     if (!message || busy) return;
     if (message.split(/\s+/).length > 52) return;
     if (message.split(/\s+/).some((word) => word.length > 16)) return;
+    if (message.toLowerCase() === 'clear') {
+      setDraft(''); setBusy(true); setMessages([]);
+      try {
+        await saveState({ messages: [], pendingPrompt: '' });
+      } catch { setMessages(messages); }
+      finally { setBusy(false); }
+      return;
+    }
     setDraft(''); setBusy(true);
     const extractedWords = extractWords(message);
     const nextPalette = [...new Set([...extractedWords, ...palette])].slice(0, 52);
