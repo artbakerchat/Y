@@ -39,6 +39,7 @@ build/Release
 
 # Dependency directories
 node_modules/
+site/dist/
 .data/
 agentcore/.env.local
 agentcore/.cli/
