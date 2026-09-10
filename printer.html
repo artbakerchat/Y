@@ -251,11 +251,7 @@
 		</section>
 		<footer class="print-page-footer"><span>Billing record</span><span>Confidential</span></footer>
 		<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-		<script>
-			const noteStorageKey = 'billing-printer-note';
-			const imageStorageKey = 'billing-printer-image';
-			const imageUploadTimeKey = 'billing-printer-image-uploaded-at';
-			const draftMaxAge = 48 * 60 * 60 * 1000;
+		<script type="module">
 			const maximumImageSize = 2 * 1024 * 1024;
 			const note = document.querySelector('.billing-note');
 			const downloadNote = document.querySelector('#downloadNote');
@@ -265,26 +261,16 @@
 				removeNewestImage.hidden = ![...noteImageFrames]
 					.some((frame) => frame.classList.contains('has-image'));
 			};
-			const readDraftValue = (key) => {
-				try {
-					const record = JSON.parse(localStorage.getItem(key) || 'null');
-					if (!record || !Object.hasOwn(record, 'value') || !Number.isFinite(Number(record.savedAt)) || Date.now() - Number(record.savedAt) >= draftMaxAge) {
-						localStorage.removeItem(key);
-						return null;
-					}
-					return record.value;
-				} catch {
-					localStorage.removeItem(key);
-					return null;
-				}
-			};
-			const writeDraftValue = (key, value) => localStorage.setItem(key, JSON.stringify({ value, savedAt: Date.now() }));
+			let printerState = { note: '', images: [null, null, null] };
+			const savePrinterState = async () => { await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ printer: printerState }) }); };
+			const loadPrinterState = async () => { const response = await fetch('/api/state'); if (response.ok) { const state = await response.json(); printerState = state.printer || printerState; } };
 
-			note.innerHTML = readDraftValue(noteStorageKey) || '';
-			noteImageFrames.forEach((frame, index) => {
+			await loadPrinterState();
+			note.innerHTML = printerState.note || '';
+			 noteImageFrames.forEach((frame, index) => {
 				const image = frame.querySelector('img');
 				const input = frame.querySelector('input');
-				const savedImage = readDraftValue(`${imageStorageKey}-${index}`);
+				const savedImage = printerState.images[index]?.src;
 				if (savedImage) {
 					image.src = savedImage;
 					frame.classList.add('has-image');
@@ -301,8 +287,8 @@
 					reader.addEventListener('load', () => {
 						image.src = reader.result;
 						frame.classList.add('has-image');
-						writeDraftValue(`${imageStorageKey}-${index}`, reader.result);
-						writeDraftValue(`${imageUploadTimeKey}-${index}`, Date.now());
+						printerState.images[index] = { src: reader.result, uploadedAt: Date.now() };
+						savePrinterState();
 						updateRemoveNewestImage();
 					});
 					reader.readAsDataURL(imageFile);
@@ -314,19 +300,19 @@
 				const newestFrame = occupiedFrames.reduce((newest, frame) => {
 					const newestIndex = [...noteImageFrames].indexOf(newest);
 					const frameIndex = [...noteImageFrames].indexOf(frame);
-					const newestTime = Number(readDraftValue(`${imageUploadTimeKey}-${newestIndex}`)) || newestIndex;
-					const frameTime = Number(readDraftValue(`${imageUploadTimeKey}-${frameIndex}`)) || frameIndex;
+					const newestTime = Number(printerState.images[newestIndex]?.uploadedAt) || newestIndex;
+					const frameTime = Number(printerState.images[frameIndex]?.uploadedAt) || frameIndex;
 					return frameTime > newestTime ? frame : newest;
 				});
 				const newestIndex = [...noteImageFrames].indexOf(newestFrame);
 				newestFrame.querySelector('img').removeAttribute('src');
 				newestFrame.querySelector('input').value = '';
 				newestFrame.classList.remove('has-image');
-				localStorage.removeItem(`${imageStorageKey}-${newestIndex}`);
-				localStorage.removeItem(`${imageUploadTimeKey}-${newestIndex}`);
+				printerState.images[newestIndex] = null;
+				savePrinterState();
 				updateRemoveNewestImage();
 			});
-				note.addEventListener('input', () => writeDraftValue(noteStorageKey, note.innerHTML));
+				note.addEventListener('input', () => { printerState.note = note.innerHTML; savePrinterState(); });
 			downloadNote.addEventListener('click', async () => {
 				const imageSources = [...noteImageFrames]
 					.map((frame) => frame.querySelector('img').getAttribute('src'));

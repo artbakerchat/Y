@@ -67,23 +67,10 @@
     const clearPromptButton = document.querySelector('#clear-prompt');
     const copyStatus = document.querySelector('#prompt-copy-status');
     const defaults = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean', 'wander', 'spark', 'gravity', 'money', 'book', 'Glimmer', 'compass', 'voyage', 'solitude', 'prism', 'nectar', 'blossom', 'fossil', 'zenith', 'vortex', 'mirage', 'starlight', 'ember', 'cyclone', 'glacier', 'radiance', 'labyrinth', 'aurora', 'thistle', 'apple', 'Nebula', 'crisp', 'whisper', 'avalanche', 'horizon', 'velvet', 'mosaic', 'thunder', 'marble', 'cascade', 'echo', 'lantern', 'silver', 'standard', 'puzzle', 'orbit', 'shadow', 'flicker', 'autumn', 'rhythm', 'canvas'];
-    const promptWordsStorageKey = 'prompt-words';
     let promptWords = [];
     let lastWordClickAt = 0;
 
-    try {
-      const savedPromptWords = JSON.parse(localStorage.getItem(promptWordsStorageKey) || 'null');
-      const availableWords = getPalette();
-      if (Array.isArray(savedPromptWords)) {
-        promptWords = [...new Set(savedPromptWords.filter((word) => typeof word === 'string' && availableWords.includes(word)))];
-      }
-    } catch {
-      // Use an empty prompt if storage is unavailable.
-    }
-
-    function savePromptWords() {
-      try { localStorage.setItem(promptWordsStorageKey, JSON.stringify(promptWords)); } catch { /* Storage is optional. */ }
-    }
+    async function savePromptWords() { await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptWords }) }); }
 
     function syncPromptWordsWithPalette() {
       const availableWords = getPalette();
@@ -95,12 +82,7 @@
       }
     }
 
-    function getPalette() {
-      try {
-        const saved = JSON.parse(localStorage.getItem('garden-words') || 'null');
-        return Array.isArray(saved) && saved.length ? saved : defaults;
-      } catch { return defaults; }
-    }
+    function getPalette() { return Array.isArray(window.backendState?.palette) && window.backendState.palette.length ? window.backendState.palette : defaults; }
 
     function renderPalette() {
       paletteDisplay.replaceChildren(...getPalette().map((word) => {
@@ -138,7 +120,7 @@
           token.setAttribute('aria-label', `Remove ${word}`);
           token.addEventListener('click', () => {
             promptWords.splice(index, 1);
-            savePromptWords();
+        savePromptWords();
             renderPalette();
             renderPrompt();
           });
@@ -186,15 +168,7 @@
       clearPromptButton.disabled = false;
     });
 
-    window.addEventListener('storage', (event) => {
-      if (event.key === 'garden-words') {
-        renderPalette();
-        syncPromptWordsWithPalette();
-      }
-    });
-
-    renderPalette();
-    renderPrompt();
+    fetch('/api/state').then((response) => response.json()).then((state) => { window.backendState = state; promptWords = Array.isArray(state.promptWords) ? state.promptWords : []; renderPalette(); renderPrompt(); }).catch(() => { renderPalette(); renderPrompt(); });
   </script>
 </body>
 </html>
