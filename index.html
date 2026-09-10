@@ -53,6 +53,17 @@ fetch('/api/health').then(r=>r.json()).then(data=>{document.querySelector('#regi
   }
 </script>
 <script>
+  const transcriptRoleStyle = document.createElement('style');
+  transcriptRoleStyle.textContent = '.message.assistant .avatar{font-size:0}.message.assistant .avatar::after{content:"ASSISTANT";font-size:10px}.message.tool .avatar{font-size:0;color:#f2bb79}.message.tool .avatar::after{content:"TOOL CALL";font-size:10px}';
+  document.head.append(transcriptRoleStyle);
+</script>
+<script>
+  const transcript = document.querySelector('#chat');
+  if (transcript) {
+    transcript.innerHTML = '<div class="message user"><div class="avatar">USER</div><div class="bubble">Hi, I\'m customer <strong>ABC123XYZ</strong>...</div></div><div class="message tool"><div class="avatar">TOOL CALL</div><div class="bubble"><div class="trace"><span>lookup_customer({"customer_id":"ABC123XYZ"})</span><span>word_order_history({"customer_id":"ABC123XYZ"})</span></div></div></div><div class="message assistant"><div class="avatar">ASSISTANT</div><div class="bubble">Is this a question...</div></div>';
+  }
+</script>
+<script>
   const promptButtonStyle = document.createElement('style');
   promptButtonStyle.textContent = 'footer{align-items:flex-end}footer>span:first-child{min-width:0}footer>span:last-child{margin-left:auto;text-align:right;white-space:nowrap}footer a[href="prompt.html"]{vertical-align:bottom}@media(max-width:520px){footer{display:flex;flex-wrap:nowrap;gap:10px;line-height:1.5}footer>span:first-child{flex:1 1 auto}footer>span:last-child{display:block;flex:0 0 auto;margin-top:0;text-align:right}}';
   document.head.append(promptButtonStyle);
@@ -73,6 +84,11 @@ fetch('/api/health').then(r=>r.json()).then(data=>{document.querySelector('#regi
   document.head.append(paletteHeightStyle);
 </script>
 <script>
+  const transcriptStyle = document.createElement('style');
+  transcriptStyle.textContent = `.chat{padding:0 22px;min-height:480px;overflow:auto}.message{display:grid;grid-template-columns:82px minmax(0,1fr);gap:18px;margin:0;padding:20px 0;border-bottom:1px solid #1e3447}.message:last-child{border-bottom:0}.avatar{display:block;width:auto;height:auto;padding-top:2px;border-radius:0;color:#7fffe5;background:none!important;font-size:10px;font-weight:800;letter-spacing:.12em;text-align:left}.message.user .avatar{color:#c4a7ff}.bubble{max-width:none;color:#c4d1dc;font-size:14px;line-height:1.65}.message.user .bubble{padding:0;border:0;border-radius:0;background:none;color:var(--ink)}.trace{display:grid;gap:7px;margin-top:14px}.trace span{display:block;padding:9px 11px;border:1px solid #285166;border-radius:8px;color:#8fffe0;background:#0b202c;font-size:11px}.trace span:before{content:'↳ ';color:#5c8b9d}.message.user .trace span{border-color:#4d3d70;color:#cbbaff;background:#201c3b}.message.user .trace span:before{content:'↳ ';color:#9f86da}@media(max-width:520px){.chat{padding:0 16px}.message{grid-template-columns:66px minmax(0,1fr);gap:12px;padding:17px 0}}`;
+  document.head.append(transcriptStyle);
+</script>
+<script>
   document.querySelector('footer a[href="pricing.html"]')?.remove();
   const footerLinkStyle = document.createElement('style');
   footerLinkStyle.textContent = 'footer a[href="prompt.html"]{display:inline-block;padding:8px 12px;border:1px solid #285b64;border-radius:8px;color:#51e0d0;background:#0e2938;font-weight:700}footer a[href="prompt.html"]:hover{color:#07111f;background:#51e0d0}';
@@ -86,8 +102,12 @@ fetch('/api/health').then(r=>r.json()).then(data=>{document.querySelector('#regi
   document.head.append(layoutStyle);
 </script>
 <script>
-  document.querySelectorAll('.message:not(.user) .avatar').forEach((avatar) => { avatar.textContent = 'L'; });
+  document.querySelectorAll('.message.assistant .avatar').forEach((avatar) => { avatar.textContent = 'ASSISTANT'; });
+  document.querySelectorAll('.message.tool .avatar').forEach((avatar) => { avatar.textContent = 'TOOL CALL'; });
   const auroraStyle = document.createElement('style');
   auroraStyle.textContent = ':root{--cyan:#7fffe5;--orange:#ff7bd5;--line:#24506a;--panel:#10243a;--bg:#061522}body{background:radial-gradient(circle at 15% 10%,#153f52 0,transparent 35%),radial-gradient(circle at 85% 70%,#28184a 0,transparent 38%),var(--bg)}.mark{border-color:#7fffe5;color:#7fffe5;background:#12364a}.card{border-color:#24506a;background:rgb(11 31 49 / 90%)}.card-head{border-color:#24506a}.avatar{color:#051a26;background:linear-gradient(135deg,#7fffe5,#78b7ff)}.message.user .avatar{color:#fff;background:#563d80}.message.user .bubble{border-color:#385c7b;background:#182d4a}.trace span{border-color:#276b73;color:#8fffe0;background:#0b3037}.composer{border-color:#2d6178;background:#071d2d}.send{color:#061522;background:linear-gradient(135deg,#7fffe5,#78b7ff)}.send:hover{background:#b1fff1}.badge{border-color:#326d7d;color:#7fffe5}.side{border-color:#24506a}';
   document.head.append(auroraStyle);
+  const transcriptFinalStyle = document.createElement('style');
+  transcriptFinalStyle.textContent = '.message .bubble,.message.user .bubble{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none}.message.tool .bubble{color:#c4d1dc}';
+  document.head.append(transcriptFinalStyle);
 </script>

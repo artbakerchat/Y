@@ -12,9 +12,12 @@ const modelId = process.env.BEDROCK_MODEL_ID || 'amazon.nova-micro-v1:0';
 const stateDir = join(root, '.data', 'sessions');
 const stateTtlMs = 48 * 60 * 60 * 1000;
 const dailyRequestLimit = 20;
+const redirectRateLimit = 20;
+const redirectRateWindowMs = 60 * 1000;
+const redirectRateBuckets = new Map();
 const client = new BedrockRuntimeClient({ region });
 const htmlRoutes = { '/': 'index.html', '/guide': 'guide.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html' };
-const legacyHtmlRoutes = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' };
+const legacyHtmlAssets = { '/index.html': 'index.html', '/guide.html': 'guide.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html' };
 let strands;
 try { strands = await import('@strands-agents/sdk'); } catch { strands = null; }
 
@@ -62,6 +65,19 @@ async function ask(message, palette = []) {
 }
 
 function send(res, status, body, type = 'application/json') { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); }
+function allowLegacyAlias(req) {
+  const clientIp = req.headers['cf-connecting-ip'] || req.socket.remoteAddress || 'unknown';
+  const key = clientIp;
+  const now = Date.now();
+  const bucket = redirectRateBuckets.get(key);
+  if (!bucket || now - bucket.startedAt >= redirectRateWindowMs) {
+    redirectRateBuckets.set(key, { startedAt: now, count: 1 });
+    return true;
+  }
+  if (bucket.count >= redirectRateLimit) return false;
+  bucket.count += 1;
+  return true;
+}
 async function body(req) { let data = ''; for await (const chunk of req) data += chunk; return JSON.parse(data || '{}'); }
 
 const server = http.createServer(async (req, res) => {
@@ -73,10 +89,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/api/ask') { const payload = await body(req); const message = typeof payload?.prompt === 'string' ? payload.prompt : payload?.message; if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'Prompt is required.' }); if (message.length > 4000) return send(res, 413, { error: 'Prompt is too long.' }); const state = await loadState(sessionId); const today = new Date().toISOString().slice(0, 10); if (state.rate.day !== today) state.rate = { day: today, count: 0 }; if (state.rate.count >= dailyRequestLimit) { res.writeHead(429, { ...sessionHeaders(sessionId), 'Retry-After': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) }); return res.end(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: dailyRequestLimit })); } state.rate.count += 1; await saveState(sessionId, state); const answer = await ask(message.trim(), state.palette); state.messages = [...state.messages, { role: 'user', content: message.trim(), createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }]; await saveState(sessionId, state); res.writeHead(200, sessionHeaders(sessionId)); return res.end(JSON.stringify(answer)); }
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' });
     const pathname = req.url.split('?')[0];
-    const cleanPath = legacyHtmlRoutes[pathname];
-    if (cleanPath) { res.writeHead(301, { Location: cleanPath }); return res.end(); }
+    if (legacyHtmlAssets[pathname] && !allowLegacyAlias(req)) { res.writeHead(429, { 'Cache-Control': 'no-store', 'Retry-After': '60' }); return res.end('Too many legacy URL requests. Please try again in a minute.'); }
     const requested = normalize(pathname).replace(/^[/\\]+/, '');
-    const asset = htmlRoutes[pathname] || requested;
+    const asset = htmlRoutes[pathname] || legacyHtmlAssets[pathname] || requested;
     if (requested.includes('..')) return send(res, 403, { error: 'Forbidden.' });
     const file = await readFile(join(root, asset)); const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' }; send(res, 200, file, types[extname(asset)] || 'application/octet-stream');
   } catch (error) { console.error(error); send(res, error.code === 'ENOENT' ? 404 : 500, { error: error.code === 'ENOENT' ? 'Not found.' : 'Runtime error. Check the server terminal.' }); }

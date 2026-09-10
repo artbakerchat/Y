@@ -13,17 +13,18 @@ const HTML_ROUTES = {
   '/pricing': 'pricing.html',
 };
 
-const LEGACY_HTML_ROUTES = {
-  '/index.html': '/',
-  '/guide.html': '/guide',
-  '/pinball.html': '/pinball',
-  '/prompt.html': '/prompt',
-  '/pricing.html': '/pricing',
+const LEGACY_HTML_ASSETS = {
+  '/index.html': 'index.html',
+  '/guide.html': 'guide.html',
+  '/pinball.html': 'pinball.html',
+  '/prompt.html': 'prompt.html',
+  '/pricing.html': 'pricing.html',
 };
 
 const encoder = new TextEncoder();
 const STATE_TTL_MS = 48 * 60 * 60 * 1000;
 const DAILY_REQUEST_LIMIT = 20;
+const REDIRECT_RATE_PERIOD_SECONDS = 60;
 const DEFAULT_PALETTE = ['anchor','pinnacle','summit','twilight','static','ocean','wander','spark','gravity','money','book','Glimmer','compass','voyage','solitude','prism','nectar','blossom','fossil','zenith','vortex','mirage','starlight','ember','cyclone','glacier','radiance','labyrinth','aurora','thistle','apple','Nebula','crisp','whisper','avalanche','horizon','velvet','mosaic','thunder','marble','cascade','echo','lantern','silver','standard','puzzle','orbit','shadow','flicker','autumn','rhythm','canvas'];
 const emptyState = () => ({ palette: [...DEFAULT_PALETTE], promptWords: [], messages: [], printer: { note: '', images: [null, null, null] }, rate: { day: new Date().toISOString().slice(0, 10), count: 0 }, expiresAt: Date.now() + STATE_TTL_MS });
 function cleanState(value) { return { palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter(Boolean).slice(0, 52) : [...DEFAULT_PALETTE], promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string').slice(0, 52) : [], messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [], printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] }, rate: { day: typeof value?.rate?.day === 'string' ? value.rate.day : new Date().toISOString().slice(0, 10), count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0 }, expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS }; }
@@ -32,6 +33,12 @@ async function loadState(bucket, sessionId) { const key = `sessions/${sessionId}
 async function saveState(bucket, sessionId, state) { const clean = cleanState(state); await bucket.put(`sessions/${sessionId}.json`, JSON.stringify({ ...clean, expiresAt: Number(state.expiresAt) || clean.expiresAt }), { httpMetadata: { contentType: 'application/json' } }); }
 async function purgeExpiredState(bucket) { let cursor; do { const listed = await bucket.list({ prefix: 'sessions/', cursor, limit: 1000 }); await Promise.all(listed.objects.map(async (object) => { try { const stateObject = await bucket.get(object.key); const state = await stateObject.json(); if (!Number.isFinite(Number(state.expiresAt)) || Number(state.expiresAt) <= Date.now()) await bucket.delete(object.key); } catch { await bucket.delete(object.key); } })); cursor = listed.truncated ? listed.cursor : undefined; } while (cursor); }
 function stateResponse(body, sessionId) { return new Response(JSON.stringify(body), { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax` } }); }
+async function allowLegacyAlias(request, env) {
+  if (!env.REDIRECT_RATE_LIMITER) return true;
+  const clientIp = request.headers.get('cf-connecting-ip') || 'unknown';
+  const { success } = await env.REDIRECT_RATE_LIMITER.limit({ key: `legacy-alias:${clientIp}` });
+  return success;
+}
 
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
@@ -149,9 +156,10 @@ async function askBedrock(message, palette, env) {
 async function serveAsset(request, env) {
   const url = new URL(request.url);
   const originalPathname = url.pathname;
-  const cleanPath = LEGACY_HTML_ROUTES[originalPathname];
-  if (cleanPath) return Response.redirect(new URL(cleanPath, url), 301);
-  const key = HTML_ROUTES[originalPathname] || originalPathname.slice(1);
+  if (LEGACY_HTML_ASSETS[originalPathname] && !await allowLegacyAlias(request, env)) {
+    return new Response('Too many legacy URL requests. Please try again in a minute.', { status: 429, headers: { 'cache-control': 'no-store', 'retry-after': String(REDIRECT_RATE_PERIOD_SECONDS) } });
+  }
+  const key = HTML_ROUTES[originalPathname] || LEGACY_HTML_ASSETS[originalPathname] || originalPathname.slice(1);
   if (!key || !/^\/[a-zA-Z0-9._/-]+$/.test(`/${key}`) || key.includes('..')) return new Response('Not found.', { status: 404 });
   const object = await env.ASSETS.get(key);
   if (!object) return new Response('Not found.', { status: 404 });

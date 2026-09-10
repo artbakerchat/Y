@@ -23,6 +23,16 @@
       "bucket_name": "larboard-assets"
     }
   ],
+  "ratelimits": [
+    {
+      "name": "REDIRECT_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    }
+  ],
   "routes": [
     {
       "pattern": "larboard.ca",
