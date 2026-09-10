@@ -5,6 +5,22 @@ const CONTENT_TYPES = {
   '.json': 'application/json; charset=utf-8',
 };
 
+const HTML_ROUTES = {
+  '/': 'index.html',
+  '/guide': 'guide.html',
+  '/pinball': 'pinball.html',
+  '/prompt': 'prompt.html',
+  '/pricing': 'pricing.html',
+};
+
+const LEGACY_HTML_ROUTES = {
+  '/index.html': '/',
+  '/guide.html': '/guide',
+  '/pinball.html': '/pinball',
+  '/prompt.html': '/prompt',
+  '/pricing.html': '/pricing',
+};
+
 const encoder = new TextEncoder();
 
 function json(data, status = 200) {
@@ -82,15 +98,13 @@ async function askBedrock(message, env) {
 async function serveAsset(request, env) {
   const url = new URL(request.url);
   const originalPathname = url.pathname;
-  let pathname = originalPathname === '/' ? '/index.html' : originalPathname;
-  const cleanPath = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' }[originalPathname];
+  const cleanPath = LEGACY_HTML_ROUTES[originalPathname];
   if (cleanPath) return Response.redirect(new URL(cleanPath, url), 301);
-  if (pathname !== '/' && !pathname.includes('.')) pathname = `${pathname.replace(/\/+$/, '')}.html`;
-  if (!/^\/[a-zA-Z0-9._/-]+$/.test(pathname) || pathname.includes('..')) return new Response('Not found.', { status: 404 });
-  const key = pathname.slice(1);
+  const key = HTML_ROUTES[originalPathname] || originalPathname.slice(1);
+  if (!key || !/^\/[a-zA-Z0-9._/-]+$/.test(`/${key}`) || key.includes('..')) return new Response('Not found.', { status: 404 });
   const object = await env.ASSETS.get(key);
   if (!object) return new Response('Not found.', { status: 404 });
-  const headers = new Headers({ 'cache-control': key === 'index.html' ? 'no-cache' : 'public, max-age=3600', 'strict-transport-security': 'max-age=31536000; includeSubDomains' });
+  const headers = new Headers({ 'cache-control': key.endsWith('.html') ? 'no-store' : 'public, max-age=3600', 'strict-transport-security': 'max-age=31536000; includeSubDomains' });
   const extension = key.slice(key.lastIndexOf('.'));
   headers.set('content-type', CONTENT_TYPES[extension] || object.httpMetadata?.contentType || 'application/octet-stream');
   if (object.httpEtag) headers.set('etag', object.httpEtag);
