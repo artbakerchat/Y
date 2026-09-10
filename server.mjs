@@ -11,7 +11,7 @@ const region = process.env.AWS_REGION || 'ca-central-1';
 const modelId = process.env.BEDROCK_MODEL_ID || 'amazon.nova-micro-v1:0';
 const stateDir = join(root, '.data', 'sessions');
 const stateTtlMs = 48 * 60 * 60 * 1000;
-const dailyRequestLimit = 4;
+const dailyRequestLimit = 20;
 const client = new BedrockRuntimeClient({ region });
 const htmlRoutes = { '/': 'index.html', '/guide': 'guide.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html' };
 const legacyHtmlRoutes = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' };
@@ -29,7 +29,7 @@ function sessionHeaders(sessionId) { return { 'Set-Cookie': `larboard_session=${
 
 async function askWithBedrock(message, palette = []) {
   const paletteContext = palette.length ? ` The user’s current word palette is: ${palette.join(', ')}.` : ' The user’s word palette is empty.';
-  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge. Use only the user’s word palette as source data. Do not use external facts, invent entries, or claim a word is in the palette unless it is listed.${paletteContext} If the user asks for a question using the palette, output exactly one natural-sounding, grammatically complete question and nothing else. Use one or more palette words naturally; function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
+  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge. Use only the user’s word palette as source data. Do not use external facts, invent entries, or claim a word is in the palette unless it is listed.${paletteContext} If the user asks for a question using the palette, create a different, original question—not a repetition, quotation, or close paraphrase of the user’s wording. Base the question on the overall theme, relationships, or combined imagery of the palette rather than on one isolated word. Output exactly one natural-sounding, grammatically complete question and nothing else. Include relevant palette words naturally, and use synonyms or related expressions when they help make the question distinct. Function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
   const response = await client.send(command);
   return response.output?.message?.content?.map((part) => part.text || '').join('') || 'The model returned an empty response.';
 }
@@ -52,7 +52,7 @@ async function ask(message, palette = []) {
   if (strands?.Agent) {
     const paletteTool = createPaletteLookupTool(palette);
     const agent = new strands.Agent({
-      systemPrompt: 'You are Forge. Use only the user’s word palette as source data. For every request that depends on saved words or the palette, call lookup_word_palette first and use only its returned data. Do not use external facts, invent entries, or claim a word is in the palette unless the tool returned it. If the user asks for a question using the palette, output exactly one natural-sounding, grammatically complete question and nothing else. Use one or more palette words naturally; function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.',
+      systemPrompt: 'You are Forge. Use only the user’s word palette as source data. For every request that depends on saved words or the palette, call lookup_word_palette first and use only its returned data. Do not use external facts, invent entries, or claim a word is in the palette unless the tool returned it. If the user asks for a question using the palette, create a different, original question—not a repetition, quotation, or close paraphrase of the user’s wording. Base the question on the overall theme, relationships, or combined imagery of the palette rather than on one isolated word. Output exactly one natural-sounding, grammatically complete question and nothing else. Include relevant palette words naturally, and use synonyms or related expressions when they help make the question distinct. Function words needed for grammar are allowed. If the request cannot be answered from the palette, say so plainly.',
       ...(paletteTool ? { tools: [paletteTool] } : {}),
     });
     const result = await agent.invoke(message);
