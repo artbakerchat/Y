@@ -12,6 +12,8 @@ const modelId = process.env.BEDROCK_MODEL_ID || 'amazon.nova-micro-v1:0';
 const stateDir = join(root, '.data', 'sessions');
 const stateTtlMs = 48 * 60 * 60 * 1000;
 const dailyRequestLimit = 20;
+const maxRequestWords = 52;
+const maxWordCharacters = 16;
 const redirectRateLimit = 20;
 const redirectRateWindowMs = 60 * 1000;
 const redirectRateBuckets = new Map();
@@ -68,6 +70,8 @@ function allowLegacyAlias(req) {
   return true;
 }
 async function body(req) { let data = ''; for await (const chunk of req) data += chunk; return JSON.parse(data || '{}'); }
+function requestWordCount(message) { return message.trim() ? message.trim().split(/\s+/).length : 0; }
+function hasOversizedWord(message) { return message.trim().split(/\s+/).some((word) => word.length > maxWordCharacters); }
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -75,7 +79,7 @@ const server = http.createServer(async (req, res) => {
     const sessionId = sessionIdFrom(req);
     if (req.method === 'GET' && req.url === '/api/state') { const state = await loadState(sessionId); res.writeHead(200, sessionHeaders(sessionId)); return res.end(JSON.stringify(state)); }
     if (req.method === 'POST' && req.url === '/api/state') { const payload = await body(req); const state = await loadState(sessionId); const next = cleanState({ ...state, ...payload }); await saveState(sessionId, next); res.writeHead(200, sessionHeaders(sessionId)); return res.end(JSON.stringify(next)); }
-    if (req.method === 'POST' && req.url === '/api/ask') { const payload = await body(req); const message = typeof payload?.prompt === 'string' ? payload.prompt : payload?.message; if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'Prompt is required.' }); if (message.length > 4000) return send(res, 413, { error: 'Prompt is too long.' }); const state = await loadState(sessionId); const today = new Date().toISOString().slice(0, 10); if (state.rate.day !== today) state.rate = { day: today, count: 0 }; if (state.rate.count >= dailyRequestLimit) { res.writeHead(429, { ...sessionHeaders(sessionId), 'Retry-After': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) }); return res.end(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: dailyRequestLimit })); } const prompt = message.trim(); const pendingPrompt = state.pendingPrompt; const answer = await ask(prompt, state.palette, pendingPrompt); if (answer.clarification) state.pendingPrompt = prompt; else state.pendingPrompt = ''; state.rate.count += 1; state.messages = [...state.messages, { role: 'user', content: prompt, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }]; await saveState(sessionId, state); res.writeHead(200, sessionHeaders(sessionId)); return res.end(JSON.stringify(answer)); }
+    if (req.method === 'POST' && req.url === '/api/ask') { const payload = await body(req); const message = typeof payload?.prompt === 'string' ? payload.prompt : payload?.message; if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'Prompt is required.' }); if (message.length > 4000) return send(res, 413, { error: 'Prompt is too long.' }); if (requestWordCount(message) > maxRequestWords) return send(res, 413, { error: `Requests are limited to ${maxRequestWords} words.` }); if (hasOversizedWord(message)) return send(res, 413, { error: `Each word is limited to ${maxWordCharacters} characters.` }); const state = await loadState(sessionId); const today = new Date().toISOString().slice(0, 10); if (state.rate.day !== today) state.rate = { day: today, count: 0 }; if (state.rate.count >= dailyRequestLimit) { res.writeHead(429, { ...sessionHeaders(sessionId), 'Retry-After': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) }); return res.end(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: dailyRequestLimit })); } const prompt = message.trim(); const pendingPrompt = state.pendingPrompt; const answer = await ask(prompt, state.palette, pendingPrompt); if (answer.clarification) state.pendingPrompt = prompt; else state.pendingPrompt = ''; state.rate.count += 1; state.messages = [...state.messages, { role: 'user', content: prompt, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }]; await saveState(sessionId, state); res.writeHead(200, sessionHeaders(sessionId)); return res.end(JSON.stringify(answer)); }
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' });
     const pathname = req.url.split('?')[0];
     if (legacyHtmlAssets[pathname] && !allowLegacyAlias(req)) { res.writeHead(429, { 'Cache-Control': 'no-store', 'Retry-After': '60' }); return res.end('Too many legacy URL requests. Please try again in a minute.'); }
