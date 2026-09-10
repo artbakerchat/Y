@@ -26,6 +26,8 @@
     .prompt-card__hint { margin: 0.5rem 0 0.8rem; color: #8791aa; font-size: 0.72rem; }
     .prompt-palette { display: flex; flex-wrap: wrap; gap: 0.35rem; margin: 0 0 0.8rem; }
     .prompt-palette button { flex: 1 1 calc(25% - 0.35rem); min-width: 0; min-height: 42px; overflow: hidden; padding: 0.55rem 0.7rem; color: #5263b8; background: #eef0ff; border: 1px solid #d9ddff; border-radius: 7px; cursor: pointer; font: inherit; font-size: 0.75rem; text-overflow: ellipsis; white-space: nowrap; }
+    .prompt-palette button.is-dragging { opacity: 0.35; }
+    .prompt-palette button.is-drag-over { background: #d9ddff; border-color: #5263b8; box-shadow: 0 0 0 2px #c7d2fe; }
     .prompt-palette button:hover { background: #e0e5ff; }
     .prompt-palette button.is-selected { color: #fff; background: #5263b8; border-color: #4352a0; box-shadow: 0 0 0 2px #c7d2fe; }
     .prompt-palette button.is-selected:hover { background: #4352a0; }
@@ -48,7 +50,7 @@
       </div>
       <div class="prompt-card">
         <div id="prompt-input" class="prompt-preview is-empty" role="status" aria-label="Selected prompt" aria-live="polite">Click word buttons below to begin.</div>
-        <p id="prompt-hint" class="prompt-card__hint">Click words to highlight them for the prompt.</p>
+        <p id="prompt-hint" class="prompt-card__hint">Click words to highlight them for the prompt. Drag buttons to reorder them.</p>
         <div id="prompt-palette" class="prompt-palette" aria-label="Your word palette"></div>
         <div class="prompt-actions">
           <button class="prompt-clear" id="clear-prompt" type="button">Clear prompt</button>
@@ -57,7 +59,7 @@
       </div>
     </section>
     <nav class="page-navigation" aria-label="Page navigation">
-      <a href="index.html">Workspace</a><a href="pinball.html">Pinball</a><a href="pricing.html">Pricing</a>
+      <a href="/">Workspace</a><a href="/pinball">Pinball</a><a href="/pricing">Pricing</a>
     </nav>
   </main>
   <script>
@@ -69,8 +71,10 @@
     const defaults = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean', 'wander', 'spark', 'gravity', 'money', 'book', 'Glimmer', 'compass', 'voyage', 'solitude', 'prism', 'nectar', 'blossom', 'fossil', 'zenith', 'vortex', 'mirage', 'starlight', 'ember', 'cyclone', 'glacier', 'radiance', 'labyrinth', 'aurora', 'thistle', 'apple', 'Nebula', 'crisp', 'whisper', 'avalanche', 'horizon', 'velvet', 'mosaic', 'thunder', 'marble', 'cascade', 'echo', 'lantern', 'silver', 'standard', 'puzzle', 'orbit', 'shadow', 'flicker', 'autumn', 'rhythm', 'canvas'];
     let promptWords = [];
     let lastWordClickAt = 0;
+    let draggedPaletteIndex = -1;
 
     async function savePromptWords() { await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptWords }) }); }
+    async function savePalette(palette) { await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ palette }) }); }
 
     function syncPromptWordsWithPalette() {
       const availableWords = getPalette();
@@ -85,11 +89,41 @@
     function getPalette() { return Array.isArray(window.backendState?.palette) && window.backendState.palette.length ? window.backendState.palette : defaults; }
 
     function renderPalette() {
-      paletteDisplay.replaceChildren(...getPalette().map((word) => {
+      paletteDisplay.replaceChildren(...getPalette().map((word, index) => {
         const button = document.createElement('button');
         button.type = 'button';
+        button.draggable = true;
         button.textContent = word;
+        button.title = 'Drag to reorder';
         button.classList.toggle('is-selected', promptWords.includes(word));
+        button.addEventListener('dragstart', (event) => {
+          draggedPaletteIndex = index;
+          button.classList.add('is-dragging');
+          event.dataTransfer.effectAllowed = 'move';
+          event.dataTransfer.setData('text/plain', word);
+        });
+        button.addEventListener('dragend', () => {
+          draggedPaletteIndex = -1;
+          button.classList.remove('is-dragging');
+          paletteDisplay.querySelectorAll('.is-drag-over').forEach((target) => target.classList.remove('is-drag-over'));
+        });
+        button.addEventListener('dragover', (event) => {
+          event.preventDefault();
+          if (draggedPaletteIndex !== index) button.classList.add('is-drag-over');
+          event.dataTransfer.dropEffect = 'move';
+        });
+        button.addEventListener('dragleave', () => button.classList.remove('is-drag-over'));
+        button.addEventListener('drop', (event) => {
+          event.preventDefault();
+          button.classList.remove('is-drag-over');
+          if (draggedPaletteIndex < 0 || draggedPaletteIndex === index) return;
+          const reorderedPalette = [...getPalette()];
+          [reorderedPalette[draggedPaletteIndex], reorderedPalette[index]] = [reorderedPalette[index], reorderedPalette[draggedPaletteIndex]];
+          window.backendState = { ...window.backendState, palette: reorderedPalette };
+          draggedPaletteIndex = -1;
+          savePalette(reorderedPalette);
+          renderPalette();
+        });
         button.addEventListener('click', () => {
           const now = Date.now();
           if (now - lastWordClickAt < 300) return;
@@ -128,7 +162,7 @@
         }));
       }
       input.classList.toggle('is-empty', promptWords.length === 0);
-      hint.textContent = `${promptWords.length} word${promptWords.length === 1 ? '' : 's'} highlighted · Click to toggle selection.`;
+      hint.textContent = `${promptWords.length} word${promptWords.length === 1 ? '' : 's'} highlighted · Click to toggle selection · Drag buttons to reorder.`;
     }
 
     async function copyPromptText(text) {

@@ -10,6 +10,7 @@ const HTML_ROUTES = {
   '/pinball': 'pinball.html',
   '/prompt': 'prompt.html',
   '/pricing': 'pricing.html',
+  '/printer': 'printer.html',
 };
 
 const LEGACY_HTML_ASSETS = {
@@ -17,6 +18,15 @@ const LEGACY_HTML_ASSETS = {
   '/pinball.html': 'pinball.html',
   '/prompt.html': 'prompt.html',
   '/pricing.html': 'pricing.html',
+  '/printer.html': 'printer.html',
+};
+
+const CANONICAL_HTML_ROUTES = {
+  '/index.html': '/',
+  '/pinball.html': '/pinball',
+  '/prompt.html': '/prompt',
+  '/pricing.html': '/pricing',
+  '/printer.html': '/printer',
 };
 
 const encoder = new TextEncoder();
@@ -160,6 +170,9 @@ async function serveAsset(request, env) {
   const originalPathname = url.pathname;
   if (LEGACY_HTML_ASSETS[originalPathname] && !await allowLegacyAlias(request, env)) {
     return new Response('Too many legacy URL requests. Please try again in a minute.', { status: 429, headers: { 'cache-control': 'no-store', 'retry-after': String(REDIRECT_RATE_PERIOD_SECONDS) } });
+  }
+  if (CANONICAL_HTML_ROUTES[originalPathname]) {
+    return Response.redirect(`${url.origin}${CANONICAL_HTML_ROUTES[originalPathname]}${url.search}`, 301);
   }
   const key = HTML_ROUTES[originalPathname] || LEGACY_HTML_ASSETS[originalPathname] || originalPathname.slice(1);
   if (!key || !/^\/[a-zA-Z0-9._/-]+$/.test(`/${key}`) || key.includes('..')) return new Response('Not found.', { status: 404 });

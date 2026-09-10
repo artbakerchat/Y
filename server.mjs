@@ -16,8 +16,9 @@ const redirectRateLimit = 20;
 const redirectRateWindowMs = 60 * 1000;
 const redirectRateBuckets = new Map();
 const client = new BedrockRuntimeClient({ region });
-const htmlRoutes = { '/': 'index.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html' };
-const legacyHtmlAssets = { '/index.html': 'index.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html' };
+const htmlRoutes = { '/': 'index.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html', '/printer': 'printer.html' };
+const legacyHtmlAssets = { '/index.html': 'index.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html', '/printer.html': 'printer.html' };
+const canonicalHtmlRoutes = { '/index.html': '/', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing', '/printer.html': '/printer' };
 let strands;
 try { strands = await import('@strands-agents/sdk'); } catch { strands = null; }
 
@@ -78,6 +79,7 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' });
     const pathname = req.url.split('?')[0];
     if (legacyHtmlAssets[pathname] && !allowLegacyAlias(req)) { res.writeHead(429, { 'Cache-Control': 'no-store', 'Retry-After': '60' }); return res.end('Too many legacy URL requests. Please try again in a minute.'); }
+    if (canonicalHtmlRoutes[pathname]) { res.writeHead(301, { Location: `${canonicalHtmlRoutes[pathname]}${req.url.slice(pathname.length)}`, 'Cache-Control': 'public, max-age=86400' }); return res.end(); }
     const requested = normalize(pathname).replace(/^[/\\]+/, '');
     const asset = htmlRoutes[pathname] || legacyHtmlAssets[pathname] || requested;
     if (requested.includes('..')) return send(res, 403, { error: 'Forbidden.' });
