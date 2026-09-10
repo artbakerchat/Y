@@ -36,9 +36,14 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/api/health') return send(res, 200, { ok: true, region, model: modelId });
     if (req.method === 'POST' && req.url === '/api/ask') { const { message } = await body(req); if (typeof message !== 'string' || !message.trim()) return send(res, 400, { error: 'Message is required.' }); if (message.length > 4000) return send(res, 413, { error: 'Message is too long.' }); return send(res, 200, await ask(message.trim())); }
     if (req.method !== 'GET') return send(res, 405, { error: 'Method not allowed.' });
-    const requested = req.url === '/' ? 'index.html' : normalize(req.url.split('?')[0]).replace(/^[/\\]+/, '');
+    const pathname = req.url.split('?')[0];
+    const cleanPath = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' }[pathname];
+    if (cleanPath) { res.writeHead(301, { Location: cleanPath }); return res.end(); }
+    const requestedPath = pathname === '/' ? '/index.html' : pathname;
+    const requested = normalize(requestedPath).replace(/^[/\\]+/, '');
+    const asset = extname(requested) ? requested : `${requested}.html`;
     if (requested.includes('..')) return send(res, 403, { error: 'Forbidden.' });
-    const file = await readFile(join(root, requested)); const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' }; send(res, 200, file, types[extname(requested)] || 'application/octet-stream');
+    const file = await readFile(join(root, asset)); const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8' }; send(res, 200, file, types[extname(asset)] || 'application/octet-stream');
   } catch (error) { console.error(error); send(res, error.code === 'ENOENT' ? 404 : 500, { error: error.code === 'ENOENT' ? 'Not found.' : 'Runtime error. Check the server terminal.' }); }
 });
 server.listen(port, () => console.log(`Forge listening at http://localhost:${port}`));

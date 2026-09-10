@@ -82,6 +82,8 @@ async function askBedrock(message, env) {
 async function serveAsset(request, env) {
   const url = new URL(request.url);
   let pathname = url.pathname === '/' ? '/index.html' : url.pathname;
+  const cleanPath = { '/index.html': '/', '/guide.html': '/guide', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing' }[pathname];
+  if (cleanPath) return Response.redirect(new URL(cleanPath, url), 301);
   if (pathname !== '/' && !pathname.includes('.')) pathname = `${pathname.replace(/\/+$/, '')}.html`;
   if (!/^\/[a-zA-Z0-9._/-]+$/.test(pathname) || pathname.includes('..')) return new Response('Not found.', { status: 404 });
   const key = pathname.slice(1);

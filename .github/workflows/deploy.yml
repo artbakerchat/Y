@@ -28,6 +28,7 @@ jobs:
         run: |
           npx --yes wrangler@4.129.0 r2 object put larboard-assets/index.html --file index.html --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote
           npx --yes wrangler@4.129.0 r2 object put larboard-assets/prompt.html --file prompt.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
+          npx --yes wrangler@4.129.0 r2 object put larboard-assets/guide.html --file guide.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
           npx --yes wrangler@4.129.0 r2 object put larboard-assets/pinball.html --file pinball.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
           npx --yes wrangler@4.129.0 r2 object put larboard-assets/pricing.html --file pricing.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
 
