@@ -107,6 +107,10 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 Full API documentation is in [`docs/API.md`](docs/API.md) with curl examples,
 and the machine-readable OpenAPI 3.0 spec is in [`docs/openapi.yaml`](docs/openapi.yaml).
 
+The runtime architecture is visualized in [`architecture.html`](architecture.html), a HyperFrames-compatible HTML composition showing the Worker, AgentCore, Python runtime, storage, and Good Neighbour roles.
+
+The Good Neighbour launch post is drafted in [`docs/good-neighbour-agents.md`](docs/good-neighbour-agents.md).
+
 - `GET /api/health` — reports runtime region and model configuration.
 - `GET /api/state` — loads the browser session state.
 - `POST /api/state` — saves palette and workspace state.
@@ -217,7 +221,7 @@ R2 is checked before the Worker's inline fallback skills. This means the committ
 
 ## Add a customizable Worker agent
 
-The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js). A profile defines the agent's identity and behavior (`systemPrompt`), allowed tools (`toolNames`), relevant skills (`skillNames`), daily request limit, per-tool call limit, and optional specialist agent. The existing `forge` profile is the default, so existing clients do not need to send an agent id.
+The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js), using [`agentcore/profiles.json`](agentcore/profiles.json) as the shared registry. Larboard's Good Neighbour profiles are `forge` (general coordinator), `food-bank` (shift and pantry coordination), `nonprofit-helpdesk` (small-organization operations), `mutual-aid` (requests, offers, and safe follow-up), and `civic-knowledge` (plain-language local services and public processes). The existing `forge` profile is the default, so existing clients do not need to send an agent id.
 
 To add another Worker agent:
 

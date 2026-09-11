@@ -30,7 +30,25 @@ jobs:
       - name: Upload website assets to R2
         run: |
           find skills -type f -name '*.md' -print0 | while IFS= read -r -d '' skill; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$skill" --file "$skill" --content-type 'text/markdown; charset=utf-8' --cache-control 'no-cache' --remote; done
-          for page in index pinball prompt pricing printer presentation; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$page.html" --file "$page.html" --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote; done
+          for page in index pinball prompt pricing printer presentation architecture; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$page.html" --file "$page.html" --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote; done
+
+      - name: Configure AgentCore Worker secrets
+        env:
+          AGENTCORE_RUNTIME_ARN: ${{ secrets.AGENTCORE_RUNTIME_ARN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$AGENTCORE_RUNTIME_ARN" || { echo "Missing AGENTCORE_RUNTIME_ARN GitHub secret" >&2; exit 1; }
+          test -n "$AWS_ACCESS_KEY_ID" || { echo "Missing AWS_ACCESS_KEY_ID GitHub secret" >&2; exit 1; }
+          test -n "$AWS_SECRET_ACCESS_KEY" || { echo "Missing AWS_SECRET_ACCESS_KEY GitHub secret" >&2; exit 1; }
+          printf '%s' "$AGENTCORE_RUNTIME_ARN" | npx --yes wrangler@4.129.0 secret put AGENTCORE_RUNTIME_ARN
+          printf '%s' "$AWS_ACCESS_KEY_ID" | npx --yes wrangler@4.129.0 secret put AWS_ACCESS_KEY_ID
+          printf '%s' "$AWS_SECRET_ACCESS_KEY" | npx --yes wrangler@4.129.0 secret put AWS_SECRET_ACCESS_KEY
+          if [ -n "$AWS_SESSION_TOKEN" ]; then
+            printf '%s' "$AWS_SESSION_TOKEN" | npx --yes wrangler@4.129.0 secret put AWS_SESSION_TOKEN
+          fi
 
       - name: Deploy Worker
         run: npx --yes wrangler@4.129.0 deploy

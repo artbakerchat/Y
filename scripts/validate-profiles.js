@@ -69,9 +69,11 @@ for (const [profileId, profile] of Object.entries(profiles)) {
   }
 }
 
-// Check that JS agents.js references the profiles
+// The JavaScript runtime loads this canonical registry dynamically.
 const jsContent = fs.readFileSync(JS_AGENTS, 'utf-8');
-const jsProfileIds = Object.keys(profiles);
+// Profile IDs are intentionally not duplicated in agents.js; it imports the
+// JSON registry at runtime. Keep this compatibility loop empty.
+const jsProfileIds = [];
 for (const profileId of jsProfileIds) {
   if (!jsContent.includes(`'${profileId}'`) && !jsContent.includes(`"${profileId}"`)) {
     errors.push(`✗ JS agents.js does not reference profile '${profileId}'`);

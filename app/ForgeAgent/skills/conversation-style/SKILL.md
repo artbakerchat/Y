@@ -2,7 +2,7 @@
 name: conversation-style
 description: Help the user rewrite language or tune its tone, voice, formality, or poetic quality.
 keywords: tone, style, voice, rewrite, revise, formal, casual, poetic, concise
-agents: forge
+agents: *
 ---
 
 # Skill: Conversation Style

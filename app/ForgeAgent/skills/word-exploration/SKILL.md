@@ -2,7 +2,7 @@
 name: word-exploration
 description: Explore a word's meaning, origin, connotation, register, relationships, or poetic use in plain language.
 keywords: meaning, definition, connotation, origin, etymology, explore, understand, nuance, poetic
-agents: forge
+agents: *
 ---
 
 # Skill: Word Exploration

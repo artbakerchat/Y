@@ -22,6 +22,8 @@ log = app.logger
 s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 SESSION_TTL_SECONDS = 48 * 60 * 60
+MAX_PROMPT_WORDS = 52
+MAX_RESPONSE_WORDS = 52
 
 # ---------------------------------------------------------------------------
 # State schema versioning
@@ -51,7 +53,44 @@ def _prompt_from(payload: Any) -> str:
     prompt = payload.get("prompt")
     if not isinstance(prompt, str) or not prompt.strip():
         raise ValueError("prompt must be a non-empty string")
-    return prompt.strip()[:4000]
+    prompt = prompt.strip()[:4000]
+    if len(prompt.split()) > MAX_PROMPT_WORDS:
+        raise ValueError(f"prompt must contain no more than {MAX_PROMPT_WORDS} words")
+    return prompt
+
+
+def _limit_output_words(value: str) -> str:
+    """Keep direct AgentCore responses within the public response contract."""
+    words = value.strip().split()
+    if len(words) <= MAX_RESPONSE_WORDS:
+        return value.strip()
+    return " ".join(words[:MAX_RESPONSE_WORDS]) + "…"
+
+
+def _bounded_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Trim streamed text deltas while preserving the AgentCore event shape."""
+    emitted = ""
+    bounded: list[dict[str, Any]] = []
+    for event in events:
+        current = event.get("event", {}) if isinstance(event, dict) else {}
+        delta = current.get("contentBlockDelta", {}).get("delta", {})
+        text = delta.get("text") if isinstance(delta, dict) else None
+        if not isinstance(text, str):
+            bounded.append(event)
+            continue
+        candidate = _limit_output_words(emitted + text)
+        delta_text = candidate[len(emitted):] if candidate.startswith(emitted) else ""
+        emitted = candidate
+        copied = dict(event)
+        copied_event = dict(current)
+        copied_delta_block = dict(copied_event.get("contentBlockDelta", {}))
+        copied_delta = dict(copied_delta_block.get("delta", {}))
+        copied_delta["text"] = delta_text
+        copied_delta_block["delta"] = copied_delta
+        copied_event["contentBlockDelta"] = copied_delta_block
+        copied["event"] = copied_event
+        bounded.append(copied)
+    return bounded
 
 
 def _palette_from(payload: dict[str, Any]) -> list[str]:
@@ -256,10 +295,12 @@ async def invoke(payload: dict[str, Any], context: Any):
         delta = event.get("event", {}).get("contentBlockDelta", {}).get("delta", {})
         if isinstance(delta, dict) and isinstance(delta.get("text"), str):
             answer += delta["text"]
+    answer = _limit_output_words(answer or "(empty response)")
+    events = _bounded_events(events)
     if not native_sessions:
         _save_messages(session_id, messages + [
             {"role": "user", "content": prompt},
-            {"role": "assistant", "content": answer or "(empty response)"},
+            {"role": "assistant", "content": answer},
         ])
     for event in events:
         yield event

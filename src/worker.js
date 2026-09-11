@@ -18,6 +18,7 @@ const HTML_ROUTES = {
   '/pricing': 'pricing.html',
   '/printer': 'printer.html',
   '/presentation': 'presentation.html',
+  '/architecture': 'architecture.html',
 };
 
 const LEGACY_HTML_ASSETS = {
@@ -27,6 +28,7 @@ const LEGACY_HTML_ASSETS = {
   '/pricing.html': 'pricing.html',
   '/printer.html': 'printer.html',
   '/presentation.html': 'presentation.html',
+  '/architecture.html': 'architecture.html',
 };
 
 const CANONICAL_HTML_ROUTES = {
@@ -36,6 +38,7 @@ const CANONICAL_HTML_ROUTES = {
   '/pricing.html': '/pricing',
   '/printer.html': '/printer',
   '/presentation.html': '/presentation',
+  '/architecture.html': '/architecture',
 };
 
 const encoder = new TextEncoder();
@@ -110,6 +113,12 @@ async function sha256Hex(value) {
 
 function requestWordCount(message) {
   return message.trim() ? message.trim().split(/\s+/).length : 0;
+}
+
+function limitOutputWords(value) {
+  const text = typeof value === 'string' ? value.trim() : String(value ?? '').trim();
+  const words = text ? text.split(/\s+/) : [];
+  return words.length > MAX_REQUEST_WORDS ? `${words.slice(0, MAX_REQUEST_WORDS).join(' ')}…` : text;
 }
 
 function hasOversizedWord(message) {
@@ -698,6 +707,7 @@ export default {
         const answer = env.AGENTCORE_RUNTIME_ARN
           ? await invokeAgentCore(message, state.palette, state.messages, env, request, profile.dailyRequestLimit - state.rate.count - 1, profile.id)
           : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile);
+        answer.answer = limitOutputWords(answer.answer);
 
         state.rate.count += 1;
         state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }];

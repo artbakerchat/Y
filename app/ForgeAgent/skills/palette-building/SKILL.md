@@ -2,7 +2,7 @@
 name: palette-building
 description: Help the user grow, refine, organize, or find a theme for a word palette.
 keywords: palette, add words, suggest, grow, expand, refine, theme, feeling, direction
-agents: forge
+agents: *
 ---
 
 # Skill: Palette Building

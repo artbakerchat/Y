@@ -156,7 +156,7 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
             <div className="message">
               <div className="avatar">L</div>
               <div className="bubble">
-                Tell me what's on your mind, and we'll figure out a good next step together.
+                Try a community request, such as “Help organize volunteers for a food-bank shift.” You can also ask for nonprofit help, mutual-aid coordination, or civic information. If Python is enabled, the response will identify the AgentCore runtime.
               </div>
             </div>
           </>
