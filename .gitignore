@@ -47,6 +47,7 @@ agentcore/cdk/node_modules/
 agentcore/cdk/cdk.out/
 __pycache__/
 *.py[cod]
+.venv/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)

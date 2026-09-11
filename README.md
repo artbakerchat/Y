@@ -140,6 +140,8 @@ The production Worker is configured by [`wrangler.jsonc`](wrangler.jsonc). It us
 - a Cloudflare rate limiter for legacy URL redirects;
 - Amazon Bedrock directly for the local Worker loop, or AgentCore when `AGENTCORE_RUNTIME_ARN` is present.
 
+The presentation is available at [`/presentation`](presentation.html) in local and Worker routing. The legacy `/presentation.html` path redirects to the canonical route.
+
 Set the required AWS credentials and runtime variables as encrypted Worker secrets or environment configuration. For AgentCore routing, configure `AGENTCORE_RUNTIME_ARN`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, optional `AWS_SESSION_TOKEN`, and `AWS_REGION`.
 
 The Worker signs both AgentCore and Bedrock requests with AWS Signature Version 4.
@@ -194,10 +196,21 @@ The Python runtime is configured in [`agentcore/agentcore.json`](agentcore/agent
 The runtime uses:
 
 - S3 for palettes when `FORGE_PALETTE_BUCKET` is set;
-- DynamoDB for conversation messages when `FORGE_SESSION_TABLE` is set;
+- S3 session persistence when `FORGE_SESSION_BUCKET=forge-session` is set, using the `forge-sessions/` prefix;
+- DynamoDB for conversation messages when `FORGE_SESSION_BUCKET` is not set and `FORGE_SESSION_TABLE` is configured;
+- the bundled `app/ForgeAgent/skills/` directory when deployed through `agentcore.json`;
 - a 48-hour application-level expiry for both kinds of stored state.
 
 The DynamoDB table must use `session_id` as its partition key. Configure DynamoDB TTL and S3 lifecycle policies separately if automatic physical cleanup is required.
+
+For the current AgentCore deployment, set these runtime environment variables through the AgentCore deployment configuration or console:
+
+```text
+FORGE_SESSION_BUCKET=forge-session
+FORGE_SESSION_PREFIX=forge-sessions/
+```
+
+The runtime's IAM role must allow `s3:HeadBucket`, `s3:ListBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` for the bucket and its `forge-sessions/` objects.
 
 ## Workshop modules
 

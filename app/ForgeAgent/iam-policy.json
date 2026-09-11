@@ -15,6 +15,24 @@
       "Sid": "ForgeSessionStorage",
       "Effect": "Allow",
       "Action": [
+        "s3:ListBucket"
+      ],
+      "Resource": "arn:aws:s3:::forge-session"
+    },
+    {
+      "Sid": "ForgeSessionObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::forge-session/forge-sessions/*"
+    },
+    {
+      "Sid": "ForgeSessionDynamoFallback",
+      "Effect": "Allow",
+      "Action": [
         "dynamodb:GetItem",
         "dynamodb:PutItem",
         "dynamodb:DeleteItem"

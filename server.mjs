@@ -19,9 +19,9 @@ const redirectRateLimit = 20;
 const redirectRateWindowMs = 60 * 1000;
 const redirectRateBuckets = new Map();
 const client = new BedrockRuntimeClient({ region });
-const htmlRoutes = { '/': 'index.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html', '/printer': 'printer.html' };
-const legacyHtmlAssets = { '/index.html': 'index.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html', '/printer.html': 'printer.html' };
-const canonicalHtmlRoutes = { '/index.html': '/', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing', '/printer.html': '/printer' };
+const htmlRoutes = { '/': 'index.html', '/pinball': 'pinball.html', '/prompt': 'prompt.html', '/pricing': 'pricing.html', '/printer': 'printer.html', '/presentation': 'presentation.html' };
+const legacyHtmlAssets = { '/index.html': 'index.html', '/pinball.html': 'pinball.html', '/prompt.html': 'prompt.html', '/pricing.html': 'pricing.html', '/printer.html': 'printer.html', '/presentation.html': 'presentation.html' };
+const canonicalHtmlRoutes = { '/index.html': '/', '/pinball.html': '/pinball', '/prompt.html': '/prompt', '/pricing.html': '/pricing', '/printer.html': '/printer', '/presentation.html': '/presentation' };
 let strands;
 try { strands = await import('@strands-agents/sdk'); } catch { strands = null; }
 

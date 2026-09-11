@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Gap Analysis & Multi-Agent Architecture Presentation</title>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- GSAP Animation Engine -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-card: #121824;
+      --bg-card-border: rgba(255, 255, 255, 0.08);
+      --accent-primary: #00f2fe;
+      --accent-secondary: #4facfe;
+      --accent-purple: #7f53ac;
+      --accent-pink: #647eee;
+      --accent-green: #00e676;
+      --accent-warning: #ffb74d;
+      --accent-danger: #ff5252;
+      --text-main: #f0f6fc;
+      --text-muted: #8b949e;
+      --text-dim: #484f58;
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-code: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font-main);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Presentation Canvas Frame (16:9 aspect ratio target) */
+    #deck-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 1920px;
+      max-height: 1080px;
+      background: radial-gradient(circle at 50% 20%, #172033 0%, #090d16 80%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 20px 80px rgba(0,0,0,0.8);
+      overflow: hidden;
+    }
+
+    /* Header Bar */
+    .deck-header {
+      height: 64px;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--bg-card-border);
+      background: rgba(9, 13, 22, 0.6);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: #000;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .header-title {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* Slide Stage */
+    .slide-stage {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      height: calc(100% - 128px);
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 40px 80px;
+      opacity: 0;
+      visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Typography Utilities */
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--accent-primary);
+      margin-bottom: 16px;
+    }
+
+    .slide-title {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+      margin-bottom: 20px;
+      background: linear-gradient(135deg, #ffffff 40%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-subtitle {
+      font-size: 1.2rem;
+      color: var(--text-muted);
+      max-width: 900px;
+      line-height: 1.6;
+      margin-bottom: 36px;
+    }
+
+    /* Cards Grid Layouts */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      width: 100%;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      transition: all 0.3s ease;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .card:hover {
+      border-color: rgba(0, 242, 254, 0.3);
+      transform: translateY(-4px);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(0, 242, 254, 0.1);
+      color: var(--accent-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .card-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Custom Table for Gap Analysis */
+    .gap-table-container {
+      width: 100%;
+      overflow-x: auto;
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 16px;
+    }
+
+    .gap-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .gap-table th {
+      padding: 16px 20px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+      font-weight: 700;
+      border-bottom: 1px solid var(--bg-card-border);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+    }
+
+    .gap-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--bg-card-border);
+      color: var(--text-muted);
+      vertical-align: middle;
+    }
+
+    .gap-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .badge-success {
+      background: rgba(0, 230, 118, 0.15);
+      color: var(--accent-green);
+    }
+
+    .badge-warning {
+      background: rgba(255, 183, 77, 0.15);
+      color: var(--accent-warning);
+    }
+
+    .badge-danger {
+      background: rgba(255, 82, 82, 0.15);
+      color: var(--accent-danger);
+    }
+
+    /* Code Snippet Display */
+    .code-block {
+      background: #0d1117;
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px;
+      padding: 20px;
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      color: #e6edf3;
+      line-height: 1.6;
+      white-space: pre;
+      overflow-x: auto;
+    }
+
+    .code-keyword { color: #ff7b72; }
+    .code-func { color: #d2a8ff; }
+    .code-string { color: #a5d6ff; }
+    .code-comment { color: #8b949e; font-style: italic; }
+
+    /* Footer Navigation & Controls */
+    .deck-footer {
+      height: 64px;
+      padding: 0 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--bg-card-border);
+      background: rgba(9, 13, 22, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 10;
+    }
+
+    .nav-controls {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .btn-nav {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      color: var(--text-main);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-nav:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .slide-counter {
+      font-family: var(--font-code);
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .progress-bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 16.66%;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+      transition: width 0.4s ease;
+    }
+
+    /* Key Metrics / Stat Callouts */
+    .stat-box {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--bg-card-border);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent-primary);
+      margin-bottom: 6px;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    /* Keyboard Hints Overlay */
+    .keyboard-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .key-cap {
+      background: var(--bg-card);
+      border: 1px solid var(--bg-card-border);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: var(--font-code);
+      font-size: 0.75rem;
+      color: var(--text-main);
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow-y: auto;
+        height: auto;
+        min-height: 100vh;
+        align-items: flex-start;
+      }
+
+      #deck-container {
+        width: 100%;
+        min-height: 100vh;
+        height: auto;
+      }
+
+      .deck-header {
+        min-height: 64px;
+        height: auto;
+        padding: 12px 20px;
+        gap: 10px 18px;
+        flex-wrap: wrap;
+      }
+
+      .header-title {
+        order: 3;
+        flex-basis: 100%;
+        font-size: 0.78rem;
+      }
+
+      .keyboard-hint {
+        margin-left: auto;
+      }
+
+      .slide-stage {
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+      }
+
+      .slide {
+        position: relative;
+        display: none;
+        width: 100%;
+        min-height: calc(100vh - 150px);
+        height: auto;
+        padding: 32px 20px 40px;
+      }
+
+      .slide.active {
+        display: flex;
+      }
+
+      .slide-title {
+        font-size: clamp(2rem, 8vw, 2.8rem);
+      }
+
+      .slide-subtitle {
+        font-size: 1rem;
+        margin-bottom: 24px;
+      }
+
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .card {
+        padding: 22px;
+      }
+
+      .code-block {
+        max-width: 100%;
+        font-size: 0.72rem;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+
+      .gap-table-container {
+        max-width: 100%;
+      }
+
+      .gap-table {
+        min-width: 680px;
+      }
+
+      .deck-footer {
+        height: 64px;
+        padding: 0 20px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .brand-logo {
+        font-size: 0.95rem;
+      }
+
+      .brand-badge,
+      .keyboard-hint {
+        display: none;
+      }
+
+      .slide {
+        min-height: calc(100vh - 128px);
+        padding: 26px 16px 32px;
+      }
+
+      .slide-tag {
+        font-size: 0.7rem;
+      }
+
+      .card {
+        padding: 18px;
+      }
+
+      .card-body {
+        font-size: 0.88rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="deck-container">
+    <!-- Header -->
+    <header class="deck-header">
+      <div class="brand-logo">
+        <i class="fa-solid fa-layer-group" style="color: var(--accent-primary);"></i>
+        <span class="brand-badge">HyperFrames</span>
+      </div>
+      <div class="header-title"><a href="/" style="color: inherit; text-decoration: none;">Workspace</a> / Agent Gap Analysis & Multi-Agent Evolution Plan</div>
+      <div class="keyboard-hint">
+        <span class="key-cap">←</span> <span class="key-cap">→</span> Navigate slides
+      </div>
+    </header>
+
+    <!-- Slide Stage -->
+    <main class="slide-stage">
+
+      <!-- SLIDE 1: Title Slide -->
+      <section class="slide active" id="slide-1">
+        <div class="slide-tag"><i class="fa-solid fa-sparkles"></i> Architectural Review & Roadmap</div>
+        <h1 class="slide-title">Agent Gap Analysis &<br>Multi-Agent Evolution</h1>
+        <p class="slide-subtitle">
+          A comprehensive assessment comparing the workshop curriculum in <code>modules/</code> with the current dual-track implementation (Cloudflare Worker JS & Python AgentCore) in <strong>Larboard / Forge</strong>.
+        </p>
+
+        <div class="grid-3" style="margin-top: 20px;">
+          <div class="stat-box">
+            <div class="stat-number">7</div>
+            <div class="stat-label">Curriculum Layers</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number">2</div>
+            <div class="stat-label">Active Runtimes (JS / Py)</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-number" style="color: var(--accent-green);">2</div>
+            <div class="stat-label">Active Agents (JS Track)</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 2: Agent Loop -->
+      <section class="slide" id="slide-2">
+        <div class="slide-tag"><i class="fa-solid fa-arrows-rotate"></i> Module 1 Foundation</div>
+        <h2 class="slide-title">The Agent Loop: Tools Give Reasoning Reach</h2>
+        <p class="slide-subtitle">
+          Agents for Humans starts with a small, inspectable cycle: the model understands a request, selects a tool, receives its result, and keeps reasoning until it can respond.
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-message"></i></div><div class="card-title">1. Input & Context</div></div>
+            <div class="card-body">The user prompt, palette, and session history enter the request.</div>
+          </div>
+          <div class="card" style="border-color: rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.03);">
+            <div class="card-header"><div class="card-icon" style="background: rgba(0, 242, 254, 0.2);"><i class="fa-solid fa-brain"></i></div><div class="card-title">2. Reason & Select</div></div>
+            <div class="card-body">The model chooses whether it needs <code>get_palette</code>, <code>search_palette</code>, or <code>suggest_related_words</code>.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-wrench"></i></div><div class="card-title">3. Execute & Return</div></div>
+            <div class="card-body">A plain Python <code>@tool</code> function runs, its result returns to reasoning, and the loop ends with an answer.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># You write the tools; Strands runs the loop.</span>
+agent = Agent(tools=build_tools(palette), system_prompt=SYSTEM_PROMPT)
+async <span class="code-keyword">for</span> event <span class="code-keyword">in</span> agent.stream_async(prompt):
+    <span class="code-comment"># tool result -> next reasoning cycle -> response</span>
+    yield event
+        </div>
+      </section>
+
+      <!-- SLIDE 3: Hooks -->
+      <section class="slide" id="slide-3">
+        <div class="slide-tag"><i class="fa-solid fa-shield-halved"></i> Module 2 Control Layer</div>
+        <h2 class="slide-title">Hooks Make the Loop Accountable</h2>
+        <p class="slide-subtitle">
+          The Agents for Humans track keeps model reasoning flexible while adding deterministic boundaries around it. A rate limiter resets per request and blocks a tool after three calls.
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-rotate"></i></div><div class="card-title">Before Invocation</div></div>
+            <div class="card-body"><code>RateLimiterHook.reset</code> clears per-tool counts when a new user request enters the loop. Each turn gets a fresh budget.</div>
+          </div>
+          <div class="card" style="border-color: rgba(255, 183, 77, 0.35);">
+            <div class="card-header"><div class="card-icon" style="background: rgba(255, 183, 77, 0.15); color: var(--accent-warning);"><i class="fa-solid fa-ban"></i></div><div class="card-title">Before Tool Call</div></div>
+            <div class="card-body"><code>check</code> counts calls by tool and sets <code>event.cancel_tool</code> when the limit is exceeded. The model receives the reason and must adapt.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># The hook stays separate from tools and prompts.</span>
+agent = Agent(
+    tools=build_tools(palette),
+    hooks=[RateLimiterHook(max_calls=3)],
+)
+        </div>
+      </section>
+
+      <!-- SLIDE 4: Skills -->
+      <section class="slide" id="slide-4">
+        <div class="slide-tag"><i class="fa-solid fa-book-open"></i> Module 3 Knowledge Layer</div>
+        <h2 class="slide-title">Skills Teach the Agent How to Work</h2>
+        <p class="slide-subtitle">
+          Agents for Humans keeps workflow knowledge in focused <code>skills/&lt;name&gt;/SKILL.md</code> procedures. The agent sees skill descriptions first, then loads the relevant procedure on demand instead of carrying every workflow in its system prompt.
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-feather-pointed"></i></div><div class="card-title">Conversation Style</div></div>
+            <div class="card-body">Tone, voice, and rewrite requests. Preserves intent, uses <code>search_palette</code> when useful, and keeps revisions focused.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-palette"></i></div><div class="card-title">Palette Building</div></div>
+            <div class="card-body">Theme and word-palette growth. Uses <code>get_palette</code> and <code>suggest_related_words</code> without claiming unconfirmed changes.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-magnifying-glass"></i></div><div class="card-title">Word Exploration</div></div>
+            <div class="card-body">Meaning, origin, connotation, and poetic use. Uses <code>consult_word_specialist</code> and separates facts from interpretation.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># Progressive disclosure: skills suggest; tools act.</span>
+skills_plugin = AgentSkills(skills=[<span class="code-string">"./skills"</span>])
+agent = Agent(plugins=[skills_plugin], tools=build_tools(palette))
+        </div>
+      </section>
+
+      <!-- SLIDE 5: Session Managers -->
+      <section class="slide" id="slide-5">
+        <div class="slide-tag"><i class="fa-solid fa-clock-rotate-left"></i> Module 4 Memory Layer</div>
+        <h2 class="slide-title">Persistence and Context Are Different Jobs</h2>
+        <p class="slide-subtitle">
+          Agents for Humans now separates durable session state from the context sent to the model. Native S3 sessions survive restarts, while a sliding window keeps each request bounded.
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div><div class="card-title">Session Manager</div></div>
+            <div class="card-body"><code>S3SessionManager</code> uses the same <code>session_id</code> to restore conversation state across fresh Agent instances. Set <code>FORGE_SESSION_BUCKET</code> to enable it.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-scissors"></i></div><div class="card-title">Conversation Manager</div></div>
+            <div class="card-body"><code>SlidingWindowConversationManager(window_size=20)</code> limits what enters model context. Persistence keeps history; context management keeps requests practical.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># Same session ID: new agent, restored conversation.</span>
+session_manager = S3SessionManager(session_id=session_id, bucket=bucket)
+agent = Agent(
+    session_manager=session_manager,
+    conversation_manager=SlidingWindowConversationManager(window_size=20),
+)
+        </div>
+      </section>
+
+      <!-- SLIDE 6: Deployment -->
+      <section class="slide" id="slide-6">
+        <div class="slide-tag"><i class="fa-solid fa-cloud-arrow-up"></i> Module 5 Delivery Layer</div>
+        <h2 class="slide-title">From Local Agent to Managed Runtime</h2>
+        <p class="slide-subtitle">
+          Agents for Humans keeps the agent code intact and adds one production boundary: <code>BedrockAgentCoreApp</code> receives the request, while AgentCore packages, hosts, observes, and scales the runtime.
+        </p>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-box-open"></i></div><div class="card-title">1. Package</div></div>
+            <div class="card-body"><code>agentcore deploy</code> builds from <code>app/ForgeAgent/pyproject.toml</code> and includes the bundled tools, hooks, skills, and entrypoint.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-server"></i></div><div class="card-title">2. Host</div></div>
+            <div class="card-body">The managed AgentCore Runtime invokes <code>@app.entrypoint</code> with a payload and context, without application servers to operate.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-chart-line"></i></div><div class="card-title">3. Observe</div></div>
+            <div class="card-body">CloudWatch receives runtime logs and telemetry. Invoke with a 33+ character session ID to test restored context.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># Deployment path</span>
+agentcore deploy
+agentcore invoke --session-id customer-1001-session-refund-000001 <span class="code-string">"Continue our conversation."</span>
+
+<span class="code-comment"># Runtime session storage</span>
+FORGE_SESSION_BUCKET=forge-session
+FORGE_SESSION_PREFIX=forge-sessions/
+        </div>
+      </section>
+
+      <!-- SLIDE 7: Executive Overview & Dual Track -->
+      <section class="slide" id="slide-7">
+        <div class="slide-tag"><i class="fa-solid fa-compass"></i> Domain Shift & Dual Runtime</div>
+        <h2 class="slide-title">Architecture Overview</h2>
+        <p class="slide-subtitle">
+          The codebase adapts the 7-layer agentic patterns from a generic workshop into a custom Word-Craft AI Workspace across two distinct execution tracks.
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(79, 172, 254, 0.15); color: var(--accent-secondary);">
+                <i class="fa-fab fa-js"></i>
+              </div>
+              <div class="card-title">JavaScript Worker Track</div>
+            </div>
+            <div class="card-body">
+              Located in <code>src/worker.js</code>. Production-ready Cloudflare Worker with AWS Bedrock Converse API integration. Implements <strong>Modules 1–6</strong> (Tools, Hooks, Skills, Session history, Steering, and Multi-Agent delegation).
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(127, 83, 172, 0.15); color: var(--accent-purple);">
+                <i class="fa-fab fa-python"></i>
+              </div>
+              <div class="card-title">Python AgentCore Track</div>
+            </div>
+            <div class="card-body">
+              Located in <code>app/ForgeAgent/main.py</code>. Deployed via AWS Bedrock AgentCore. Now implements the Module 1–3 foundation: palette tools, the Strands agent loop, rate limiting, and on-demand Markdown skills.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 8: Gap Analysis Matrix -->
+      <section class="slide" id="slide-8">
+        <div class="slide-tag"><i class="fa-solid fa-list-check"></i> 7-Layer Comparison</div>
+        <h2 class="slide-title">Curriculum vs. Codebase Gap Matrix</h2>
+        
+        <div class="gap-table-container">
+          <table class="gap-table">
+            <thead>
+              <tr>
+                <th>Module Layer</th>
+                <th>Curriculum Concept</th>
+                <th>JS Worker (`src/worker.js`)</th>
+                <th>Python AgentCore (`app/ForgeAgent/`)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Loop & Tools</strong></td>
+                <td>@tool functions + agent loop</td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Complete</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Palette Tools + Loop</span></td>
+              </tr>
+              <tr>
+                <td><strong>2. Hooks</strong></td>
+                <td>Per-tool rate limiting</td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Complete</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> RateLimiterHook</span></td>
+              </tr>
+              <tr>
+                <td><strong>3. Skills</strong></td>
+                <td>Markdown procedure injection</td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> R2 / Inline Skills</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> AgentSkills + Markdown</span></td>
+              </tr>
+              <tr>
+                <td><strong>4. Session & Steering</strong></td>
+                <td>Persistence & Quality Reviewer</td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Bedrock Multi-turn + Review</span></td>
+                <td><span class="badge-status badge-warning"><i class="fa-solid fa-triangle-exclamation"></i> S3 Session + Window; Steering Pending</span></td>
+              </tr>
+              <tr>
+                <td><strong>5. Multi-Agent</strong></td>
+                <td>Orchestrator + Sub-agents</td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Word Specialist Agent</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Tech Specialist Agent</span></td>
+              </tr>
+              <tr>
+                <td><strong>6. Evals</strong></td>
+                <td>Trajectory & LLM judge scoring</td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Contract Evals</span></td>
+                <td><span class="badge-status badge-warning"><i class="fa-solid fa-triangle-exclamation"></i> Offline Contracts; LLM Judge Pending</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- SLIDE 9: Multi-Agent Delegation -->
+      <section class="slide" id="slide-9">
+        <div class="slide-tag"><i class="fa-solid fa-network-wired"></i> Current State</div>
+        <h2 class="slide-title">Specialists as Tools</h2>
+        <p class="slide-subtitle">
+          Module 6 extends Agents for Humans with the agents-as-tools pattern: Forge remains the orchestrator, while a focused technical specialist handles device problems in an isolated loop.
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fa-solid fa-user-gear"></i></div>
+              <div class="card-title">Orchestrator Agent (Forge)</div>
+            </div>
+            <div class="card-body">
+              Receives user intent, manages session context, handles palette requests directly, and decides when technical expertise is required.
+            </div>
+          </div>
+
+          <div class="card" style="border-color: rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.03);">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(0, 242, 254, 0.2);"><i class="fa-solid fa-brain"></i></div>
+              <div class="card-title">Sub-Agent (Word Specialist)</div>
+            </div>
+            <div class="card-body">
+              Dispatched through <code>tech_support_specialist</code>. Runs a silent nested loop with <code>check_device_compatibility</code> and <code>run_device_diagnostic</code>, then returns findings to Forge.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 10: Multi-Agent Evolution Roadmap -->
+      <section class="slide" id="slide-10">
+        <div class="slide-tag"><i class="fa-solid fa-rocket"></i> Roadmap</div>
+        <h2 class="slide-title">Multi-Agent Expansion Plan</h2>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fa-solid fa-users"></i></div>
+              <div class="card-title">1. Expand JS Registry</div>
+            </div>
+            <div class="card-body">
+              Register additional specialist profiles in <code>src/agents.js</code>:
+              <br><br>
+              • <strong>Etymology Specialist</strong><br>
+              • <strong>Tone & Register Specialist</strong><br>
+              • <strong>Copywriter Specialist</strong>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fa-fab fa-python"></i></div>
+              <div class="card-title">2. Python Parity</div>
+            </div>
+            <div class="card-body">
+              Add focused <code>strands</code> `@tool` specialists in <code>app/ForgeAgent/forge_specialists.py</code> with <code>callback_handler=None</code> for silent sub-agent execution.
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-icon"><i class="fa-solid fa-vial"></i></div>
+              <div class="card-title">3. Run Evals (Module 7)</div>
+            </div>
+            <div class="card-body">
+              Run <code>PYTHONPATH=evals python3 -m unittest discover</code> before deployment to verify output contracts, tool trajectories, and specialist routing.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SLIDE 11: Evaluations -->
+      <section class="slide" id="slide-11">
+        <div class="slide-tag"><i class="fa-solid fa-vial-circle-check"></i> Module 7 Quality Layer</div>
+        <h2 class="slide-title">Make Agent Behavior Measurable</h2>
+        <p class="slide-subtitle">
+          Agents for Humans now has offline contracts for the two questions that matter before shipping: is the response useful, and did the agent follow the intended tool trajectory?
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-message-check"></i></div><div class="card-title">Output Contract</div></div>
+            <div class="card-body"><code>score_output</code> checks required facts and forbidden claims without a model call. Use it for fast local regression checks; add an LLM judge for nuance and tone.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-route"></i></div><div class="card-title">Trajectory Contract</div></div>
+            <div class="card-body"><code>score_trajectory</code> extracts ordered tool calls and verifies workflows such as lookup → order history → refund.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># Fast, repeatable checks before deployment</span>
+PYTHONPATH=evals python3 -m unittest discover -s evals -p <span class="code-string">'test_*.py'</span>
+        </div>
+      </section>
+
+      <!-- SLIDE 12: Conclusion -->
+      <section class="slide" id="slide-12">
+        <div class="slide-tag"><i class="fa-solid fa-circle-check"></i> Next Steps</div>
+        <h2 class="slide-title">Implementation Readiness</h2>
+        <p class="slide-subtitle">
+          The core path is implemented. Two hardening gaps remain before the Python track reaches full curriculum parity: deterministic steering and production-grade LLM evaluation.
+        </p>
+
+        <div class="grid-2" style="margin-bottom: 24px;">
+          <div class="card" style="border-color: rgba(255, 183, 77, 0.4);">
+            <div class="card-header"><div class="card-icon" style="background: rgba(255, 183, 77, 0.15); color: var(--accent-warning);"><i class="fa-solid fa-shield-halved"></i></div><div class="card-title">Remaining: Python Steering</div></div>
+            <div class="card-body">Add a deterministic workflow handler for refund prerequisites and an optional tone guardrail. Hooks currently limit calls but do not enforce business ordering.</div>
+          </div>
+          <div class="card" style="border-color: rgba(255, 183, 77, 0.4);">
+            <div class="card-header"><div class="card-icon" style="background: rgba(255, 183, 77, 0.15); color: var(--accent-warning);"><i class="fa-solid fa-scale-balanced"></i></div><div class="card-title">Remaining: LLM Evals</div></div>
+            <div class="card-body">Keep the offline contracts in CI, then add <code>strands-agents-evals</code> for model-judged quality and live trajectory evaluation.</div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top: 10px;">
+<span class="code-comment"># Example: Python Strands Sub-Agent Delegation (app/ForgeAgent/forge_specialists.py)</span>
+<span class="code-keyword">from</span> strands <span class="code-keyword">import</span> Agent, tool
+
+<span class="code-func">@tool</span>
+<span class="code-keyword">def</span> <span class="code-func">word_specialist</span>(word: str, aspect: str) -> str:
+    <span class="code-string">"""Delegate deep etymology or connotation analysis to the specialist agent."""</span>
+    specialist = Agent(
+        tools=[look_up_word_details, find_related_words_deep],
+        system_prompt=<span class="code-string">"You are a specialized word-craft analyst..."</span>,
+        callback_handler=<span class="code-keyword">None</span>
+    )
+    <span class="code-keyword">return</span> str(specialist(f<span class="code-string">"Analyse '{word}' for aspect '{aspect}'"</span>))
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="deck-footer">
+      <div class="slide-counter">SLIDE <span id="current-slide-num">1</span> OF <span id="total-slide-num">6</span></div>
+      <div class="nav-controls">
+        <button class="btn-nav" id="btn-prev" onclick="prevSlide()"><i class="fa-solid fa-chevron-left"></i></button>
+        <button class="btn-nav" id="btn-next" onclick="nextSlide()"><i class="fa-solid fa-chevron-right"></i></button>
+      </div>
+    </footer>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-container">
+      <div class="progress-bar" id="progress-bar"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 12;
+
+    function updateSlide() {
+      // Toggle slides
+      document.querySelectorAll('.slide').forEach((slide, index) => {
+        if (index + 1 === currentSlide) {
+          slide.classList.add('active');
+          gsap.fromTo(slide.children, 
+            { y: 20, opacity: 0 }, 
+            { y: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: "power2.out" }
+          );
+        } else {
+          slide.classList.remove('active');
+        }
+      });
+
+      // Update counters & progress
+      document.getElementById('current-slide-num').innerText = currentSlide;
+      document.getElementById('total-slide-num').innerText = totalSlides;
+      const progressPercent = (currentSlide / totalSlides) * 100;
+      document.getElementById('progress-bar').style.width = progressPercent + '%';
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateSlide();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateSlide();
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        prevSlide();
+      }
+    });
+
+    // Initialize
+    updateSlide();
+  </script>
+</body>
+</html>

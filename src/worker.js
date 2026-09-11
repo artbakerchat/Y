@@ -1,5 +1,4 @@
 import { buildTools as buildEditableTools } from '../tools/index.js';
-import { buildTools as buildEditableTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
@@ -17,6 +16,7 @@ const HTML_ROUTES = {
   '/prompt': 'prompt.html',
   '/pricing': 'pricing.html',
   '/printer': 'printer.html',
+  '/presentation': 'presentation.html',
 };
 
 const LEGACY_HTML_ASSETS = {
@@ -25,6 +25,7 @@ const LEGACY_HTML_ASSETS = {
   '/prompt.html': 'prompt.html',
   '/pricing.html': 'pricing.html',
   '/printer.html': 'printer.html',
+  '/presentation.html': 'presentation.html',
 };
 
 const CANONICAL_HTML_ROUTES = {
@@ -33,6 +34,7 @@ const CANONICAL_HTML_ROUTES = {
   '/prompt.html': '/prompt',
   '/pricing.html': '/pricing',
   '/printer.html': '/printer',
+  '/presentation.html': '/presentation',
 };
 
 const encoder = new TextEncoder();
