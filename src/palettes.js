@@ -44,7 +44,7 @@ export const PALETTE_TEMPLATES = {
     description: 'Vocabulary for organizing information, serving community members, and coordinating library programs',
     tags: ['library', 'information', 'community-access'],
     words: ['catalog','collection','patron','query','discovery','reference','resource','archive','preserve','curate','organize','access','literacy','community','program','event','outreach','circulation','catalog','metadata','classification','preservation','archive','digital','collection','recommend','reference','research','inquiry','information','literacy','knowledge','learning','exploration'],
-    story: 'Your library palette. Words like "patron," "catalog," and "discovery" help you serve your community better. Grow this vocabulary with your library's unique terms.',
+    story: 'Your library palette. Words like "patron," "catalog," and "discovery" help you serve your community better. Grow this vocabulary with your unique terms.',
     context: { type: 'library', role: 'librarian', scale: 'small-medium' },
   },
 
