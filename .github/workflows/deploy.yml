@@ -24,17 +24,10 @@ jobs:
         with:
           node-version: 22
 
-      - name: Build TypeScript React site
-        run: npm --prefix site install && npm --prefix site run build
-
       - name: Upload website assets to R2
         run: |
           for skill in skills/*.md; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/skills/$(basename "$skill")" --file "$skill" --content-type 'text/markdown; charset=utf-8' --cache-control 'no-cache' --remote; done
-          npx --yes wrangler@4.129.0 r2 object put larboard-assets/index.html --file site/dist/index.html --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote
-          for asset in site/dist/assets/*; do case "$asset" in *.css) content_type='text/css; charset=utf-8' ;; *.js) content_type='text/javascript; charset=utf-8' ;; *) content_type='application/octet-stream' ;; esac; npx --yes wrangler@4.129.0 r2 object put "larboard-assets/assets/$(basename "$asset")" --file "$asset" --content-type "$content_type" --cache-control 'public, max-age=3600' --remote; done
-          npx --yes wrangler@4.129.0 r2 object put larboard-assets/prompt.html --file prompt.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
-          npx --yes wrangler@4.129.0 r2 object put larboard-assets/pinball.html --file pinball.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
-          npx --yes wrangler@4.129.0 r2 object put larboard-assets/pricing.html --file pricing.html --content-type 'text/html; charset=utf-8' --cache-control 'public, max-age=3600' --remote
+          for page in index pinball prompt pricing printer presentation; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$page.html" --file "$page.html" --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote; done
 
       - name: Deploy Worker
         run: npx --yes wrangler@4.129.0 deploy
