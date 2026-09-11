@@ -6,27 +6,40 @@ from strands.hooks import BeforeInvocationEvent, BeforeToolCallEvent, HookProvid
 
 
 class RateLimiterHook(HookProvider):
-    """Cap each tool at a fixed number of calls per agent invocation."""
+    """Cap each tool at a fixed number of calls per agent invocation.
 
-    def __init__(self, max_calls: int = 3, on_event: Callable[[str], None] | None = None):
+    Args:
+        max_calls: Maximum number of times any single tool may be called
+            within one agent invocation.  Must be >= 1.
+        on_event: Optional callback invoked with a human-readable message
+            each time a tool call is counted or blocked.  Useful for
+            structured logging without coupling to a specific logger.
+    """
+
+    def __init__(
+        self,
+        max_calls: int = 3,
+        on_event: Callable[[str], None] | None = None,
+    ) -> None:
         if max_calls < 1:
             raise ValueError("max_calls must be at least 1")
-        self.max_calls = max_calls
+        self.max_calls: int = max_calls
         self.counts: dict[str, int] = {}
-        self.on_event = on_event
+        self.on_event: Callable[[str], None] | None = on_event
 
     def register_hooks(self, registry: HookRegistry) -> None:
+        """Register lifecycle callbacks with the Strands hook registry."""
         registry.add_callback(BeforeInvocationEvent, self.reset)
         registry.add_callback(BeforeToolCallEvent, self.check)
 
-    def reset(self, event: BeforeInvocationEvent) -> None:
+    def reset(self, event: BeforeInvocationEvent) -> None:  # noqa: ARG002
         """Reset per-tool counts when a new request enters the loop."""
         self.counts = {}
         self._emit("rate limiter reset")
 
     def check(self, event: BeforeToolCallEvent) -> None:
         """Cancel a tool call after it exceeds the per-request limit."""
-        name = event.tool_use["name"]
+        name: str = event.tool_use["name"]
         self.counts[name] = self.counts.get(name, 0) + 1
         count = self.counts[name]
         self._emit(f"{name}: call {count}/{self.max_calls}")
@@ -38,5 +51,6 @@ class RateLimiterHook(HookProvider):
             self._emit(f"blocked {name} after exceeding limit")
 
     def _emit(self, message: str) -> None:
+        """Forward a log message to the caller-supplied callback if set."""
         if self.on_event:
             self.on_event(message)

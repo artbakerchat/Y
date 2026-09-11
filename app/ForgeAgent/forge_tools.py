@@ -4,13 +4,22 @@ The functions are intentionally small and deterministic so the model can use
 them to inspect the user's palette without inventing palette state.
 """
 
+from collections.abc import Callable
+
 from strands import tool
 
 from forge_specialists import tech_support_specialist
 
 
-def build_tools(palette: list[str]):
-    """Build the tools for one request with its current palette in scope."""
+def build_tools(palette: list[str]) -> list[Callable[..., str]]:
+    """Build the tools for one request with its current palette in scope.
+
+    Args:
+        palette: The current session palette — a list of up to 52 word strings.
+
+    Returns:
+        A list of Strands-compatible tool callables bound to the supplied palette.
+    """
 
     @tool
     def get_palette() -> str:
@@ -39,7 +48,7 @@ def build_tools(palette: list[str]):
         Args:
             theme: The theme or concept for the suggestions.
         """
-        banks = {
+        banks: dict[str, list[str]] = {
             "nature": ["glacier", "canopy", "driftwood", "mesa", "shoreline"],
             "light": ["prism", "glimmer", "radiance", "flicker", "beacon"],
             "motion": ["cascade", "vortex", "drift", "surge", "current"],

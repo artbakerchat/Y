@@ -23,6 +23,27 @@ s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 SESSION_TTL_SECONDS = 48 * 60 * 60
 
+# ---------------------------------------------------------------------------
+# State schema versioning
+#
+# Bump STATE_SCHEMA_VERSION whenever the DynamoDB/S3 session record shape
+# changes (fields added, renamed, or removed).
+#
+# Migration guide
+# ---------------
+# v1  (current)  Initial versioned schema.  Added schemaVersion field to all
+#               new session records.  Records written without this field are
+#               treated as v0 and loaded without modification — no data loss.
+#
+# When bumping to v2 in the future:
+#   1. Increment STATE_SCHEMA_VERSION.
+#   2. Add a migration block in _load_messages():
+#        if item.get("schemaVersion", 0) < 2:
+#            # back-fill or transform fields here
+#   3. Document the change above.
+# ---------------------------------------------------------------------------
+STATE_SCHEMA_VERSION = 1
+
 
 def _prompt_from(payload: Any) -> str:
     if not isinstance(payload, dict):
@@ -151,6 +172,7 @@ def _save_messages(session_id: str, messages: list[dict[str, str]]) -> None:
     if table:
         table.put_item(Item={
             "session_id": session_id,
+            "schemaVersion": STATE_SCHEMA_VERSION,
             "messages": messages[-20:],
             "updated_at": int(time.time()),
             "expires_at": _expires_at(),

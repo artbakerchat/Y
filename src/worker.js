@@ -44,10 +44,33 @@ const DAILY_REQUEST_LIMIT = 8;
 const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
+
+// ---------------------------------------------------------------------------
+// State schema versioning
+//
+// Bump STATE_SCHEMA_VERSION whenever a field is added, renamed, or removed.
+// cleanState() must handle missing/unknown fields from older versions so that
+// sessions stored before a deployment continue to work without a hard reset.
+//
+// Migration guide
+// ---------------
+// v1  (current)  Initial versioned schema.  Added schemaVersion field.
+//               All sessions written before this version are treated as v0
+//               and normalised by cleanState() as usual — no data loss.
+//
+// When bumping to v2 in the future:
+//   1. Increment STATE_SCHEMA_VERSION.
+//   2. Add a migration block inside cleanState() guarded by:
+//        if (!value.schemaVersion || value.schemaVersion < 2) { … }
+//   3. Document the change above.
+// ---------------------------------------------------------------------------
+const STATE_SCHEMA_VERSION = 1;
+
 const DEFAULT_PALETTE = ['anchor','pinnacle','summit','twilight','static','ocean','wander','spark','gravity','money','book','Glimmer','compass','voyage','solitude','prism','nectar','blossom','fossil','zenith','vortex','mirage','starlight','ember','cyclone','glacier','radiance','labyrinth','aurora','thistle','apple','Nebula','crisp','whisper','avalanche','horizon','velvet','mosaic','thunder','marble','cascade','echo','lantern','silver','standard','puzzle','orbit','shadow','flicker','autumn','rhythm','canvas'];
 const emptyState = (paletteId = 'default', paletteStory = '') => {
   const template = getPaletteTemplate(paletteId);
   return {
+    schemaVersion: STATE_SCHEMA_VERSION,
     agentId: 'forge',
     paletteId,
     paletteStory: paletteStory || template.story,
@@ -60,7 +83,7 @@ const emptyState = (paletteId = 'default', paletteStory = '') => {
     expiresAt: Date.now() + STATE_TTL_MS,
   };
 };
-function cleanState(value) { return { agentId: typeof value?.agentId === 'string' ? value.agentId : 'forge', paletteId: typeof value?.paletteId === 'string' ? value.paletteId : 'default', paletteStory: typeof value?.paletteStory === 'string' ? value.paletteStory : getPaletteTemplate(value?.paletteId || 'default').story, palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter((word) => word && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : getPaletteTemplate(value?.paletteId || 'default').words.slice(0, 52), promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string' && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [], messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [], pendingPrompt: typeof value?.pendingPrompt === 'string' ? value.pendingPrompt.slice(0, 4000) : '', printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] }, rate: { day: typeof value?.rate?.day === 'string' ? value.rate.day : new Date().toISOString().slice(0, 10), count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0 }, expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS }; }
+function cleanState(value) { return { schemaVersion: STATE_SCHEMA_VERSION, agentId: typeof value?.agentId === 'string' ? value.agentId : 'forge', paletteId: typeof value?.paletteId === 'string' ? value.paletteId : 'default', paletteStory: typeof value?.paletteStory === 'string' ? value.paletteStory : getPaletteTemplate(value?.paletteId || 'default').story, palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter((word) => word && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : getPaletteTemplate(value?.paletteId || 'default').words.slice(0, 52), promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string' && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [], messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [], pendingPrompt: typeof value?.pendingPrompt === 'string' ? value.pendingPrompt.slice(0, 4000) : '', printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] }, rate: { day: typeof value?.rate?.day === 'string' ? value.rate.day : new Date().toISOString().slice(0, 10), count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0 }, expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS }; }
 function sessionIdFrom(request) { const match = request.headers.get('cookie')?.match(/(?:^|;\s*)larboard_session=([^;]+)/); return match?.[1] || crypto.randomUUID(); }
 async function loadState(bucket, sessionId, detectionHints = {}) { const key = `sessions/${sessionId}.json`; const object = await bucket.get(key); if (!object) { const paletteId = detectPaletteContext(detectionHints.message || '', detectionHints.params || {}); const template = getPaletteTemplate(paletteId); return emptyState(paletteId, template.story); } try { const raw = await object.json(); if (!Number.isFinite(Number(raw.expiresAt)) || Number(raw.expiresAt) <= Date.now()) { await bucket.delete(key); const paletteId = detectPaletteContext(detectionHints.message || '', detectionHints.params || {}); const template = getPaletteTemplate(paletteId); return emptyState(paletteId, template.story); } return cleanState(raw); } catch { const paletteId = detectPaletteContext(detectionHints.message || '', detectionHints.params || {}); const template = getPaletteTemplate(paletteId); return emptyState(paletteId, template.story); } }
 async function saveState(bucket, sessionId, state) { const clean = cleanState(state); await bucket.put(`sessions/${sessionId}.json`, JSON.stringify({ ...clean, expiresAt: Number(state.expiresAt) || clean.expiresAt }), { httpMetadata: { contentType: 'application/json' } }); }

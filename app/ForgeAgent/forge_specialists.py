@@ -10,8 +10,11 @@ def check_device_compatibility(device: str, issue: str) -> str:
     Args:
         device: The device name or model.
         issue: A description of the compatibility problem.
+
+    Returns:
+        A human-readable fix or fallback recommendation.
     """
-    known_issues = {
+    known_issues: dict[str, str] = {
         "wireless headphones": "Reset the headphones by holding power for 10 seconds, then pair again.",
         "usb-c hub": "Confirm the laptop supports USB-C alternate mode for the requested display output.",
         "mechanical keyboard": "Update firmware from v2.1 to v2.3 to address key ghosting.",
@@ -29,6 +32,9 @@ def run_device_diagnostic(device: str) -> str:
 
     Args:
         device: The device name or model to diagnose.
+
+    Returns:
+        A formatted diagnostic report with firmware, connection, and battery status.
     """
     return (
         f"Diagnostic results for {device}:\n"
@@ -48,6 +54,9 @@ def tech_support_specialist(issue_description: str) -> str:
 
     Args:
         issue_description: The device problem and observed symptoms.
+
+    Returns:
+        A structured diagnosis and recommended resolution from the specialist agent.
     """
     specialist = Agent(
         tools=[check_device_compatibility, run_device_diagnostic],
