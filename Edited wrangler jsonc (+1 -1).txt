@@ -1,8 +1,0 @@
-Edited wrangler.jsonc (+1 -1)
-    17      "BEDROCK_MODEL_ID": "ca.amazon.nova-lite-v1:0",
-    18 -    "MODEL_REQUESTS_ENABLED": "false"
-    18 +    "MODEL_REQUESTS_ENABLED": "true"
-
-git add wrangler.jsonc
-git commit -m "Enable model requests"
-git push origin main
