@@ -13,6 +13,7 @@ from strands.session.s3_session_manager import S3SessionManager
 
 from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
+from forge_steering import PaletteReadyHandler, ToneGuardrailHandler
 
 
 app = BedrockAgentCoreApp()
@@ -168,7 +169,7 @@ def _agent_for_palette(
     return Agent(
         tools=build_tools(palette),
         hooks=[RateLimiterHook(max_calls=max_tool_calls, on_event=lambda message: log.info("Hook: %s", message))],
-        plugins=[skills_plugin],
+        plugins=[skills_plugin, PaletteReadyHandler(), ToneGuardrailHandler()],
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
         system_prompt=(
