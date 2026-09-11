@@ -149,14 +149,34 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
           ))
         ) : (
           <>
-            <div className="message">
+            <div className="message assistant">
               <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
               <div className="bubble">Hey — glad you're here. What are you working on?</div>
             </div>
-            <div className="message">
+            <div className="message assistant">
               <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
               <div className="bubble">
                 Try a community request, such as “Help organize volunteers for a food-bank shift.” You can also ask for nonprofit help, mutual-aid coordination, or civic information. If Python is enabled, the response will identify the AgentCore runtime.
+              </div>
+            </div>
+            <div className="message user">
+              <div className="avatar role-label" aria-label="You" title="You">You</div>
+              <div className="bubble">How many apples can I get from the food bank</div>
+            </div>
+            <div className="message assistant">
+              <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
+              <div className="bubble">
+                Would you like to confirm the default serving plan of one apple per person, or do you have any specific needs or preferences for the food bank distribution?
+              </div>
+            </div>
+            <div className="message user">
+              <div className="avatar role-label" aria-label="You" title="You">You</div>
+              <div className="bubble">3 people</div>
+            </div>
+            <div className="message assistant">
+              <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
+              <div className="bubble">
+                You can get three apples from the food bank, with one apple per person. Is there anything else you would like to know or plan regarding the food bank distribution?
               </div>
             </div>
           </>
