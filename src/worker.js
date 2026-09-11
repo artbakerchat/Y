@@ -268,16 +268,9 @@ function legacyBuildTools(palette) {
 
 // ---------------------------------------------------------------------------
 // MODULE 3: SKILLS
-// Markdown procedures stored in R2 under skills/<name>.md.
-// The skill index maps keywords to skill names; the loader falls back to
-// inline text when R2 is unavailable so the mechanism always works.
+// Markdown procedures are discovered from R2 under skills/<name>.md.
+// Inline skills are retained for local development when R2 is unavailable.
 // ---------------------------------------------------------------------------
-const SKILL_INDEX = [
-  { name: 'palette-building',   keywords: ['add', 'suggest', 'grow', 'expand', 'palette', 'word', 'theme'] },
-  { name: 'word-exploration',   keywords: ['meaning', 'connotation', 'origin', 'etymology', 'explore', 'understand'] },
-  { name: 'conversation-style', keywords: ['tone', 'style', 'voice', 'rewrite', 'formal', 'casual', 'poetic'] },
-];
-
 const INLINE_SKILLS = {
   'palette-building': [
     '# Skill: Palette Building',
@@ -305,22 +298,79 @@ const INLINE_SKILLS = {
   ].join('\n'),
 };
 
-async function loadSkill(name, env) {
-  if (env.ASSETS) {
-    try {
-      const obj = await env.ASSETS.get(`skills/${name}.md`);
-      if (obj) return obj.text();
-    } catch { /* fall through to inline */ }
+const INLINE_SKILL_METADATA = {
+  'palette-building': ['add', 'suggest', 'grow', 'expand', 'palette', 'word', 'theme'],
+  'word-exploration': ['meaning', 'connotation', 'origin', 'etymology', 'explore', 'understand'],
+  'conversation-style': ['tone', 'style', 'voice', 'rewrite', 'formal', 'casual', 'poetic'],
+};
+
+let remoteSkillCatalog;
+
+function parseSkillDocument(key, source) {
+  const fallbackName = key.split('/').pop().replace(/\.md$/i, '');
+  const match = source.match(/^---\s*\n([\s\S]*?)\n---\s*\n?/);
+  const metadata = {};
+  if (match) {
+    for (const line of match[1].split('\n')) {
+      const separator = line.indexOf(':');
+      if (separator < 1) continue;
+      const name = line.slice(0, separator).trim();
+      const value = line.slice(separator + 1).trim();
+      if (value.startsWith('[') && value.endsWith(']')) metadata[name] = value.slice(1, -1).split(',').map((item) => item.trim()).filter(Boolean);
+      else if (value) metadata[name] = value.split(',').map((item) => item.trim()).filter(Boolean);
+    }
   }
-  return INLINE_SKILLS[name] || null;
+  return {
+    name: metadata.name?.[0] || fallbackName,
+    description: metadata.description?.join(', ') || '',
+    keywords: metadata.keywords || INLINE_SKILL_METADATA[fallbackName] || [],
+    agents: metadata.agents || '*',
+    text: match ? source.slice(match[0].length).trim() : source.trim(),
+  };
+}
+
+async function loadSkillCatalog(env) {
+  if (!env.ASSETS) {
+    return Object.entries(INLINE_SKILLS).map(([name, text]) => ({
+      name,
+      keywords: INLINE_SKILL_METADATA[name] || [],
+      agents: '*',
+      text,
+    }));
+  }
+  if (!remoteSkillCatalog) {
+    remoteSkillCatalog = (async () => {
+      try {
+        const listed = await env.ASSETS.list({ prefix: 'skills/' });
+        const skills = await Promise.all(listed.objects
+          .filter((object) => object.key.endsWith('.md'))
+          .map(async (object) => {
+            const source = await (await env.ASSETS.get(object.key))?.text();
+            return source ? parseSkillDocument(object.key, source) : null;
+          }));
+        return skills.filter(Boolean);
+      } catch {
+        return [];
+      }
+    })();
+  }
+  const skills = await remoteSkillCatalog;
+  return skills.length ? skills : Object.entries(INLINE_SKILLS).map(([name, text]) => ({
+    name,
+    keywords: INLINE_SKILL_METADATA[name] || [],
+    agents: '*',
+    text,
+  }));
 }
 
 async function resolveSkill(message, env, profile) {
   const lower = message.toLowerCase();
-  for (const skill of SKILL_INDEX.filter(({ name }) => profile.skillNames.includes(name))) {
-    if (skill.keywords.some((kw) => lower.includes(kw))) {
-      const text = await loadSkill(skill.name, env);
-      if (text) return text;
+  const skills = await loadSkillCatalog(env);
+  for (const skill of skills) {
+    const allowed = profile.skillNames === '*' || profile.skillNames.includes(skill.name);
+    const assigned = skill.agents === '*' || skill.agents.includes('*') || skill.agents.includes(profile.id);
+    if (allowed && assigned && skill.keywords.some((kw) => lower.includes(kw))) {
+      return skill.text;
     }
   }
   return null;

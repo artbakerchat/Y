@@ -85,11 +85,28 @@ The Worker signs both AgentCore and Bedrock requests with AWS Signature Version 
 
 ## Edit skills
 
-The editable skill source files live in [`skills/`](skills/). Update the Markdown files locally, commit them, and push to `main`. The GitHub Actions workflow uploads every `skills/*.md` file to the `skills/` prefix in R2 before deploying the Worker.
+The editable skill source files live in [`skills/`](skills/). Add a Markdown file with frontmatter, commit it, and push to `main`. The GitHub Actions workflow uploads every `skills/*.md` file to the `skills/` prefix in R2 before deploying the Worker.
 
-Skill content controls the procedure given to the agent. Skill activation is still controlled by `SKILL_INDEX` in [`src/worker.js`](src/worker.js), so add or change keywords there when a skill should activate for different prompts.
+```md
+---
+name: research-workflow
+description: A procedure for investigating questions carefully.
+keywords: research, investigate, sources, evidence
+agents: researcher
+---
 
-R2 is checked before the Worker's inline fallback skills. This means the committed Markdown files become the production source of truth after the deployment workflow runs.
+# Research Workflow
+
+1. Clarify the question.
+2. Search the approved sources.
+3. Separate evidence from interpretation.
+4. Identify uncertainty.
+5. Summarize the findings.
+```
+
+The Worker discovers Markdown skills from R2, matches the request against `keywords`, and loads the selected procedure. `agents: *` makes a skill available to every profile; `agents: researcher` restricts it to one profile. The Forge profile uses `skillNames: '*'`, so adding a valid Markdown skill does not require a JavaScript edit or a change to `SKILL_INDEX`.
+
+R2 is checked before the Worker's inline fallback skills. This means the committed Markdown files become the production source of truth after the deployment workflow runs. Markdown skills can change procedures and response behavior, but they cannot create new tools or enforce security-critical rules; those still belong in [`tools/`](tools/) and Worker steering code.
 
 ## Add a customizable Worker agent
 

@@ -1,3 +1,10 @@
+---
+name: word-exploration
+description: Explore a word's meaning, origin, connotation, or poetic use.
+keywords: meaning, connotation, origin, etymology, explore, understand
+agents: forge
+---
+
 # Skill: Word Exploration
 
 Use this procedure when the user wants to explore a word's meaning, origin, connotation, or poetic use.

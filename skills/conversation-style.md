@@ -1,3 +1,10 @@
+---
+name: conversation-style
+description: Rewrite language and adjust its tone or voice.
+keywords: tone, style, voice, rewrite, formal, casual, poetic
+agents: forge
+---
+
 # Skill: Conversation Style
 
 Use this procedure when the user wants to rewrite, refine, or adjust the tone of language.

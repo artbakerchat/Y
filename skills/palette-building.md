@@ -1,3 +1,10 @@
+---
+name: palette-building
+description: Grow, refine, or find a theme for a word palette.
+keywords: add, suggest, grow, expand, palette, word, theme
+agents: forge
+---
+
 # Skill: Palette Building
 
 Use this procedure when the user wants to grow, refine, or find a theme for their word palette.
