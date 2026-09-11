@@ -1,7 +1,7 @@
 import { createToolController } from './tool-controls.js';
 import { buildTools as buildEditableTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
-import { getAgentProfile, listAgentProfiles } from './agents.js';
+import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
 
 const CONTENT_TYPES = {
@@ -684,14 +684,16 @@ export default {
       if (url.pathname === '/api/state' && request.method === 'POST') { const current = await loadState(env.ASSETS, sessionId); const next = cleanState({ ...current, ...(await request.json()) }); await saveState(env.ASSETS, sessionId, next); return stateResponse(next, sessionId); }
       if (url.pathname === '/api/ask' && request.method === 'POST') {
         const body = await request.json();
-        const profile = getAgentProfile(body?.agent || request.headers.get('x-agent-id') || 'forge');
-        if (!profile) return json({ error: 'Unknown agent.' }, 400);
+        const explicitAgentId = body?.agent || request.headers.get('x-agent-id');
         const message = typeof body?.prompt === 'string' ? body.prompt.trim() : typeof body?.message === 'string' ? body.message.trim() : '';
         if (!message) return json({ error: 'Message is required.' }, 400);
         if (message.length > 4000) return json({ error: 'Message is too long.' }, 413);
         if (requestWordCount(message) > MAX_REQUEST_WORDS) return json({ error: `Requests are limited to ${MAX_REQUEST_WORDS} words.` }, 413);
         if (hasOversizedWord(message)) return json({ error: `Each word is limited to ${MAX_WORD_CHARACTERS} characters.` }, 413);
         const state = await loadState(env.ASSETS, sessionId);
+        const agentId = explicitAgentId || inferAgentId(message, state.agentId);
+        const profile = getAgentProfile(agentId);
+        if (!profile) return json({ error: 'Unknown agent.' }, 400);
         if (state.agentId !== profile.id) {
           state.agentId = profile.id;
           state.messages = [];
@@ -708,6 +710,7 @@ export default {
           ? await invokeAgentCore(message, state.palette, state.messages, env, request, profile.dailyRequestLimit - state.rate.count - 1, profile.id)
           : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile);
         answer.answer = limitOutputWords(answer.answer);
+        answer.agentId = profile.id;
 
         state.rate.count += 1;
         state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }];
