@@ -944,6 +944,70 @@ PYTHONPATH=evals python3 -m unittest discover -s evals -p <span class="code-stri
         </div>
       </section>
 
+      <!-- SLIDE 13: Peer Agent Fleet — agy / kiro / codex -->
+      <section class="slide" id="slide-13">
+        <div class="slide-tag"><i class="fa-solid fa-globe"></i> Global Peer Fleet</div>
+        <h2 class="slide-title">Three Sovereign Agents on larboard.ca</h2>
+        <p class="slide-subtitle">
+          Each EC2 machine hosts an independent specialist agent. No single orchestrator — each peer owns its region, its model provider, and its domain.
+        </p>
+
+        <div class="grid-3">
+          <!-- agy -->
+          <div class="card" style="border-color: rgba(66, 133, 244, 0.4); background: rgba(66, 133, 244, 0.04);">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(66, 133, 244, 0.15); color: #4285f4;">
+                <i class="fa-solid fa-a"></i>
+              </div>
+              <div class="card-title">agy — Oregon</div>
+            </div>
+            <div class="card-body">
+              <strong>us-west-2</strong> · Google Antigravity<br><br>
+              Powered by Gemini. Specialises in code generation, multi-agent orchestration patterns, and GCP-native tooling.<br><br>
+              <code>skills/agy/</code> · <code>tools/gcp_tools.py</code>
+            </div>
+          </div>
+
+          <!-- kiro -->
+          <div class="card" style="border-color: rgba(255, 153, 0, 0.4); background: rgba(255, 153, 0, 0.04);">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(255, 153, 0, 0.15); color: #ff9900;">
+                <i class="fa-solid fa-k"></i>
+              </div>
+              <div class="card-title">kiro — Montreal</div>
+            </div>
+            <div class="card-body">
+              <strong>ca-central-1</strong> · AWS Kiro<br><br>
+              Powered by Bedrock. Specialises in AWS-native workflows, session persistence via S3, and AgentCore deployment.<br><br>
+              <code>skills/kiro/</code> · <code>tools/aws_tools.py</code>
+            </div>
+          </div>
+
+          <!-- codex -->
+          <div class="card" style="border-color: rgba(16, 163, 127, 0.4); background: rgba(16, 163, 127, 0.04);">
+            <div class="card-header">
+              <div class="card-icon" style="background: rgba(16, 163, 127, 0.15); color: #10a37f;">
+                <i class="fa-solid fa-c"></i>
+              </div>
+              <div class="card-title">codex — Paris</div>
+            </div>
+            <div class="card-body">
+              <strong>eu-west-3</strong> · OpenAI Codex<br><br>
+              Powered by GPT-4o. Specialises in natural-language code synthesis, GDPR-compliant EU data handling, and Responses API streaming.<br><br>
+              <code>skills/codex/</code> · <code>tools/openai_tools.py</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top: 24px;">
+<span class="code-comment"># agents.yaml — peer fleet definition</span>
+agents:
+  agy:   { region: us-west-2,    provider: google,  model: gemini-3.6-flash }
+  kiro:  { region: ca-central-1, provider: aws,     model: bedrock/claude-haiku }
+  codex: { region: eu-west-3,    provider: openai,  model: gpt-5.6-luna }
+        </div>
+      </section>
+
     </main>
 
     <!-- Footer -->
@@ -963,7 +1027,7 @@ PYTHONPATH=evals python3 -m unittest discover -s evals -p <span class="code-stri
 
   <script>
     let currentSlide = 1;
-    const totalSlides = 12;
+    const totalSlides = 13;
 
     function updateSlide() {
       // Toggle slides
