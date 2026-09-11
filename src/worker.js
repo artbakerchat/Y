@@ -575,6 +575,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
   const skill = await resolveSkill(message, env, profile);
   const systemText = [
     `You are ${profile.name}. ${profile.systemPrompt}`,
+    'Think privately and never reveal chain-of-thought, hidden reasoning, internal deliberation, tool calls, or intermediate analysis. Return only the concise final answer intended for the user. Do not label or describe your reasoning process.',
     `This session has a daily limit of ${profile.dailyRequestLimit} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
     `The user's word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
     skill ? `\n\nActive skill - follow these steps:\n${skill}` : '',

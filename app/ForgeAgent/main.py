@@ -241,6 +241,7 @@ def _agent_for_palette(
         session_manager=session_manager,
         system_prompt=(
             f"{system_prompt} "
+            "Think privately and never reveal chain-of-thought, hidden reasoning, internal deliberation, tool calls, or intermediate analysis. Return only the concise final answer intended for the user. "
             f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
             "Use the user's word palette as inspiration when relevant. "
             "Never invent palette entries or present guesses as facts. "

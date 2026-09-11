@@ -49,7 +49,7 @@ function sessionHeaders(sessionId) { return { 'Set-Cookie': `larboard_session=${
 
 async function askWithBedrock(message, palette = []) {
   const paletteContext = palette.length ? ` The user’s current word palette is: ${palette.join(', ')}.` : ' The user’s word palette is empty.';
-  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge, a warm and easygoing conversation partner. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. Use the user’s word palette as inspiration when relevant:${paletteContext} Never invent palette entries or present guesses as facts.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
+  const command = new ConverseCommand({ modelId, system: [{ text: `You are Forge, a warm and easygoing conversation partner. Think privately and never reveal chain-of-thought, hidden reasoning, internal deliberation, tool calls, or intermediate analysis. Return only the concise final answer intended for the user. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. Use the user’s word palette as inspiration when relevant:${paletteContext} Never invent palette entries or present guesses as facts.` }], messages: [{ role: 'user', content: [{ text: message }] }], inferenceConfig: { maxTokens: 700, temperature: 0.5 } });
   const response = await client.send(command);
   return response.output?.message?.content?.map((part) => part.text || '').join('') || 'The model returned an empty response.';
 }
@@ -62,7 +62,7 @@ async function ask(message, palette = [], pendingPrompt = '', requestsRemaining 
   }
   if (strands?.Agent) {
     const agent = new strands.Agent({
-      systemPrompt: `You are Forge, a warm and easygoing conversation partner. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. The user’s current word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
+      systemPrompt: `You are Forge, a warm and easygoing conversation partner. Think privately and never reveal chain-of-thought, hidden reasoning, internal deliberation, tool calls, or intermediate analysis. Return only the concise final answer intended for the user. Talk to the user like a thoughtful, helpful person. Use plain language, keep replies natural and concise, and ask a gentle follow-up when it would help. The user’s current word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
     });
     let result;
     try { result = await agent.invoke(message); } catch (error) { throw error; }
