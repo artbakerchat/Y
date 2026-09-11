@@ -71,6 +71,67 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 
 Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each session has a daily limit of 8 model requests.
 
+## Context-aware palette loading
+
+Forge detects the user's context on first visit and loads a relevant palette template. This aligns with the community-focused vision in [`builder-story.md`](builder-story.md).
+
+### How it works
+
+1. **First-time visitors**: When a new session is created, Forge detects context from:
+   - URL parameters: `?context=volunteering`, `?context=teaching`, etc.
+   - First message keywords: detecting "volunteer," "lesson," "food," "research," etc.
+
+2. **Palette templates**: Each context has a pre-built palette of relevant words and a story explaining the palette's purpose:
+
+   - **volunteering**: Coordinates volunteers, shifts, schedules, and team matching
+   - **teaching**: Scaffolds lessons, assessments, and diverse learners
+   - **library**: Manages patrons, collections, and community access
+   - **foodbank**: Organizes donations, distributions, and food security
+   - **contracting**: Handles compliance, deadlines, and documentation
+   - **content_creator**: Designs lesson materials and learning progressions
+   - **researcher**: Organizes papers, synthesizes findings, and manages research
+   - **household**: Coordinates family calendars and shared responsibilities
+   - **wellness**: Tracks habits, goals, and personal growth
+   - **default**: General word exploration and creative writing
+
+3. **Persistence**: The selected palette persists for 48 hours. Users can edit it at any time, and their edits are saved.
+
+4. **Display**: The palette story appears on first load (or first revisit after 48h) as italicized text with a left border accent, explaining the palette's purpose and inviting customization.
+
+### Using context detection
+
+**URL parameters** (explicit):
+```
+http://localhost:3000/?context=volunteering
+```
+
+**First message keywords** (implicit):
+- Type "I need help organizing volunteers" → loads volunteering palette
+- Type "How do I scaffold this lesson?" → loads teaching palette
+- Type "Managing a food drive" → loads foodbank palette
+
+### Adding a new palette template
+
+Edit [`src/palettes.js`](src/palettes.js) and add an entry to `PALETTE_TEMPLATES`:
+
+```javascript
+newcontext: {
+  id: 'newcontext',
+  name: 'Context Name',
+  description: 'What this palette is for',
+  tags: ['tag1', 'tag2'],
+  words: ['word1', 'word2', /* ... up to 52 words ... */],
+  story: 'This palette helps with...',
+  context: { type: 'category', role: 'role', scale: 'scale' },
+}
+```
+
+Then add keywords to `detectPaletteContext()` to trigger automatic detection:
+
+```javascript
+keywords.newcontext = ['keyword1', 'keyword2', 'keyword3'];
+```
+
 ## Cloudflare deployment
 
 The production Worker is configured by [`wrangler.jsonc`](wrangler.jsonc). It uses:
