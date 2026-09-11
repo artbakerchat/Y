@@ -2,7 +2,11 @@
 
 Forge is a small full-stack AI conversation workspace. The browser provides the interface; model requests are handled server-side so AWS credentials never reach the client.
 
-The application is focused on word exploration and palette building rather than the customer-service scenario used by the workshop material in [`modules/`](modules/).
+The application focuses on word exploration and palette building. [`modules/`](modules/) contains workshop guides, and [`centre/`](centre/) contains the customer-service reference notebooks and scripts. See [the workshop-to-Forge map](modules/README.md) for how their patterns apply to this application.
+
+## Offline checks
+
+Run `npm test` for deterministic tool-control tests and `npm run check` for Worker and local-server syntax checks. Both use Node.js 22+ and require no dependencies or AWS credentials. GitHub Actions also runs the existing Python evaluations with `python -m unittest discover -s evals -p 'test_*.py'`.
 
 ## Architecture
 

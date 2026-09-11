@@ -1,3 +1,4 @@
+import { createToolController } from './tool-controls.js';
 import { buildTools as buildEditableTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, listAgentProfiles } from './agents.js';
@@ -395,59 +396,6 @@ async function resolveSkill(message, env, profile) {
   return null;
 }
 
-// ---------------------------------------------------------------------------
-// MODULE 2: HOOKS
-// Per-request tool-call rate limiter. A fresh counter is created for every
-// invocation. beforeToolCall returns null to proceed, or a cancellation
-// string to skip the tool and feed that message back to the model.
-// ---------------------------------------------------------------------------
-const MAX_TOOL_CALLS_PER_REQUEST = 3;
-
-function createHooks(maxToolCallsPerRequest = MAX_TOOL_CALLS_PER_REQUEST) {
-  const counts = {};
-  return {
-    beforeToolCall(toolName) {
-      counts[toolName] = (counts[toolName] || 0) + 1;
-      if (counts[toolName] > maxToolCallsPerRequest) {
-        return `'${toolName}' has already been called ${maxToolCallsPerRequest} time(s) this request. Do not call it again.`;
-      }
-      return null;
-    },
-    getCounts() { return { ...counts }; },
-  };
-}
-
-// ---------------------------------------------------------------------------
-// MODULE 3: STEERING
-// Two layers:
-//   beforeTool — deterministic pre-tool validation (blocks tools until
-//                prerequisites have run with status === 'success').
-//   steerPostResponse — a Bedrock quality reviewer that revises the answer
-//                       when the verdict begins with REVISE:.
-//
-// toolLedger is an array of { name, status } entries recorded after each
-// tool call completes. This matches the module's LedgerProvider pattern:
-// only a successful prior call satisfies a prerequisite, not a blocked or
-// errored one.
-// ---------------------------------------------------------------------------
-function createSteering(toolLedger) {
-  return {
-    beforeTool(toolName) {
-      // suggest_related_words requires the palette to have been inspected first
-      // with a successful result. Cancelled or errored calls do not qualify.
-      if (toolName === 'suggest_related_words') {
-        const paletteChecked = toolLedger.some(
-          (entry) => (entry.name === 'get_palette' || entry.name === 'search_palette') && entry.status === 'success',
-        );
-        if (!paletteChecked) {
-          return 'You must call get_palette or search_palette first to understand the existing palette before suggesting new words.';
-        }
-      }
-      return null;
-    },
-  };
-}
-
 async function steerPostResponse(answer, env) {
   // Skip when credentials are absent (local dev / preview mode).
   if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return answer;
@@ -612,13 +560,15 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     { role: 'user', content: [{ text: message }] },
   ];
 
-  // Module 2: Hooks - fresh counter per request.
-  const hooks = createHooks(profile.maxToolCallsPerRequest);
-
-  // Module 3: Steering - ledger of { name, status } entries recorded after
-  // each tool call completes. Only successful calls satisfy prerequisites.
-  const toolLedger = [];
-  const steering = createSteering(toolLedger);
+  // Modules 2 + 3: per-invocation limits and successful-call workflow checks.
+  // The specialist uses the same error boundary and ledger as local tools.
+  const controlledTools = tools.map((tool) => profile.specialist && tool.spec.name === profile.specialist.spec.name
+    ? { ...tool, fn: (input) => invokeWordSpecialist(input, env) }
+    : tool);
+  const controller = createToolController({
+    tools: controlledTools,
+    maxCallsPerTool: profile.maxToolCallsPerRequest,
+  });
 
   // Step 3+: Agent loop - iterate until end_turn or safety cap.
   const MAX_LOOP_ITERATIONS = 8;
@@ -644,7 +594,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
       const answer = assistantMessage.content?.map((b) => b.text || '').join('') || 'The model returned an empty response.';
       // Step 5: Post-response steering check.
       const finalAnswer = await steerPostResponse(answer, env);
-      return { answer: finalAnswer, agent: true, toolCallCounts: hooks.getCounts() };
+      return { answer: finalAnswer, agent: true, toolCallCounts: controller.getCounts() };
     }
 
     if (stopReason === 'tool_use') {
@@ -652,46 +602,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
 
       for (const block of assistantMessage.content || []) {
         if (!block.toolUse) continue;
-        const { toolUseId, name, input } = block.toolUse;
-        let toolResult;
-
-        // Step 4a: Hooks - rate limit check.
-        const hookCancel = hooks.beforeToolCall(name);
-        if (hookCancel) {
-          toolResult = hookCancel;
-        } else {
-          // Step 4b: Steering - pre-tool validation.
-          const steerGuide = steering.beforeTool(name);
-          if (steerGuide) {
-            toolResult = steerGuide;
-          } else {
-            // Step 4c: Dispatch - multi-agent specialist or local tool fn.
-            if (profile.specialist && name === profile.specialist.spec.name) {
-              // Module 6: invoke the specialist agent (mini loop with its own tools).
-              toolResult = await invokeWordSpecialist(input || {}, env);
-              toolLedger.push({ name, status: 'success' });
-            } else {
-              const tool = tools.find((t) => t.spec.name === name);
-              if (tool?.fn) {
-                try {
-                  toolResult = await tool.fn(input || {});
-                  toolLedger.push({ name, status: 'success' });
-                } catch (err) {
-                  toolResult = `Tool error: ${err.message?.slice(0, 120)}`;
-                  toolLedger.push({ name, status: 'error' });
-                }
-              } else {
-                toolResult = `Unknown tool: ${name}`;
-                toolLedger.push({ name, status: 'error' });
-              }
-            }
-          }
-        }
-
-        // Step 4d: Collect tool results to feed back into the loop.
-        toolResultContents.push({
-          toolResult: { toolUseId, content: [{ text: String(toolResult) }] },
-        });
+        toolResultContents.push(await controller.execute(block.toolUse));
       }
 
       runningMessages.push({ role: 'user', content: toolResultContents });
