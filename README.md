@@ -91,6 +91,22 @@ Skill content controls the procedure given to the agent. Skill activation is sti
 
 R2 is checked before the Worker's inline fallback skills. This means the committed Markdown files become the production source of truth after the deployment workflow runs.
 
+## Add a customizable Worker agent
+
+The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js). A profile defines the agent's identity and behavior (`systemPrompt`), allowed tools (`toolNames`), relevant skills (`skillNames`), daily request limit, per-tool call limit, and optional specialist agent. The existing `forge` profile is the default, so existing clients do not need to send an agent id.
+
+To add another Worker agent:
+
+1. Add a profile to `AGENT_PROFILES` in [`src/agents.js`](src/agents.js).
+2. Add or register its tools in [`tools/`](tools/) and list their names in `toolNames`.
+3. Add its Markdown procedures under [`skills/`](skills/) and include them in `skillNames` and `SKILL_INDEX` in [`src/worker.js`](src/worker.js).
+4. Select it with `{ "agent": "your-agent-id", "message": "..." }` on `POST /api/ask`, or send the `x-agent-id` header. Available profiles are returned by `GET /api/agents`.
+5. Add an API or UI test that verifies tool allow-listing, profile-specific instructions, and session isolation when changing agents.
+
+The Worker records `agentId` in session state and clears conversation history when a session switches profiles. This prevents one agent from inheriting another agent's conversational assumptions while preserving the shared workspace palette.
+
+When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards `agent_id` to the Python runtime, but the current [`app/ForgeAgent/main.py`](app/ForgeAgent/main.py) still has a single hard-coded Forge agent. To support multiple profiles through AgentCore, implement the same profile registry in that runtime or route non-Forge profiles to the local Worker loop until the runtime is updated. Keep profile definitions synchronized across both paths, or choose one path as the source of truth.
+
 Agent tools follow the same source-controlled workflow. Executable tools live as JavaScript modules in [`tools/`](tools/); edit an existing module or add one and register it in [`tools/index.js`](tools/index.js). Pushing to `main` bundles the updated tool code into the Worker deployment. Tool descriptions and input schemas are exposed to Bedrock, while implementations execute inside the Worker, so review new tools carefully before deployment.
 
 ## AgentCore runtime

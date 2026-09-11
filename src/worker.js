@@ -1,4 +1,5 @@
 import { buildTools as buildEditableTools } from '../tools/index.js';
+import { getAgentProfile, listAgentProfiles } from './agents.js';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -38,8 +39,8 @@ const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
 const DEFAULT_PALETTE = ['anchor','pinnacle','summit','twilight','static','ocean','wander','spark','gravity','money','book','Glimmer','compass','voyage','solitude','prism','nectar','blossom','fossil','zenith','vortex','mirage','starlight','ember','cyclone','glacier','radiance','labyrinth','aurora','thistle','apple','Nebula','crisp','whisper','avalanche','horizon','velvet','mosaic','thunder','marble','cascade','echo','lantern','silver','standard','puzzle','orbit','shadow','flicker','autumn','rhythm','canvas'];
-const emptyState = () => ({ palette: [...DEFAULT_PALETTE], promptWords: [], messages: [], pendingPrompt: '', printer: { note: '', images: [null, null, null] }, rate: { day: new Date().toISOString().slice(0, 10), count: 0 }, expiresAt: Date.now() + STATE_TTL_MS });
-function cleanState(value) { return { palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter((word) => word && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [...DEFAULT_PALETTE], promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string' && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [], messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [], pendingPrompt: typeof value?.pendingPrompt === 'string' ? value.pendingPrompt.slice(0, 4000) : '', printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] }, rate: { day: typeof value?.rate?.day === 'string' ? value.rate.day : new Date().toISOString().slice(0, 10), count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0 }, expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS }; }
+const emptyState = () => ({ agentId: 'forge', palette: [...DEFAULT_PALETTE], promptWords: [], messages: [], pendingPrompt: '', printer: { note: '', images: [null, null, null] }, rate: { day: new Date().toISOString().slice(0, 10), count: 0 }, expiresAt: Date.now() + STATE_TTL_MS });
+function cleanState(value) { return { agentId: typeof value?.agentId === 'string' ? value.agentId : 'forge', palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter((word) => word && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [...DEFAULT_PALETTE], promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string' && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [], messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [], pendingPrompt: typeof value?.pendingPrompt === 'string' ? value.pendingPrompt.slice(0, 4000) : '', printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] }, rate: { day: typeof value?.rate?.day === 'string' ? value.rate.day : new Date().toISOString().slice(0, 10), count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0 }, expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS }; }
 function sessionIdFrom(request) { const match = request.headers.get('cookie')?.match(/(?:^|;\s*)larboard_session=([^;]+)/); return match?.[1] || crypto.randomUUID(); }
 async function loadState(bucket, sessionId) { const key = `sessions/${sessionId}.json`; const object = await bucket.get(key); if (!object) return emptyState(); try { const raw = await object.json(); if (!Number.isFinite(Number(raw.expiresAt)) || Number(raw.expiresAt) <= Date.now()) { await bucket.delete(key); return emptyState(); } return cleanState(raw); } catch { await bucket.delete(key); return emptyState(); } }
 async function saveState(bucket, sessionId, state) { const clean = cleanState(state); await bucket.put(`sessions/${sessionId}.json`, JSON.stringify({ ...clean, expiresAt: Number(state.expiresAt) || clean.expiresAt }), { httpMetadata: { contentType: 'application/json' } }); }
@@ -84,14 +85,14 @@ async function signingKey(secret, date, region, service) {
   return hmac(serviceKey, 'aws4_request');
 }
 
-async function invokeAgentCore(message, palette, history, env, request, requestsRemaining) {
+async function invokeAgentCore(message, palette, history, env, request, requestsRemaining, agentId = 'forge') {
   const region = env.AWS_REGION || 'ca-central-1';
   const runtimeArn = env.AGENTCORE_RUNTIME_ARN;
   const host = env.AGENTCORE_RUNTIME_HOST || `bedrock-agentcore.${region}.amazonaws.com`;
   const encodedArn = encodeURIComponent(runtimeArn);
   const path = `/runtimes/${encodedArn}/invocations`;
   const query = 'qualifier=DEFAULT';
-  const body = JSON.stringify({ prompt: message, palette, requests_remaining: requestsRemaining });
+  const body = JSON.stringify({ prompt: message, palette, requests_remaining: requestsRemaining, agent_id: agentId });
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -314,9 +315,9 @@ async function loadSkill(name, env) {
   return INLINE_SKILLS[name] || null;
 }
 
-async function resolveSkill(message, env) {
+async function resolveSkill(message, env, profile) {
   const lower = message.toLowerCase();
-  for (const skill of SKILL_INDEX) {
+  for (const skill of SKILL_INDEX.filter(({ name }) => profile.skillNames.includes(name))) {
     if (skill.keywords.some((kw) => lower.includes(kw))) {
       const text = await loadSkill(skill.name, env);
       if (text) return text;
@@ -333,13 +334,13 @@ async function resolveSkill(message, env) {
 // ---------------------------------------------------------------------------
 const MAX_TOOL_CALLS_PER_REQUEST = 3;
 
-function createHooks() {
+function createHooks(maxToolCallsPerRequest = MAX_TOOL_CALLS_PER_REQUEST) {
   const counts = {};
   return {
     beforeToolCall(toolName) {
       counts[toolName] = (counts[toolName] || 0) + 1;
-      if (counts[toolName] > MAX_TOOL_CALLS_PER_REQUEST) {
-        return `'${toolName}' has already been called ${MAX_TOOL_CALLS_PER_REQUEST} time(s) this request. Do not call it again.`;
+      if (counts[toolName] > maxToolCallsPerRequest) {
+        return `'${toolName}' has already been called ${maxToolCallsPerRequest} time(s) this request. Do not call it again.`;
       }
       return null;
     },
@@ -432,15 +433,16 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
 // Step 5  stopReason === 'end_turn':
 //           Post-response steering check, return answer     (Module 3 Steering)
 // ---------------------------------------------------------------------------
-async function askBedrock(message, palette, history, env, requestsRemaining) {
-  const tools = buildEditableTools(palette);
+async function askBedrock(message, palette, history, env, requestsRemaining, profile) {
+  const availableTools = buildEditableTools(palette);
+  const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name));
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
 
   // Step 1: Skills - inject relevant procedure into system prompt.
-  const skill = await resolveSkill(message, env);
+  const skill = await resolveSkill(message, env, profile);
   const systemText = [
-    'You are Forge, a focused word specialist and conversation partner. Help the user explore meaning, nuance, connotation, etymology, tone, and poetic or precise word choice. Stay tightly on the user\'s topic; do not drift into generic life coaching or broad brainstorming. Use plain language, give concrete examples when useful, and ask at most one concise follow-up question when needed.',
-    `This session has a daily limit of ${DAILY_REQUEST_LIMIT} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
+    `You are ${profile.name}. ${profile.systemPrompt}`,
+    `This session has a daily limit of ${profile.dailyRequestLimit} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
     `The user's word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
     skill ? `\n\nActive skill - follow these steps:\n${skill}` : '',
   ].filter(Boolean).join(' ');
@@ -458,7 +460,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining) {
   ];
 
   // Module 2: Hooks - fresh counter per request.
-  const hooks = createHooks();
+  const hooks = createHooks(profile.maxToolCallsPerRequest);
 
   // Module 3: Steering - track which tools have run this request.
   const toolLog = [];
@@ -512,7 +514,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining) {
             toolLog.push(name);
 
             // Step 4c: Dispatch - multi-agent specialist or local tool fn.
-            if (name === 'consult_word_specialist') {
+            if (profile.specialist && name === profile.specialist.spec.name) {
               // Module 6: invoke the specialist agent (second Bedrock call).
               toolResult = await invokeWordSpecialist(input || {}, env);
             } else {
@@ -572,29 +574,37 @@ export default {
     const url = new URL(request.url);
     try {
       if (url.pathname === '/api/health' && request.method === 'GET') {
-        return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0' });
+        return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
+      if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       const sessionId = sessionIdFrom(request);
       if (url.pathname === '/api/state' && request.method === 'GET') return stateResponse(await loadState(env.ASSETS, sessionId), sessionId);
       if (url.pathname === '/api/state' && request.method === 'POST') { const current = await loadState(env.ASSETS, sessionId); const next = cleanState({ ...current, ...(await request.json()) }); await saveState(env.ASSETS, sessionId, next); return stateResponse(next, sessionId); }
       if (url.pathname === '/api/ask' && request.method === 'POST') {
         const body = await request.json();
+        const profile = getAgentProfile(body?.agent || request.headers.get('x-agent-id') || 'forge');
+        if (!profile) return json({ error: 'Unknown agent.' }, 400);
         const message = typeof body?.prompt === 'string' ? body.prompt.trim() : typeof body?.message === 'string' ? body.message.trim() : '';
         if (!message) return json({ error: 'Message is required.' }, 400);
         if (message.length > 4000) return json({ error: 'Message is too long.' }, 413);
         if (requestWordCount(message) > MAX_REQUEST_WORDS) return json({ error: `Requests are limited to ${MAX_REQUEST_WORDS} words.` }, 413);
         if (hasOversizedWord(message)) return json({ error: `Each word is limited to ${MAX_WORD_CHARACTERS} characters.` }, 413);
         const state = await loadState(env.ASSETS, sessionId);
+        if (state.agentId !== profile.id) {
+          state.agentId = profile.id;
+          state.messages = [];
+          state.pendingPrompt = '';
+        }
         if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
         if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
         const today = new Date().toISOString().slice(0, 10);
         if (state.rate.day !== today) state.rate = { day: today, count: 0 };
-        if (state.rate.count >= DAILY_REQUEST_LIMIT) return new Response(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: DAILY_REQUEST_LIMIT }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`, 'retry-after': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) } });
+        if (state.rate.count >= profile.dailyRequestLimit) return new Response(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: profile.dailyRequestLimit }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`, 'retry-after': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) } });
 
         // Route to AgentCore if configured, otherwise run the local agent loop.
         const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, request, DAILY_REQUEST_LIMIT - state.rate.count - 1)
-          : await askBedrock(message, state.palette, state.messages, env, DAILY_REQUEST_LIMIT - state.rate.count - 1);
+          ? await invokeAgentCore(message, state.palette, state.messages, env, request, profile.dailyRequestLimit - state.rate.count - 1, profile.id)
+          : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile);
 
         state.rate.count += 1;
         state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }];
