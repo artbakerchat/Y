@@ -1,4 +1,6 @@
 import { buildTools as buildEditableTools } from '../tools/index.js';
+import { buildTools as buildEditableTools } from '../tools/index.js';
+import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, listAgentProfiles } from './agents.js';
 
 const CONTENT_TYPES = {
@@ -402,16 +404,24 @@ function createHooks(maxToolCallsPerRequest = MAX_TOOL_CALLS_PER_REQUEST) {
 // MODULE 3: STEERING
 // Two layers:
 //   beforeTool — deterministic pre-tool validation (blocks tools until
-//                prerequisites have run).
-//   steerPostResponse — a lightweight second Bedrock call that checks the
-//                       final answer for quality/tone before it is returned.
+//                prerequisites have run with status === 'success').
+//   steerPostResponse — a Bedrock quality reviewer that revises the answer
+//                       when the verdict begins with REVISE:.
+//
+// toolLedger is an array of { name, status } entries recorded after each
+// tool call completes. This matches the module's LedgerProvider pattern:
+// only a successful prior call satisfies a prerequisite, not a blocked or
+// errored one.
 // ---------------------------------------------------------------------------
-function createSteering(toolLog) {
+function createSteering(toolLedger) {
   return {
     beforeTool(toolName) {
-      // suggest_related_words requires the palette to have been inspected first.
+      // suggest_related_words requires the palette to have been inspected first
+      // with a successful result. Cancelled or errored calls do not qualify.
       if (toolName === 'suggest_related_words') {
-        const paletteChecked = toolLog.some((t) => t === 'get_palette' || t === 'search_palette');
+        const paletteChecked = toolLedger.some(
+          (entry) => (entry.name === 'get_palette' || entry.name === 'search_palette') && entry.status === 'success',
+        );
         if (!paletteChecked) {
           return 'You must call get_palette or search_palette first to understand the existing palette before suggesting new words.';
         }
@@ -425,16 +435,31 @@ async function steerPostResponse(answer, env) {
   // Skip when credentials are absent (local dev / preview mode).
   if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return answer;
   try {
-    const result = await bedrockConverse(env, {
+    // First call: quality review.
+    const reviewResult = await bedrockConverse(env, {
       system: [{ text: 'You are a quality reviewer for a conversational AI. Evaluate the reply. If it is clear, helpful, and on-topic reply with only: APPROVED. If it needs improvement reply with: REVISE: <one sentence of guidance>.' }],
       messages: [{ role: 'user', content: [{ text: `Reply to review:\n${answer}` }] }],
       maxTokens: 80,
       temperature: 0.0,
     });
-    const verdict = result.output?.message?.content?.map((p) => p.text || '').join('').trim() || '';
+    const verdict = reviewResult.output?.message?.content?.map((p) => p.text || '').join('').trim() || '';
+
     if (verdict.startsWith('REVISE:')) {
-      // Log the guidance for observability; do not block or alter the response.
+      const guidance = verdict.slice('REVISE:'.length).trim();
       console.log(JSON.stringify({ steering: 'post-response', verdict }));
+
+      // Second call: revise the answer using the guidance.
+      const reviseResult = await bedrockConverse(env, {
+        system: [{ text: 'You are a helpful conversational AI. Rewrite the reply below, applying the improvement guidance. Keep the same subject matter and do not add new facts. Return only the improved reply, no preamble.' }],
+        messages: [{
+          role: 'user',
+          content: [{ text: `Original reply:\n${answer}\n\nImprovement guidance: ${guidance}` }],
+        }],
+        maxTokens: 700,
+        temperature: 0.4,
+      });
+      const revised = reviseResult.output?.message?.content?.map((p) => p.text || '').join('').trim();
+      if (revised) return revised;
     }
   } catch { /* steering is best-effort; never block the response on its failure */ }
   return answer;
@@ -442,31 +467,92 @@ async function steerPostResponse(answer, env) {
 
 // ---------------------------------------------------------------------------
 // MODULE 6: MULTI-AGENT
-// The word specialist is a second independent Bedrock call with its own
-// focused system prompt. It is invoked as a tool result and fed back into
-// the main loop exactly like any other tool.
+// The word specialist runs as a mini agent loop with its own tools and
+// focused system prompt. It mirrors the module's agents-as-tools pattern:
+// a sub-agent with narrow capabilities (look_up_word_details,
+// find_related_words_deep) that the orchestrator calls like a function.
+// The result is fed back into the main loop as a tool result.
 // ---------------------------------------------------------------------------
 async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
   if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) {
     return `Word specialist unavailable (credentials not configured). Proceeding without specialist input on "${word}".`;
   }
+
   const focusMap = {
-    etymology:   'Explain the origin and historical evolution of the word.',
-    connotation: 'Describe the emotional and cultural connotations of the word.',
-    poetic_use:  'Explain how this word is used in poetry: rhythm, imagery, and mood.',
+    etymology:   'Focus on the word\'s origin, historical evolution, and linguistic roots.',
+    connotation: 'Focus on the emotional, cultural, and contextual connotations of the word.',
+    poetic_use:  'Focus on how this word is used in poetry: its rhythm, imagery, and mood.',
   };
   const focus = focusMap[aspect] || focusMap.connotation;
+
+  // Build toolConfig from the specialist's own tools (not the orchestrator's).
+  const specialistToolConfig = {
+    tools: specialistTools.map((t) => ({ toolSpec: t.spec })),
+  };
+
+  const specialistSystem = [
+    { text: `You are a word-craft specialist with access to etymology and vocabulary tools. ${focus} Use your tools to look up concrete data before responding. Be concise (3–6 sentences). Return only the analysis, no preamble.` },
+  ];
+
+  const runningMessages = [
+    { role: 'user', content: [{ text: `Analyse the word: ${word}` }] },
+  ];
+
+  const MAX_SPECIALIST_ITERATIONS = 4;
+  let iterations = 0;
+
   try {
-    const result = await bedrockConverse(env, {
-      system: [{ text: `You are a word-craft specialist. ${focus} Be concise (3-5 sentences).` }],
-      messages: [{ role: 'user', content: [{ text: `Analyse the word: ${word}` }] }],
-      maxTokens: 200,
-      temperature: 0.4,
-    });
-    return result.output?.message?.content?.map((p) => p.text || '').join('') || `No analysis available for "${word}".`;
+    while (iterations < MAX_SPECIALIST_ITERATIONS) {
+      iterations += 1;
+
+      const result = await bedrockConverse(env, {
+        system: specialistSystem,
+        messages: runningMessages,
+        toolConfig: specialistToolConfig,
+        maxTokens: 300,
+        temperature: 0.4,
+      });
+
+      const assistantMessage = result.output?.message;
+      const stopReason = result.stopReason;
+      if (!assistantMessage) break;
+
+      runningMessages.push(assistantMessage);
+
+      if (stopReason === 'end_turn' || stopReason === 'max_tokens') {
+        return assistantMessage.content?.map((b) => b.text || '').join('') || `No analysis available for "${word}".`;
+      }
+
+      if (stopReason === 'tool_use') {
+        const toolResultContents = [];
+
+        for (const block of assistantMessage.content || []) {
+          if (!block.toolUse) continue;
+          const { toolUseId, name, input } = block.toolUse;
+          const tool = specialistTools.find((t) => t.spec.name === name);
+          let toolResult;
+          if (tool?.fn) {
+            try { toolResult = await tool.fn(input || {}); }
+            catch (err) { toolResult = `Tool error: ${err.message?.slice(0, 120)}`; }
+          } else {
+            toolResult = `Unknown specialist tool: ${name}`;
+          }
+          toolResultContents.push({
+            toolResult: { toolUseId, content: [{ text: String(toolResult) }] },
+          });
+        }
+
+        runningMessages.push({ role: 'user', content: toolResultContents });
+      } else {
+        // Unexpected stop — return whatever text is available.
+        return assistantMessage.content?.map((b) => b.text || '').join('') || `No analysis available for "${word}".`;
+      }
+    }
   } catch (err) {
     return `Specialist call failed: ${err.message?.slice(0, 120)}`;
   }
+
+  return `Specialist reached iteration limit without completing analysis of "${word}".`;
 }
 
 // ---------------------------------------------------------------------------
@@ -512,9 +598,10 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
   // Module 2: Hooks - fresh counter per request.
   const hooks = createHooks(profile.maxToolCallsPerRequest);
 
-  // Module 3: Steering - track which tools have run this request.
-  const toolLog = [];
-  const steering = createSteering(toolLog);
+  // Module 3: Steering - ledger of { name, status } entries recorded after
+  // each tool call completes. Only successful calls satisfy prerequisites.
+  const toolLedger = [];
+  const steering = createSteering(toolLedger);
 
   // Step 3+: Agent loop - iterate until end_turn or safety cap.
   const MAX_LOOP_ITERATIONS = 8;
@@ -561,19 +648,24 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
           if (steerGuide) {
             toolResult = steerGuide;
           } else {
-            toolLog.push(name);
-
             // Step 4c: Dispatch - multi-agent specialist or local tool fn.
             if (profile.specialist && name === profile.specialist.spec.name) {
-              // Module 6: invoke the specialist agent (second Bedrock call).
+              // Module 6: invoke the specialist agent (mini loop with its own tools).
               toolResult = await invokeWordSpecialist(input || {}, env);
+              toolLedger.push({ name, status: 'success' });
             } else {
               const tool = tools.find((t) => t.spec.name === name);
               if (tool?.fn) {
-                try { toolResult = await tool.fn(input || {}); }
-                catch (err) { toolResult = `Tool error: ${err.message?.slice(0, 120)}`; }
+                try {
+                  toolResult = await tool.fn(input || {});
+                  toolLedger.push({ name, status: 'success' });
+                } catch (err) {
+                  toolResult = `Tool error: ${err.message?.slice(0, 120)}`;
+                  toolLedger.push({ name, status: 'error' });
+                }
               } else {
                 toolResult = `Unknown tool: ${name}`;
+                toolLedger.push({ name, status: 'error' });
               }
             }
           }
