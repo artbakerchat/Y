@@ -24,6 +24,15 @@ jobs:
         with:
           node-version: 22
 
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Validate Worker source
+        run: npm run check
+
+      - name: Build Worker (dry run)
+        run: npx --yes wrangler@4.129.0 deploy --dry-run
+
       - name: Validate Markdown skills
         run: node scripts/validate-skills.js
 
