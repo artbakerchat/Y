@@ -221,7 +221,7 @@ R2 is checked before the Worker's inline fallback skills. This means the committ
 
 ## Add a customizable Worker agent
 
-The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js), using [`agentcore/profiles.json`](agentcore/profiles.json) as the shared registry. Larboard's Good Neighbour profiles are `forge` (general coordinator), `food-bank` (shift and pantry coordination), `nonprofit-helpdesk` (small-organization operations), `mutual-aid` (requests, offers, and safe follow-up), and `civic-knowledge` (plain-language local services and public processes). The existing `forge` profile is the default, so existing clients do not need to send an agent id.
+The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js), using [`agentcore/profiles.json`](agentcore/profiles.json) as the shared registry. Larboard's profiles include `forge` (general coordinator), `food-bank` (shift and pantry coordination), `nonprofit-helpdesk` (small-organization operations), `mutual-aid` (requests, offers, and safe follow-up), `civic-knowledge` (plain-language local services and public processes), `bob-dylan` (Music Expert), and `santa-claus` (Santa Claus). The existing `forge` profile is the default, so existing clients do not need to send an agent id.
 
 To add another Worker agent:
 
@@ -233,7 +233,7 @@ To add another Worker agent:
 
 The Worker records `agentId` in session state and clears conversation history when a session switches profiles. This prevents one agent from inheriting another agent's conversational assumptions while preserving the shared workspace palette.
 
-When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards `agent_id` to the Python runtime, but the current [`app/ForgeAgent/main.py`](app/ForgeAgent/main.py) still has a single hard-coded Forge agent. To support multiple profiles through AgentCore, implement the same profile registry in that runtime or route non-Forge profiles to the local Worker loop until the runtime is updated. Keep profile definitions synchronized across both paths, or choose one path as the source of truth.
+When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards `agent_id` to the Python runtime. The Python runtime resolves the same profile registry, system prompt, tool allow-list, and limits, with the bundled registry kept synchronized for deployment. Keep profile definitions synchronized across both paths, or choose one path as the source of truth.
 
 Agent tools follow the same source-controlled workflow. Executable tools live as JavaScript modules in [`tools/`](tools/); edit an existing module or add one and register it in [`tools/index.js`](tools/index.js). Pushing to `main` bundles the updated tool code into the Worker deployment. Tool descriptions and input schemas are exposed to Bedrock, while implementations execute inside the Worker, so review new tools carefully before deployment.
 

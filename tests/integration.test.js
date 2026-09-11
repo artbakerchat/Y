@@ -595,7 +595,7 @@ test('GET /api/agents returns agent profile list', async () => {
   assert.ok(forge, 'Must include the forge profile');
   assert.ok(forge.name, 'Profile must have a name');
   assert.ok(forge.description, 'Profile must have a description');
-  for (const id of ['food-bank', 'nonprofit-helpdesk', 'mutual-aid', 'civic-knowledge']) {
+  for (const id of ['food-bank', 'nonprofit-helpdesk', 'mutual-aid', 'civic-knowledge', 'bob-dylan', 'santa-claus']) {
     assert.ok(agents.some((agent) => agent.id === id), `Must include the ${id} profile`);
   }
 });

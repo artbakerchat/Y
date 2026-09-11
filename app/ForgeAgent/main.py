@@ -14,7 +14,7 @@ from strands.session.s3_session_manager import S3SessionManager
 from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
 from forge_steering import PaletteReadyHandler, ToneGuardrailHandler
-from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls
+from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
 
 
 app = BedrockAgentCoreApp()
@@ -233,8 +233,11 @@ def _agent_for_palette(
     skills_plugin = AgentSkills(skills=[_skills_path()])
     session_manager = _native_session_manager(session_id)
 
+    profile_tool_names = set(get_tool_names(profile_id))
+    profile_tools = [tool for tool in build_tools(palette, profile_id) if getattr(tool, "__name__", "") in profile_tool_names]
+
     return Agent(
-        tools=build_tools(palette, profile_id),
+        tools=profile_tools,
         hooks=[RateLimiterHook(max_calls=max_tool_calls, on_event=lambda message: log.info("Hook: %s", message))],
         plugins=[skills_plugin, PaletteReadyHandler(), ToneGuardrailHandler()],
         conversation_manager=SlidingWindowConversationManager(window_size=20),
