@@ -27,6 +27,12 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Install React site dependencies
+        run: npm --prefix site ci
+
+      - name: Build React site
+        run: npm --prefix site run build
+
       - name: Validate Worker source
         run: npm run check
 
@@ -40,6 +46,7 @@ jobs:
         run: |
           find skills -type f -name '*.md' -print0 | while IFS= read -r -d '' skill; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$skill" --file "$skill" --content-type 'text/markdown; charset=utf-8' --cache-control 'no-cache' --remote; done
           for page in index pinball prompt pricing printer presentation; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$page.html" --file "$page.html" --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote; done
+          find site/dist -type f -print0 | while IFS= read -r -d '' asset; do key="${asset#site/dist/}"; case "$asset" in *.html) content_type='text/html; charset=utf-8' ;; *.js) content_type='text/javascript; charset=utf-8' ;; *.css) content_type='text/css; charset=utf-8' ;; *) content_type='application/octet-stream' ;; esac; npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$key" --file "$asset" --content-type "$content_type" --cache-control 'public, max-age=3600' --remote; done
 
       - name: Configure AgentCore Worker secrets
         env:
