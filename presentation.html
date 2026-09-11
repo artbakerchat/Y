@@ -725,7 +725,7 @@ FORGE_SESSION_PREFIX=forge-sessions/
         <div class="slide-tag"><i class="fa-solid fa-compass"></i> Domain Shift & Dual Runtime</div>
         <h2 class="slide-title">Architecture Overview</h2>
         <p class="slide-subtitle">
-          The codebase adapts the 7-layer agentic patterns from a generic workshop into a custom Word-Craft AI Workspace across two distinct execution tracks.
+          The codebase adapts agentic patterns into Larboard's Good Neighbour workspace: practical community coordination across two distinct execution tracks.
         </p>
 
         <div class="grid-2">
@@ -793,13 +793,13 @@ FORGE_SESSION_PREFIX=forge-sessions/
                 <td><strong>4. Session & Steering</strong></td>
                 <td>Persistence & Quality Reviewer</td>
                 <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Bedrock Multi-turn + Review</span></td>
-                <td><span class="badge-status badge-warning"><i class="fa-solid fa-triangle-exclamation"></i> S3 Session + Window; Steering Pending</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> S3 Session + Window + Steering</span></td>
               </tr>
               <tr>
                 <td><strong>5. Multi-Agent</strong></td>
                 <td>Orchestrator + Sub-agents</td>
-                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Word Specialist Agent</span></td>
-                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Tech Specialist Agent</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Good Neighbour Role Tools</span></td>
+                <td><span class="badge-status badge-success"><i class="fa-solid fa-check"></i> Role-aware Strands Tools</span></td>
               </tr>
               <tr>
                 <td><strong>6. Evals</strong></td>
@@ -817,7 +817,7 @@ FORGE_SESSION_PREFIX=forge-sessions/
         <div class="slide-tag"><i class="fa-solid fa-network-wired"></i> Current State</div>
         <h2 class="slide-title">Specialists as Tools</h2>
         <p class="slide-subtitle">
-          Module 6 extends Agents for Humans with the agents-as-tools pattern: Forge remains the orchestrator, while a focused technical specialist handles device problems in an isolated loop.
+          Larboard extends the agents-as-tools pattern into a Good Neighbour fleet. A shared coordinator routes community work to role-specific profiles with narrow, deterministic operational tools.
         </p>
 
         <div class="grid-2">
@@ -827,23 +827,52 @@ FORGE_SESSION_PREFIX=forge-sessions/
               <div class="card-title">Orchestrator Agent (Forge)</div>
             </div>
             <div class="card-body">
-              Receives user intent, manages session context, handles palette requests directly, and decides when technical expertise is required.
+              Receives community intent, manages session context, protects privacy, and selects the appropriate local-life workflow.
             </div>
           </div>
 
           <div class="card" style="border-color: rgba(0, 242, 254, 0.3); background: rgba(0, 242, 254, 0.03);">
             <div class="card-header">
               <div class="card-icon" style="background: rgba(0, 242, 254, 0.2);"><i class="fa-solid fa-brain"></i></div>
-              <div class="card-title">Sub-Agent (Word Specialist)</div>
+              <div class="card-title">Language Specialist + Role Tools</div>
             </div>
             <div class="card-body">
-              Dispatched through <code>tech_support_specialist</code>. Runs a silent nested loop with <code>check_device_compatibility</code> and <code>run_device_diagnostic</code>, then returns findings to Forge.
+              Profiles include <strong>Food Bank Coordinator</strong>, <strong>Nonprofit Helpdesk</strong>, <strong>Mutual Aid Hub</strong>, and <strong>Civic Knowledge Assistant</strong>. Each role exposes only the tools needed for its workflow.
             </div>
           </div>
         </div>
       </section>
 
-      <!-- SLIDE 10: Multi-Agent Evolution Roadmap -->
+      <!-- SLIDE 10: Good Neighbour Agent Fleet -->
+      <section class="slide" id="slide-10-good-neighbour">
+        <div class="slide-tag"><i class="fa-solid fa-people-group"></i> Good Neighbour Fleet</div>
+        <h2 class="slide-title">Agents for Local Life</h2>
+        <p class="slide-subtitle">
+          Larboard turns shared profiles, narrow tools, and community safeguards into practical agents for grassroots coordination.
+        </p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-basket-shopping"></i></div><div class="card-title">Food Bank Coordinator</div></div>
+            <div class="card-body">Matches volunteer skills and availability to shift demands, reports roster gaps, checks inventory thresholds, and prepares reminder handoffs without claiming notifications were sent.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-building-circle-check"></i></div><div class="card-title">Nonprofit Helpdesk</div></div>
+            <div class="card-body">Generates incident reports, board memos, and grant trackers. Searches supplied bylaws and HR policies while preserving the source citation and refusing to invent organizational rules.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-handshake-angle"></i></div><div class="card-title">Mutual Aid Hub</div></div>
+            <div class="card-body">Redacts common contact and sensitive-status details, pairs anonymous needs with offers only after explicit opt-in, and requires mutual confirmation before connection.</div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-icon"><i class="fa-solid fa-landmark"></i></div><div class="card-title">Civic Knowledge Assistant</div></div>
+            <div class="card-body">Verifies supplied institutional sources before grounding answers, labels uncertainty when guidance is incomplete, and directs people to official contact points for confirmation.</div>
+          </div>
+        </div>
+        <div class="code-block" style="margin-top: 22px;">Shared capability: <code>consult_word_specialist</code> for clear, respectful, and precise community communication.</div>
+      </section>
+
+      <!-- SLIDE 11: Multi-Agent Evolution Roadmap -->
       <section class="slide" id="slide-10">
         <div class="slide-tag"><i class="fa-solid fa-rocket"></i> Roadmap</div>
         <h2 class="slide-title">Multi-Agent Expansion Plan</h2>
@@ -855,7 +884,7 @@ FORGE_SESSION_PREFIX=forge-sessions/
               <div class="card-title">1. Expand JS Registry</div>
             </div>
             <div class="card-body">
-              Register additional specialist profiles in <code>src/agents.js</code>:
+              Shared profiles live in <code>agentcore/profiles.json</code> and are available through <code>GET /api/agents</code>. The Good Neighbour roles are food-bank, nonprofit-helpdesk, mutual-aid, and civic-knowledge:
               <br><br>
               • <strong>Etymology Specialist</strong><br>
               • <strong>Tone & Register Specialist</strong><br>
@@ -869,7 +898,7 @@ FORGE_SESSION_PREFIX=forge-sessions/
               <div class="card-title">2. Python Parity</div>
             </div>
             <div class="card-body">
-              Add focused <code>strands</code> `@tool` specialists in <code>app/ForgeAgent/forge_specialists.py</code> with <code>callback_handler=None</code> for silent sub-agent execution.
+              The Python runtime mirrors the role tools in <code>app/ForgeAgent/community_tools.py</code>; the Worker uses <code>tools/community-tools.js</code>. Both paths preserve the language specialist.
             </div>
           </div>
 
@@ -879,7 +908,7 @@ FORGE_SESSION_PREFIX=forge-sessions/
               <div class="card-title">3. Run Evals (Module 7)</div>
             </div>
             <div class="card-body">
-              Run <code>PYTHONPATH=evals python3 -m unittest discover</code> before deployment to verify output contracts, tool trajectories, and specialist routing.
+              Run the offline tests before deployment to verify role registration, tool trajectories, privacy boundaries, grounded-source behavior, and output contracts.
             </div>
           </div>
         </div>

@@ -234,7 +234,7 @@ def _agent_for_palette(
     session_manager = _native_session_manager(session_id)
 
     return Agent(
-        tools=build_tools(palette),
+        tools=build_tools(palette, profile_id),
         hooks=[RateLimiterHook(max_calls=max_tool_calls, on_event=lambda message: log.info("Hook: %s", message))],
         plugins=[skills_plugin, PaletteReadyHandler(), ToneGuardrailHandler()],
         conversation_manager=SlidingWindowConversationManager(window_size=20),

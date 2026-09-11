@@ -143,18 +143,18 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
         {messages.length ? (
           messages.map((message, index) => (
             <div className={`message ${message.role}`} key={`${index}-${message.content}`}>
-              <div className="avatar">{message.role === 'user' ? 'YOU' : 'L'}</div>
+              <div className="avatar" aria-label={message.role === 'user' ? 'You' : 'Larboard assistant'} title={message.role === 'user' ? 'You' : 'Larboard assistant'}>{message.role === 'user' ? 'YOU' : 'L'}</div>
               <div className="bubble">{message.content}</div>
             </div>
           ))
         ) : (
           <>
             <div className="message">
-              <div className="avatar">L</div>
+              <div className="avatar" aria-label="Larboard assistant" title="Larboard assistant">L</div>
               <div className="bubble">Hey — glad you're here. What are you working on?</div>
             </div>
             <div className="message">
-              <div className="avatar">L</div>
+              <div className="avatar" aria-label="Larboard assistant" title="Larboard assistant">L</div>
               <div className="bubble">
                 Try a community request, such as “Help organize volunteers for a food-bank shift.” You can also ask for nonprofit help, mutual-aid coordination, or civic information. If Python is enabled, the response will identify the AgentCore runtime.
               </div>

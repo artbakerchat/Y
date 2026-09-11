@@ -567,7 +567,7 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
 //           Post-response steering check, return answer     (Module 3 Steering)
 // ---------------------------------------------------------------------------
 async function askBedrock(message, palette, history, env, requestsRemaining, profile) {
-  const availableTools = buildEditableTools(palette);
+  const availableTools = buildEditableTools(palette, profile.id);
   const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name));
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
 
