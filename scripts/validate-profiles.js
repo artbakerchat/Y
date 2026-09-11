@@ -16,6 +16,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, '..');
 
 const PROFILES_JSON = path.join(repoRoot, 'agentcore', 'profiles.json');
+const BUNDLED_PROFILES_JSON = path.join(repoRoot, 'app', 'ForgeAgent', 'profiles.json');
 const JS_AGENTS = path.join(repoRoot, 'src', 'agents.js');
 const PY_PROFILES = path.join(repoRoot, 'app', 'ForgeAgent', 'forge_profiles.py');
 
@@ -43,6 +44,19 @@ try {
   console.log(`✓ Parsed profiles.json (${Object.keys(profiles).length} profiles)`);
 } catch (error) {
   errors.push(`✗ Failed to parse profiles.json: ${error.message}`);
+}
+
+// AgentCore CodeZip deployments package app/ForgeAgent independently, so its
+// bundled registry must remain byte-for-byte equivalent to the canonical one.
+try {
+  const bundled = JSON.parse(fs.readFileSync(BUNDLED_PROFILES_JSON, 'utf-8')).profiles || {};
+  if (JSON.stringify(bundled) !== JSON.stringify(profiles)) {
+    errors.push('âœ— Bundled Python profiles.json is out of sync with agentcore/profiles.json');
+  } else {
+    console.log('âœ“ Bundled Python profile registry is synchronized');
+  }
+} catch (error) {
+  errors.push(`âœ— Failed to load bundled Python profiles.json: ${error.message}`);
 }
 
 // Validate each profile structure

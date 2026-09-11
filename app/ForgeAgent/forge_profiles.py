@@ -12,7 +12,15 @@ from typing import Any
 
 def _get_profiles_path() -> Path:
     """Resolve path to profiles.json from repository root."""
+    configured_path = os.getenv("FORGE_PROFILES_PATH")
+    if configured_path:
+        configured = Path(configured_path)
+        if configured.exists():
+            return configured
     current_file = Path(__file__).resolve()
+    bundled_file = current_file.parent / "profiles.json"
+    if bundled_file.exists():
+        return bundled_file
     # app/ForgeAgent/forge_profiles.py -> app/ -> . (repo root)
     repo_root = current_file.parent.parent.parent
     profiles_file = repo_root / "agentcore" / "profiles.json"
