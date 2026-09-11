@@ -6,7 +6,43 @@ The application focuses on word exploration and palette building. [`modules/`](m
 
 ## Offline checks
 
-Run `npm test` for deterministic tool-control tests and `npm run check` for Worker and local-server syntax checks. Both use Node.js 22+ and require no dependencies or AWS credentials. GitHub Actions also runs the existing Python evaluations with `python -m unittest discover -s evals -p 'test_*.py'`.
+Run `npm test` for deterministic tests and `npm run check` for Worker and local-server syntax checks. Both use Node.js 22+ and require no dependencies or AWS credentials. GitHub Actions also runs the existing Python evaluations with `python -m unittest discover -s evals -p 'test_*.py'`.
+
+### Test suite
+
+`npm test` runs all files matching `tests/*.test.js` with Node's built-in test runner. The suite currently includes:
+
+| File | Tests | What it covers |
+| --- | --- | --- |
+| `tests/tool-controls.test.js` | 10 unit tests | Tool controller: prerequisites, per-tool limits, error boundaries, ledger immutability |
+| `tests/integration.test.js` | 12 integration tests | Full Worker request cycle with mocked Bedrock and in-memory R2 |
+
+#### Integration tests (`tests/integration.test.js`)
+
+The integration tests invoke the Worker's `fetch()` handler directly — the same code path that runs in production. Bedrock Converse calls are intercepted by a mock that returns scripted fixture responses (tool-use turns followed by an end-turn), and R2 is replaced by an in-memory store. No AWS credentials or network access are required.
+
+Critical paths covered:
+
+- **Palette fetch → word suggestion flow** — the agent calls `get_palette`, then `suggest_related_words`, then produces a final text reply; the answer and saved session state are verified.
+- **Empty palette** — `get_palette` returns the "palette is empty" message and the cycle completes without error.
+- **Daily rate-limit enforcement** — a session pre-loaded at `count=8` receives a `429` response and Bedrock is never called.
+- **Session state persistence** — two consecutive requests to the same session accumulate history and increment the rate counter correctly.
+- **Agent profile isolation** — continuing with the same `forge` profile preserves conversation history.
+- **Input validation** — oversized word counts, oversized individual words, and empty messages are all rejected before reaching Bedrock.
+- **Expired session handling** — a stored session past its TTL is discarded and a fresh state is initialised.
+- **Prerequisite enforcement in the full cycle** — a model that skips `get_palette` and calls `suggest_related_words` directly receives a blocked-tool error result; the cycle still completes.
+- **Health and agents endpoints** — `GET /api/health` and `GET /api/agents` return the expected shapes.
+
+#### Mock fixtures
+
+Fixture helpers live at the top of `tests/integration.test.js`:
+
+```js
+bedrockToolUseResponse(toolName, toolInput, toolUseId)  // simulates a tool_use stop
+bedrockEndTurnResponse(text)                            // simulates an end_turn stop
+```
+
+Pass an ordered array of these fixtures to `withMockFetch(responseQueue, fn)` — each Bedrock call consumes the next fixture from the queue. The in-memory R2 mock is created with `createMockBucket(initialObjects)` and exposes a `_store` Map for post-request assertions.
 
 ## Architecture
 
@@ -68,10 +104,14 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 
 ## API overview
 
+Full API documentation is in [`docs/API.md`](docs/API.md) with curl examples,
+and the machine-readable OpenAPI 3.0 spec is in [`docs/openapi.yaml`](docs/openapi.yaml).
+
 - `GET /api/health` — reports runtime region and model configuration.
 - `GET /api/state` — loads the browser session state.
 - `POST /api/state` — saves palette and workspace state.
 - `POST /api/ask` — sends a prompt to the configured agent path.
+- `GET /api/agents` — lists available agent profiles (Cloudflare Worker only).
 
 Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each session has a daily limit of 8 model requests.
 

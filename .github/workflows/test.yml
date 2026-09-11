@@ -15,9 +15,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm test
-      - run: npm run check
+      - name: Validate profile definitions
+        run: node scripts/validate-profiles.js
+      - name: Run unit tests
+        run: npm test
+      - name: Syntax and schema checks
+        run: npm run check
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
-      - run: python -m unittest discover -s evals -p 'test_*.py'
+      - name: Python evaluations
+        run: python -m unittest discover -s evals -p 'test_*.py'

@@ -14,6 +14,7 @@ from strands.session.s3_session_manager import S3SessionManager
 from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
 from forge_steering import PaletteReadyHandler, ToneGuardrailHandler
+from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls
 
 
 app = BedrockAgentCoreApp()
@@ -160,9 +161,14 @@ def _agent_for_palette(
     palette: list[str],
     requests_remaining: int,
     session_id: str,
+    profile_id: str = 'forge',
 ) -> Agent:
     palette_text = ", ".join(palette) if palette else "(empty)"
-    max_tool_calls = _max_tool_calls()
+    profile = get_profile(profile_id) or get_profile('forge')
+    system_prompt = get_system_prompt(profile_id)
+    max_tool_calls = min(_max_tool_calls(), profile_max_tool_calls(profile_id))
+    daily_limit = profile.get('dailyRequestLimit', 8)
+    
     skills_plugin = AgentSkills(skills=[_skills_path()])
     session_manager = _native_session_manager(session_id)
 
@@ -173,12 +179,8 @@ def _agent_for_palette(
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
         system_prompt=(
-            "You are Forge, a focused word specialist and conversation partner. "
-            "Help the user explore meaning, nuance, connotation, etymology, tone, "
-            "and poetic or precise word choice. Stay tightly on the user's topic; "
-            "do not drift into generic life coaching or broad brainstorming. Use plain language, "
-            "give concrete examples when useful, and ask at most one concise follow-up question when needed. "
-            f"This session has a daily limit of 8 model requests; {requests_remaining} remain after this turn. "
+            f"{system_prompt} "
+            f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
             "Use the user's word palette as inspiration when relevant. "
             "Never invent palette entries or present guesses as facts. "
             f"The current palette is: {palette_text}. "
@@ -188,17 +190,28 @@ def _agent_for_palette(
             f"Each tool is limited to {max_tool_calls} calls per request. "
             "If a hook blocks a tool, do not retry it. "
             "Use the relevant markdown skill when the request matches its description; "
-            "skills provide suggested procedures, while hooks provide hard limits. "
-            "For device problems, connectivity, firmware, or troubleshooting, delegate "
-            "to the tech_support_specialist tool and translate its findings into a clear "
-            "customer-facing answer. Handle word and palette requests directly."
+            "skills provide suggested procedures, while hooks provide hard limits."
         )
     )
+
+
+def _profile_id_from(payload: dict[str, Any]) -> str:
+    """Extract profile ID from payload, defaulting to 'forge'."""
+    profile_id = payload.get("agent_id") or payload.get("profile_id")
+    if not isinstance(profile_id, str) or not profile_id.strip():
+        return 'forge'
+    profile_id = profile_id.strip().lower()
+    # Validate that profile exists
+    if not get_profile(profile_id):
+        log.warning(f"Unknown profile {profile_id}; falling back to forge")
+        return 'forge'
+    return profile_id
 
 
 @app.entrypoint
 async def invoke(payload: dict[str, Any], context: Any):
     prompt = _prompt_from(payload)
+    profile_id = _profile_id_from(payload)
     requests_remaining = max(0, min(8, int(payload.get("requests_remaining", 8))))
     session_id = _session_id(context)
     palette = _load_palette(session_id, _palette_from(payload))
@@ -208,8 +221,8 @@ async def invoke(payload: dict[str, Any], context: Any):
     agent_prompt = prompt if native_sessions else (
         f"Conversation history:\n{history}\n\nCurrent request: {prompt}" if history else prompt
     )
-    log.info("Invoking ForgeAgent with %d palette words and %d stored messages", len(palette), len(messages))
-    agent = _agent_for_palette(palette, requests_remaining, session_id)
+    log.info("Invoking agent profile=%s with %d palette words and %d stored messages", profile_id, len(palette), len(messages))
+    agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id)
 
     events = []
     async for event in agent.stream_async(agent_prompt):

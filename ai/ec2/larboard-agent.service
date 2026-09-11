@@ -1,0 +1,25 @@
+[Unit]
+Description=Larboard repository peer agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=larboard
+Group=larboard
+WorkingDirectory=/opt/larboard/repo
+EnvironmentFile=/etc/larboard/agent.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/larboard/venv/bin/python -m ai.ec2.launch
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+StateDirectory=larboard
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

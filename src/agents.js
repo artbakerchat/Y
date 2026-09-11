@@ -1,18 +1,30 @@
+import { createRequire } from 'module';
 import { wordSpecialistTool } from '../tools/word-specialist-tool.js';
 
-export const AGENT_PROFILES = {
-  forge: {
-    id: 'forge',
-    name: 'Forge',
-    description: 'A focused word specialist and conversation partner.',
-    systemPrompt: 'Help the user explore meaning, nuance, connotation, etymology, tone, and poetic or precise word choice. Stay tightly on the user\'s topic; do not drift into generic life coaching or broad brainstorming. Use plain language, give concrete examples when useful, and ask at most one concise follow-up question when needed.',
-    toolNames: ['get_palette', 'search_palette', 'suggest_related_words', 'consult_word_specialist'],
-    skillNames: '*',
-    dailyRequestLimit: 8,
-    maxToolCallsPerRequest: 3,
-    specialist: wordSpecialistTool,
-  },
+// Load profile definitions from the shared source of truth.
+// agentcore/profiles.json is the canonical registry for all serialisable
+// profile fields. Runtime-only fields (specialist function references) are
+// injected here and never stored in the JSON file.
+const require = createRequire(import.meta.url);
+const _profilesData = require('../agentcore/profiles.json');
+const _rawProfiles = _profilesData.profiles || {};
+
+// Map specialist string keys to live tool objects. Add new entries here
+// when new specialist tools are introduced.
+const SPECIALIST_MAP = {
+  word_specialist: wordSpecialistTool,
 };
+
+// Enrich each profile from JSON with its runtime specialist reference.
+export const AGENT_PROFILES = Object.fromEntries(
+  Object.entries(_rawProfiles).map(([id, profile]) => [
+    id,
+    {
+      ...profile,
+      specialist: SPECIALIST_MAP[profile.specialist] ?? null,
+    },
+  ])
+);
 
 export function getAgentProfile(id = 'forge') {
   return AGENT_PROFILES[id] || null;

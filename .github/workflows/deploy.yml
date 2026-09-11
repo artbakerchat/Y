@@ -24,6 +24,9 @@ jobs:
         with:
           node-version: 22
 
+      - name: Validate Markdown skills
+        run: node scripts/validate-skills.js
+
       - name: Upload website assets to R2
         run: |
           find skills -type f -name '*.md' -print0 | while IFS= read -r -d '' skill; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$skill" --file "$skill" --content-type 'text/markdown; charset=utf-8' --cache-control 'no-cache' --remote; done

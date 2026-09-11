@@ -1,0 +1,885 @@
+openapi: 3.0.3
+info:
+  title: Forge API
+  description: |
+    Forge is a full-stack AI conversation workspace focused on word exploration
+    and palette building. Model requests are handled server-side; AWS credentials
+    never reach the browser.
+
+    ## Rate limits
+
+    - **Daily model requests**: 8 per session (resets at midnight UTC).
+    - **Prompt length**: ≤ 4 000 characters.
+    - **Word count**: ≤ 52 words.
+    - **Word length**: ≤ 16 characters per word.
+    - **Legacy URL redirects** (local server): 20 per IP per 60 seconds.
+
+    ## Session
+
+    All mutable endpoints are tied to a session cookie named `larboard_session`.
+    On the first request the server assigns a UUID and returns it via
+    `Set-Cookie`. Subsequent requests that carry the cookie continue the same
+    session. Sessions expire after **48 hours** of inactivity.
+
+    ## Environments
+
+    | Environment | Base URL | Notes |
+    |---|---|---|
+    | Local Node server | `http://localhost:3000` | Runs `server.mjs`; uses Strands SDK when installed, falls back to Bedrock Converse |
+    | Cloudflare Worker | `https://<your-domain>` | Runs `src/worker.js`; full agent loop with tools, skills, and optional AgentCore routing |
+
+  version: "1.0.0"
+  contact:
+    name: Forge project
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server (server.mjs)
+  - url: https://example.workers.dev
+    description: Cloudflare Worker (replace with your actual Worker URL)
+
+tags:
+  - name: Health
+    description: Liveness and configuration check
+  - name: Session State
+    description: Read and write per-session workspace state (palette, messages, etc.)
+  - name: Conversation
+    description: Send a prompt to the AI agent
+  - name: Agents
+    description: List available agent profiles (Worker only)
+
+# ---------------------------------------------------------------------------
+# SECURITY
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: larboard_session
+      description: |
+        A UUID assigned on first request. Carries session identity for state
+        loading, rate-limit tracking, and conversation history. Set by the
+        server via `Set-Cookie`; clients do not need to generate it.
+
+  # ---------------------------------------------------------------------------
+  # SHARED SCHEMAS
+  # ---------------------------------------------------------------------------
+  schemas:
+
+    # ---- Palette / workspace state ----------------------------------------
+    PaletteWord:
+      type: string
+      maxLength: 16
+      description: A single word in the palette. Max 16 characters.
+      example: "aurora"
+
+    PrinterImage:
+      type: object
+      nullable: true
+      properties:
+        src:
+          type: string
+          description: Data URL or remote URL of the image.
+        uploadedAt:
+          type: integer
+          format: int64
+          description: Unix timestamp (ms) when the image was uploaded.
+      required: [src, uploadedAt]
+
+    Printer:
+      type: object
+      properties:
+        note:
+          type: string
+          description: Freeform note attached to the printer workspace.
+          default: ""
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrinterImage'
+          maxItems: 3
+          description: Up to 3 image slots. Null entries represent empty slots.
+      required: [note, images]
+
+    RateInfo:
+      type: object
+      description: Daily request-rate tracking for this session.
+      properties:
+        day:
+          type: string
+          format: date
+          description: "The date (YYYY-MM-DD UTC) the counter was last reset."
+          example: "2026-09-11"
+        count:
+          type: integer
+          minimum: 0
+          maximum: 8
+          description: Number of model requests made today.
+          example: 2
+      required: [day, count]
+
+    Message:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [user, assistant]
+        content:
+          type: string
+          description: Plain-text message content.
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of when the message was recorded.
+      required: [role, content]
+
+    SessionState:
+      type: object
+      description: Complete workspace state for a session.
+      properties:
+        agentId:
+          type: string
+          description: |
+            Active agent profile. Changing this field via POST /api/state
+            resets conversation history in the Worker. Always `"forge"` in
+            the local server.
+          default: "forge"
+          example: "forge"
+        paletteId:
+          type: string
+          description: Identifier of the active palette template.
+          default: "default"
+          example: "volunteering"
+        paletteStory:
+          type: string
+          description: |
+            Narrative description of the palette's purpose. Shown on first
+            load as an italicised block. Editable by the user.
+          example: "This palette helps coordinate volunteers, shifts, and schedules."
+        palette:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaletteWord'
+          maxItems: 52
+          description: The current word palette (up to 52 words).
+        promptWords:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaletteWord'
+          maxItems: 52
+          description: Words selected from the palette to include in the next prompt.
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+          description: Conversation history (last 100 turns stored; last 20 sent to the model).
+        pendingPrompt:
+          type: string
+          maxLength: 4000
+          description: A prompt awaiting clarification. Set by the agent when it asks for more context.
+        printer:
+          $ref: '#/components/schemas/Printer'
+        rate:
+          $ref: '#/components/schemas/RateInfo'
+        expiresAt:
+          type: integer
+          format: int64
+          description: Unix timestamp (ms) when this session expires (48 h after last save).
+      required:
+        - agentId
+        - paletteId
+        - paletteStory
+        - palette
+        - promptWords
+        - messages
+        - pendingPrompt
+        - printer
+        - rate
+        - expiresAt
+
+    # ---- Health ------------------------------------------------------------
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          example: true
+        region:
+          type: string
+          description: AWS region used for Bedrock calls.
+          example: "ca-central-1"
+        model:
+          type: string
+          description: Bedrock model ID in use.
+          example: "ca.amazon.nova-lite-v1:0"
+        agents:
+          type: array
+          description: List of available agent profiles (Worker only; absent in local server response).
+          items:
+            $ref: '#/components/schemas/AgentSummary'
+      required: [ok, region, model]
+
+    # ---- Agents ------------------------------------------------------------
+    AgentSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "forge"
+        name:
+          type: string
+          example: "Forge"
+        description:
+          type: string
+          example: "A focused word specialist and conversation partner."
+      required: [id, name, description]
+
+    # ---- Ask ---------------------------------------------------------------
+    AskRequest:
+      type: object
+      description: |
+        Prompt payload. Either `prompt` or `message` may be used; `prompt`
+        takes precedence. The `agent` field and `x-agent-id` header are
+        Worker-only; the local server ignores them.
+      properties:
+        prompt:
+          type: string
+          maxLength: 4000
+          description: |
+            The user's message. Must not exceed 4 000 characters, 52 words,
+            or 16 characters in any single word.
+          example: "What is the connotation of the word aurora?"
+        message:
+          type: string
+          maxLength: 4000
+          description: Alias for `prompt`. Ignored when `prompt` is also present.
+        agent:
+          type: string
+          description: |
+            Agent profile to use (Worker only). Defaults to `"forge"`.
+            Switching agents resets conversation history for the session.
+          example: "forge"
+      required: []
+
+    AskResponse:
+      type: object
+      properties:
+        answer:
+          type: string
+          description: The agent's text response.
+          example: "Aurora carries a sense of luminous beauty and renewal…"
+        agent:
+          type: boolean
+          description: |
+            `true` when a full agent loop ran (tools available).
+            `false` for the simple Bedrock Converse fallback in `server.mjs`.
+        runtime:
+          type: string
+          description: |
+            `"agentcore"` when the Worker routed the request to the Python
+            AgentCore runtime. Absent or undefined for the local JS loop.
+          example: "agentcore"
+        toolCallCounts:
+          type: object
+          description: |
+            Map of tool name → call count for the completed turn (Worker
+            local loop only). Absent when routing to AgentCore.
+          additionalProperties:
+            type: integer
+          example:
+            get_palette: 1
+            consult_word_specialist: 1
+      required: [answer]
+
+    # ---- Errors ------------------------------------------------------------
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Human-readable error message.
+          example: "Prompt is required."
+        limit:
+          type: integer
+          description: |
+            The applicable limit. Present on 429 responses that carry rate
+            information.
+          example: 8
+      required: [error]
+
+# ---------------------------------------------------------------------------
+# PATHS
+# ---------------------------------------------------------------------------
+paths:
+
+  # --------------------------------------------------------------------------
+  /api/health:
+    get:
+      operationId: getHealth
+      summary: Health check
+      description: |
+        Returns the liveness status, configured AWS region, and Bedrock model
+        ID. In the Cloudflare Worker this also includes the list of available
+        agent profiles. No session cookie required.
+      tags: [Health]
+      responses:
+        "200":
+          description: Server is running.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              examples:
+                localServer:
+                  summary: Local server response
+                  value:
+                    ok: true
+                    region: "ca-central-1"
+                    model: "amazon.nova-micro-v1:0"
+                workerResponse:
+                  summary: Cloudflare Worker response (includes agents)
+                  value:
+                    ok: true
+                    region: "ca-central-1"
+                    model: "ca.amazon.nova-lite-v1:0"
+                    agents:
+                      - id: "forge"
+                        name: "Forge"
+                        description: "A focused word specialist and conversation partner."
+        "500":
+          description: Unexpected runtime error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --------------------------------------------------------------------------
+  /api/agents:
+    get:
+      operationId: listAgents
+      summary: List agent profiles
+      description: |
+        Returns all registered agent profiles. **Cloudflare Worker only** —
+        the local `server.mjs` does not expose this endpoint (returns 404).
+        The same data is also embedded in the `GET /api/health` response under
+        the `agents` key.
+      tags: [Agents]
+      security:
+        - sessionCookie: []
+      responses:
+        "200":
+          description: Array of agent profile summaries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentSummary'
+              example:
+                - id: "forge"
+                  name: "Forge"
+                  description: "A focused word specialist and conversation partner."
+        "404":
+          description: Endpoint not found (local server only).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Unexpected runtime error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --------------------------------------------------------------------------
+  /api/state:
+    get:
+      operationId: getState
+      summary: Load session state
+      description: |
+        Returns the full workspace state for the current session. If no session
+        cookie is present, the server creates a new session and returns a
+        fresh state, setting `Set-Cookie` in the response.
+
+        Context detection runs on first load: pass `?context=<id>` to select a
+        palette template immediately.
+      tags: [Session State]
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: context
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - volunteering
+              - teaching
+              - library
+              - foodbank
+              - contracting
+              - content_creator
+              - researcher
+              - household
+              - wellness
+              - default
+          description: |
+            Palette context to load on a new session. Ignored if a valid
+            session already exists.
+          example: "volunteering"
+      responses:
+        "200":
+          description: Current session state.
+          headers:
+            Set-Cookie:
+              description: |
+                `larboard_session=<uuid>; Path=/; HttpOnly; SameSite=Lax`
+                Returned on every GET /api/state response to (re)establish the
+                session cookie.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+              example:
+                agentId: "forge"
+                paletteId: "default"
+                paletteStory: "This palette is for general word exploration and creative writing."
+                palette:
+                  - "anchor"
+                  - "aurora"
+                  - "cascade"
+                  - "echo"
+                  - "ember"
+                promptWords: []
+                messages: []
+                pendingPrompt: ""
+                printer:
+                  note: ""
+                  images: [null, null, null]
+                rate:
+                  day: "2026-09-11"
+                  count: 0
+                expiresAt: 1757722800000
+        "500":
+          description: Unexpected runtime error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      operationId: saveState
+      summary: Save session state
+      description: |
+        Merges the supplied fields into the current session state and persists
+        the result. Unrecognised fields are dropped. The response always returns
+        the cleaned, merged state.
+
+        The following constraints are enforced on write:
+        - `palette` entries are trimmed, filtered to non-empty strings, and
+          capped at 52 words (Worker additionally enforces the 16-character
+          word limit).
+        - `promptWords` is capped at 52 words.
+        - `messages` is capped at the last 100 turns.
+        - `pendingPrompt` is truncated to 4 000 characters.
+        - `printer.images` is capped at 3 slots.
+      tags: [Session State]
+      security:
+        - sessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: |
+                Partial state object. Only the fields present in the payload
+                are merged; omitted fields retain their current values.
+              properties:
+                paletteId:
+                  type: string
+                  description: New palette template ID.
+                paletteStory:
+                  type: string
+                  description: Replacement palette story text.
+                palette:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaletteWord'
+                  maxItems: 52
+                promptWords:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PaletteWord'
+                  maxItems: 52
+                pendingPrompt:
+                  type: string
+                  maxLength: 4000
+                printer:
+                  $ref: '#/components/schemas/Printer'
+            examples:
+              updatePalette:
+                summary: Add new words to the palette
+                value:
+                  palette:
+                    - "anchor"
+                    - "aurora"
+                    - "solitude"
+                    - "labyrinth"
+              updatePrinterNote:
+                summary: Save a printer note
+                value:
+                  printer:
+                    note: "Draft for the workshop handout."
+                    images: [null, null, null]
+      responses:
+        "200":
+          description: Merged and cleaned state after the save.
+          headers:
+            Set-Cookie:
+              description: Session cookie (same format as GET /api/state).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionState'
+        "400":
+          description: Malformed JSON body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Unexpected runtime error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # --------------------------------------------------------------------------
+  /api/ask:
+    post:
+      operationId: ask
+      summary: Send a prompt to the agent
+      description: |
+        Submits a prompt to the configured AI agent and returns a response.
+        The session's conversation history is automatically appended and
+        persisted.
+
+        **Routing (Worker only)**:
+        - When `AGENTCORE_RUNTIME_ARN` is set, the request is forwarded to the
+          Python AgentCore runtime.
+        - Otherwise, the JavaScript agent loop runs directly in the Worker with
+          full tool and skill support.
+
+        **Input constraints** (enforced before any model call):
+        | Constraint | Limit | HTTP status on violation |
+        |---|---|---|
+        | Characters | ≤ 4 000 | 413 |
+        | Words | ≤ 52 | 413 |
+        | Characters per word | ≤ 16 | 413 |
+        | Requests per day | ≤ 8 | 429 |
+
+        **Agent selection (Worker only)**:
+        Pass the agent ID in the JSON body (`"agent": "forge"`) or in the
+        `x-agent-id` request header. Switching agents resets conversation
+        history. The local server always uses the built-in Forge logic.
+      tags: [Conversation]
+      security:
+        - sessionCookie: []
+      parameters:
+        - name: x-agent-id
+          in: header
+          required: false
+          schema:
+            type: string
+          description: |
+            Agent profile ID (Worker only). Overridden by the `agent` field in
+            the request body when both are present. Defaults to `"forge"`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AskRequest'
+            examples:
+              simplePrompt:
+                summary: Basic word question
+                value:
+                  prompt: "What does aurora mean poetically?"
+              palettePrompt:
+                summary: Prompt with explicit agent selection (Worker)
+                value:
+                  prompt: "Suggest words related to the theme of light."
+                  agent: "forge"
+              messageAlias:
+                summary: Using the message alias instead of prompt
+                value:
+                  message: "Find words that feel like solitude."
+      responses:
+        "200":
+          description: Agent response.
+          headers:
+            Set-Cookie:
+              description: Session cookie refreshed after the completed turn.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AskResponse'
+              examples:
+                localServerResponse:
+                  summary: Local server (simple Bedrock fallback)
+                  value:
+                    answer: "Aurora carries a sense of luminous beauty and renewal. In poetry it often signals a threshold moment — the world caught between night and full day."
+                    agent: false
+                workerResponse:
+                  summary: Worker with full agent loop
+                  value:
+                    answer: "Aurora's Latin root means 'dawn'. Its connotation blends rarity with the sublime — it names something beautiful precisely because it doesn't last."
+                    agent: true
+                    toolCallCounts:
+                      consult_word_specialist: 1
+                agentCoreResponse:
+                  summary: Worker routing to AgentCore
+                  value:
+                    answer: "Aurora (Latin: dawn) carries connotations of rare luminous beauty, renewal, and the moment before full light."
+                    agent: true
+                    runtime: "agentcore"
+        "400":
+          description: Missing or empty prompt, unknown agent, or malformed JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingPrompt:
+                  value:
+                    error: "Message is required."
+                unknownAgent:
+                  value:
+                    error: "Unknown agent."
+        "413":
+          description: Prompt exceeds one of the input constraints.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                tooLong:
+                  value:
+                    error: "Prompt is too long."
+                tooManyWords:
+                  value:
+                    error: "Requests are limited to 52 words."
+                wordTooLong:
+                  value:
+                    error: "Each word is limited to 16 characters."
+        "429":
+          description: Daily request limit reached.
+          headers:
+            Retry-After:
+              description: Seconds until midnight UTC when the counter resets.
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: "Daily request limit reached. Please try again tomorrow."
+                limit: 8
+        "503":
+          description: |
+            Model requests are disabled (Worker) or AWS credentials are not
+            configured.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                disabled:
+                  value:
+                    error: "Model requests are temporarily disabled."
+                noCredentials:
+                  value:
+                    error: "Bedrock credentials are not configured."
+        "500":
+          description: Unexpected runtime error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+# ---------------------------------------------------------------------------
+# x-tools: Tool interface documentation (non-standard extension)
+# Describes the agent tools exposed to Amazon Bedrock via toolConfig.
+# These are NOT HTTP endpoints; they are called by the AI model inside the
+# agent loop and executed server-side.
+# ---------------------------------------------------------------------------
+x-tools:
+  description: |
+    The following tools are registered with Amazon Bedrock as part of the
+    agent's toolConfig. They are invoked by the model during a POST /api/ask
+    turn and run server-side inside the Worker (or local server). Clients
+    never call these directly.
+
+    The `forge` agent profile allows: get_palette, search_palette,
+    suggest_related_words, consult_word_specialist.
+
+    Per-request limit: 3 tool calls of any single tool per turn
+    (maxToolCallsPerRequest = 3).
+
+  tools:
+
+    get_palette:
+      description: |
+        Returns the full contents of the current session palette so the agent
+        can reason about it in context.
+      inputSchema:
+        type: object
+        properties: {}
+        required: []
+      outputSchema:
+        type: string
+        description: |
+          Either "Current palette (N words): word1, word2, …" or
+          "The palette is empty."
+      example:
+        input: {}
+        output: "Current palette (4 words): anchor, aurora, cascade, echo"
+
+    search_palette:
+      description: |
+        Case-insensitive substring search over palette words. Returns all
+        words that contain the query string.
+      inputSchema:
+        type: object
+        properties:
+          query:
+            type: string
+            description: Substring to search for.
+        required: [query]
+      outputSchema:
+        type: string
+        description: |
+          "Found N match(es): word1, word2, …" or
+          "No palette words match \"<query>\"."
+      example:
+        input:
+          query: "aur"
+        output: "Found 1 match(es): aurora"
+
+    suggest_related_words:
+      description: |
+        Suggests thematically related words that could be added to the
+        palette. Uses a built-in theme bank for the themes: nature, light,
+        motion, time. Any other theme returns a general set.
+      inputSchema:
+        type: object
+        properties:
+          theme:
+            type: string
+            description: The theme or concept to base suggestions on.
+        required: [theme]
+      outputSchema:
+        type: string
+        description: |
+          "Suggested words for theme \"<theme>\": word1, word2, …"
+      example:
+        input:
+          theme: "light"
+        output: "Suggested words for theme \"light\": prism, glimmer, radiance, flicker, beacon"
+
+    consult_word_specialist:
+      description: |
+        Delegates to the word-craft specialist sub-agent for deep linguistic
+        analysis: etymology, connotation, or poetic use. The specialist runs
+        its own inner agent loop (up to 4 iterations) with two private tools
+        (look_up_word_details, find_related_words_deep) and returns a 3–6
+        sentence analysis. Requires AWS credentials; returns a graceful
+        fallback message when credentials are absent.
+      inputSchema:
+        type: object
+        properties:
+          word:
+            type: string
+            description: The word to analyse.
+          aspect:
+            type: string
+            description: "Focus area: etymology | connotation | poetic_use"
+            enum: [etymology, connotation, poetic_use]
+        required: [word]
+      outputSchema:
+        type: string
+        description: A 3–6 sentence specialist analysis.
+      example:
+        input:
+          word: "aurora"
+          aspect: "etymology"
+        output: |
+          Aurora derives from the Latin word for dawn and is cognate with
+          the Greek eos. It entered English as both a proper name (the
+          goddess of dawn) and a common noun for the polar light display.
+          Its luminous, rare quality makes it a favourite in elevated
+          registers and lyric poetry.
+
+  specialistTools:
+    description: |
+      Internal tools available only inside the word specialist's own agent
+      loop. Not exposed to the main orchestrator or to clients.
+
+    look_up_word_details:
+      description: |
+        Returns stored etymology, connotation, and register data for a word
+        from a built-in dictionary of ~15 palette-relevant words.
+      inputSchema:
+        type: object
+        properties:
+          word:
+            type: string
+            description: The word to look up.
+        required: [word]
+      outputSchema:
+        type: string
+        description: |
+          Multi-line string with Word, Etymology, Connotation, and Register
+          fields, or a "no stored details" notice for unknown words.
+      example:
+        input:
+          word: "aurora"
+        output: |
+          Word: aurora
+          Etymology: Latin aurora (dawn). Cognate with Greek eos. Used since Classical Latin for the goddess of dawn.
+          Connotation: Luminous beauty, rarity, renewal. Carries a sense of the sublime and the natural spectacular.
+          Register: formal / poetic
+
+    find_related_words_deep:
+      description: |
+        Returns thematically related words from a richer literary vocabulary
+        set than suggest_related_words. Covers themes: light, dark, water,
+        movement, silence, time, nature, mind, structure, decay.
+        Defaults to the "mind" cluster for unrecognised themes.
+      inputSchema:
+        type: object
+        properties:
+          theme:
+            type: string
+            description: |
+              The semantic field to draw from (e.g. light, water, silence,
+              time, decay).
+        required: [theme]
+      outputSchema:
+        type: string
+        description: |
+          "Deep vocabulary for theme \"<theme>\": word1, word2, …"
+      example:
+        input:
+          theme: "light"
+        output: "Deep vocabulary for theme \"light\": luminous, aureate, lambent, incandescent, phosphorescent, crepuscular, scintilla"

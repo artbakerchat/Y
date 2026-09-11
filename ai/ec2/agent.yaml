@@ -1,0 +1,171 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: One regional Larboard peer. Deploy once for each of agy, kiro, and codex.
+Parameters:
+  AgentId:
+    Type: String
+    AllowedValues: [agy, kiro, codex]
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+    Description: A subnet in VpcId with outbound internet access for SSM, pip, GitHub and model APIs.
+  AssociatePublicIp:
+    Type: String
+    Default: 'true'
+    AllowedValues: ['true', 'false']
+    Description: Use false only with working NAT or equivalent outbound access.
+  InstanceType:
+    Type: String
+    Default: t3.small
+    AllowedValues: [t3.small, t3.medium]
+  ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  RepositoryCommit:
+    Type: String
+    AllowedPattern: '[a-f0-9]{40}'
+    Description: Published commit in artbakerchat/Y containing ai/ec2/bootstrap.sh.
+  SecretArn:
+    Type: String
+    AllowedPattern: 'arn:aws:secretsmanager:[a-z0-9-]+:[0-9]{12}:secret:[a-zA-Z0-9/_+=.@-]+'
+    Description: Same-region secret containing only this peer token, model, and provider API key.
+  BedrockResourceArns:
+    Type: CommaDelimitedList
+    Default: arn:aws:bedrock:ca-central-1::foundation-model/amazon.nova-micro-v1:0
+    Description: For kiro, list the exact model and any inference-profile/destination-model ARNs used by KIRO_MODEL.
+Conditions:
+  IsKiro: !Equals [!Ref AgentId, kiro]
+  PublicIp: !Equals [!Ref AssociatePublicIp, 'true']
+Resources:
+  Sessions:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules: [{ObjectOwnership: BucketOwnerEnforced}]
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireSessions
+            Status: Enabled
+            Prefix: !Sub '${AgentId}-sessions/'
+            ExpirationInDays: 2
+      Tags:
+        - {Key: Project, Value: larboard}
+        - {Key: AgentId, Value: !Ref AgentId}
+  SessionsPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref Sessions
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource: [!GetAtt Sessions.Arn, !Sub '${Sessions.Arn}/*']
+            Condition:
+              Bool: {aws:SecureTransport: 'false'}
+  AgentRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: {Service: ec2.amazonaws.com}
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: PeerSessionAndSecret
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:ListBucket
+                Resource: !GetAtt Sessions.Arn
+              - Effect: Allow
+                Action: [s3:GetObject, s3:PutObject, s3:DeleteObject]
+                Resource: !Sub '${Sessions.Arn}/${AgentId}-sessions/*'
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref SecretArn
+        - !If
+          - IsKiro
+          - PolicyName: KiroModel
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: [bedrock:InvokeModel, bedrock:InvokeModelWithResponseStream]
+                  Resource: !Ref BedrockResourceArns
+          - !Ref AWS::NoValue
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref AgentRole]
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Outbound-only agent; use SSM or an outbound HTTPS tunnel.
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: '-1'
+          CidrIp: 0.0.0.0/0
+  Instance:
+    Type: AWS::EC2::Instance
+    DependsOn: SessionsPolicy
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref InstanceProfile
+      MetadataOptions:
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      NetworkInterfaces:
+        - DeviceIndex: '0'
+          SubnetId: !Ref SubnetId
+          GroupSet: [!Ref SecurityGroup]
+          AssociatePublicIpAddress: !If [PublicIp, true, false]
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeType: gp3
+            VolumeSize: 20
+            Encrypted: true
+            DeleteOnTermination: true
+      Tags:
+        - {Key: Name, Value: !Sub 'larboard-${AgentId}'}
+        - {Key: Project, Value: larboard}
+        - {Key: AgentId, Value: !Ref AgentId}
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euo pipefail
+          dnf install -y git
+          install -d /opt/larboard
+          git clone https://github.com/artbakerchat/Y.git /opt/larboard/repo
+          cd /opt/larboard/repo
+          git checkout -b agents/${AgentId} ${RepositoryCommit}
+          bash ai/ec2/bootstrap.sh '${AgentId}' '${AWS::Region}' '${Sessions}' '${SecretArn}'
+Outputs:
+  InstanceId:
+    Value: !Ref Instance
+  SessionBucket:
+    Value: !Ref Sessions
+  InstanceProfileName:
+    Value: !Ref InstanceProfile
+  AgentId:
+    Value: !Ref AgentId
+  Connect:
+    Value: !Sub 'aws ssm start-session --region ${AWS::Region} --target ${Instance}'
