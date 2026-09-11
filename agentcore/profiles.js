@@ -1,4 +1,4 @@
-{
+export default {
   "profiles": {
     "forge": {
       "id": "forge",

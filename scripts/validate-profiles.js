@@ -11,52 +11,48 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import profilesData from '../agentcore/profiles.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.join(__dirname, '..');
 
-const PROFILES_JSON = path.join(repoRoot, 'agentcore', 'profiles.json');
+const PROFILES_JS = path.join(repoRoot, 'agentcore', 'profiles.js');
 const BUNDLED_PROFILES_JSON = path.join(repoRoot, 'app', 'ForgeAgent', 'profiles.json');
 const JS_AGENTS = path.join(repoRoot, 'src', 'agents.js');
 const PY_PROFILES = path.join(repoRoot, 'app', 'ForgeAgent', 'forge_profiles.py');
 
 let errors = [];
 
-// Check that profiles.json exists
-if (!fs.existsSync(PROFILES_JSON)) {
-  errors.push(`✗ Missing profiles.json at ${PROFILES_JSON}`);
+// Check that the JavaScript registry exists. A regular module works in both
+// Node.js tests and Cloudflare Workers without JSON import attributes.
+if (!fs.existsSync(PROFILES_JS)) {
+  errors.push("Missing profiles.js at " + PROFILES_JS);
 } else {
-  console.log(`✓ Found profiles.json`);
+  console.log("Found profiles.js");
 }
 
 // Check that Python profiles module exists
 if (!fs.existsSync(PY_PROFILES)) {
-  errors.push(`✗ Missing forge_profiles.py at ${PY_PROFILES}`);
+  errors.push("Missing forge_profiles.py at " + PY_PROFILES);
 } else {
-  console.log(`✓ Found forge_profiles.py`);
+  console.log("Found forge_profiles.py");
 }
 
-// Load and parse profiles.json
-let profiles = {};
-try {
-  const content = fs.readFileSync(PROFILES_JSON, 'utf-8');
-  profiles = JSON.parse(content).profiles || {};
-  console.log(`✓ Parsed profiles.json (${Object.keys(profiles).length} profiles)`);
-} catch (error) {
-  errors.push(`✗ Failed to parse profiles.json: ${error.message}`);
-}
+// Load the canonical JavaScript registry.
+const profiles = profilesData.profiles || {};
+console.log("Loaded profiles.js (" + Object.keys(profiles).length + " profiles)");
 
 // AgentCore CodeZip deployments package app/ForgeAgent independently, so its
-// bundled registry must remain byte-for-byte equivalent to the canonical one.
+// bundled registry must remain equivalent to the canonical one.
 try {
-  const bundled = JSON.parse(fs.readFileSync(BUNDLED_PROFILES_JSON, 'utf-8')).profiles || {};
+  const bundled = JSON.parse(fs.readFileSync(BUNDLED_PROFILES_JSON, "utf-8")).profiles || {};
   if (JSON.stringify(bundled) !== JSON.stringify(profiles)) {
-    errors.push('âœ— Bundled Python profiles.json is out of sync with agentcore/profiles.json');
+    errors.push("Bundled Python profiles.json is out of sync with agentcore/profiles.js");
   } else {
-    console.log('âœ“ Bundled Python profile registry is synchronized');
+    console.log("Bundled Python profile registry is synchronized");
   }
 } catch (error) {
-  errors.push(`âœ— Failed to load bundled Python profiles.json: ${error.message}`);
+  errors.push("Failed to load bundled Python profiles.json: " + error.message);
 }
 
 // Validate each profile structure
@@ -83,10 +79,10 @@ for (const [profileId, profile] of Object.entries(profiles)) {
   }
 }
 
-// The JavaScript runtime loads this canonical registry dynamically.
+// The JavaScript runtime loads this canonical registry from profiles.js.
 const jsContent = fs.readFileSync(JS_AGENTS, 'utf-8');
 // Profile IDs are intentionally not duplicated in agents.js; it imports the
-// JSON registry at runtime. Keep this compatibility loop empty.
+// JavaScript registry at runtime. Keep this compatibility loop empty.
 const jsProfileIds = [];
 for (const profileId of jsProfileIds) {
   if (!jsContent.includes(`'${profileId}'`) && !jsContent.includes(`"${profileId}"`)) {

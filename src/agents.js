@@ -1,10 +1,10 @@
 import { wordSpecialistTool } from '../tools/word-specialist-tool.js';
-import profilesData from '../agentcore/profiles.json' with { type: 'json' };
+import profilesData from '../agentcore/profiles.js';
 
 // Load profile definitions from the shared source of truth.
-// agentcore/profiles.json is the canonical registry for all serialisable
+// agentcore/profiles.js is the canonical registry for all serialisable
 // profile fields. Runtime-only fields (specialist function references) are
-// injected here and never stored in the JSON file.
+// injected here and never stored in the profile module.
 const _rawProfiles = profilesData.profiles || {};
 
 // Map specialist string keys to live tool objects. Add new entries here

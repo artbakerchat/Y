@@ -221,7 +221,7 @@ R2 is checked before the Worker's inline fallback skills. This means the committ
 
 ## Add a customizable Worker agent
 
-The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js), using [`agentcore/profiles.json`](agentcore/profiles.json) as the shared registry. Larboard's profiles include `forge` (general coordinator), `food-bank` (shift and pantry coordination), `nonprofit-helpdesk` (small-organization operations), `mutual-aid` (requests, offers, and safe follow-up), `civic-knowledge` (plain-language local services and public processes), `bob-dylan` (Music Expert), and `santa-claus` (Santa Claus). The existing `forge` profile is the default, so existing clients do not need to send an agent id.
+The Worker agent loop is profile-driven in [`src/agents.js`](src/agents.js), using [`agentcore/profiles.js`](agentcore/profiles.js) as the shared registry. Larboard's profiles include `forge` (general coordinator), `food-bank` (shift and pantry coordination), `nonprofit-helpdesk` (small-organization operations), `mutual-aid` (requests, offers, and safe follow-up), `civic-knowledge` (plain-language local services and public processes), `bob-dylan` (Music Expert), and `santa-claus` (Santa Claus). The existing `forge` profile is the default, so existing clients do not need to send an agent id.
 
 To add another Worker agent:
 
