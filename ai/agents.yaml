@@ -1,0 +1,60 @@
+# agents.yaml — larboard.ca Peer Agent Fleet
+# Three sovereign agents, each hosted on a dedicated EC2 machine.
+# No single orchestrator: each agent owns its region, provider, and domain.
+
+agents:
+
+  agy:
+    name: "agy"
+    description: "Google Antigravity agent — code generation, GCP tooling, multi-agent orchestration"
+    ec2_region: us-west-2          # Oregon
+    provider: google
+    model: gemini-3.6-flash
+    endpoint: "https://agy.larboard.ca/invoke"
+    skills_dir: "agents/agy/skills/"
+    tools_module: "agents.agy.tools.gcp_tools"
+    session:
+      backend: s3
+      bucket: "larboard-agy-sessions"
+      prefix: "agy-sessions/"
+    auth_env: AGY_INVOKE_TOKEN
+    env:
+      GOOGLE_CLOUD_PROJECT: "${GCP_PROJECT_ID}"
+      GOOGLE_CLOUD_REGION: "us-west1"
+
+  kiro:
+    name: "kiro"
+    description: "AWS Kiro agent — Bedrock workflows, S3 session persistence, AgentCore deployment"
+    ec2_region: ca-central-1       # Montreal
+    provider: aws
+    model: "ca.anthropic.claude-3-5-haiku-20241022-v1:0"
+    endpoint: "https://kiro.larboard.ca/invoke"
+    skills_dir: "agents/kiro/skills/"
+    tools_module: "agents.kiro.tools.aws_tools"
+    session:
+      backend: s3
+      bucket: "larboard-kiro-sessions"
+      prefix: "kiro-sessions/"
+    auth_env: KIRO_INVOKE_TOKEN
+    env:
+      AWS_DEFAULT_REGION: "ca-central-1"
+      FORGE_SESSION_BUCKET: "larboard-kiro-sessions"
+      FORGE_SESSION_PREFIX: "kiro-sessions/"
+
+  codex:
+    name: "codex"
+    description: "OpenAI Codex agent — GPT-5.6 Luna code synthesis, GDPR-compliant EU data handling, Responses API streaming"
+    ec2_region: eu-west-3          # Paris
+    provider: openai
+    model: gpt-5.6-luna
+    endpoint: "https://codex.larboard.ca/invoke"
+    skills_dir: "agents/codex/skills/"
+    tools_module: "agents.codex.tools.openai_tools"
+    session:
+      backend: s3
+      bucket: "larboard-codex-sessions"
+      prefix: "codex-sessions/"
+    auth_env: CODEX_INVOKE_TOKEN
+    env:
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      AWS_DEFAULT_REGION: "eu-west-3"
