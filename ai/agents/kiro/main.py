@@ -115,12 +115,14 @@ def require_invoke_token(authorization: Optional[str]) -> None:
 @app.post("/invoke")
 async def invoke(req: InvokeRequest, authorization: Optional[str] = Header(default=None)):
     require_invoke_token(authorization)
-    if not req.session_id.strip() or not req.prompt.strip():
+    session_id = req.session_id.strip()
+    prompt = req.prompt.strip()
+    if not session_id or not prompt:
         raise HTTPException(status_code=400, detail="session_id and prompt are required.")
-    agent = build_agent(req.session_id)
+    agent = build_agent(session_id)
 
     async def stream():
-        async for event in agent.stream_async(req.prompt):
+        async for event in agent.stream_async(prompt):
             if hasattr(event, "text") and event.text:
                 yield event.text
 

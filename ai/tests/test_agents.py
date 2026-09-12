@@ -95,10 +95,10 @@ class AgentStartupAndInvocationTests(unittest.IsolatedAsyncioTestCase):
                     response = await module.invoke(
                         request, authorization=f"Bearer {config[f'{agent_id.upper()}_INVOKE_TOKEN']}"
                     )
-                    body = b"".join(
+                    body = b"".join([
                         chunk.encode() if isinstance(chunk, str) else chunk
                         async for chunk in response.body_iterator
-                    )
+                    ])
                     self.assertEqual(body, b"mock response to: hello")
                     self.assertEqual(response.media_type, "text/plain")
 
