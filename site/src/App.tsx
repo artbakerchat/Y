@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, useState } from 'react';
+import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -13,7 +13,6 @@ type AgentRole = { id: string; name: string; focus: string; description: string 
 // Constants
 // ---------------------------------------------------------------------------
 
-const STARTER_WORDS = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean'];
 const AGENT_ROLES: AgentRole[] = [
   { id: 'forge', name: 'Forge', focus: 'Good Neighbour Coordinator', description: 'Turn community needs and half-formed ideas into clear next steps.' },
   { id: 'food-bank', name: 'Food Bank Coordinator', focus: 'Food access and volunteers', description: 'Organize pantry operations, donations, pickup windows, and volunteer shifts.' },
@@ -24,14 +23,7 @@ const AGENT_ROLES: AgentRole[] = [
   { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
 ];
 const STARTING_AGENT_IDS = new Set(['forge', 'bob-dylan', 'santa-claus']);
-const APPLE_DEMO_MESSAGES: Message[] = [
-  { role: 'assistant', content: "Hey — glad you're here. What are you working on?" },
-  { role: 'assistant', content: 'Try a community request, ask Bob Dylan about songwriting, or ask Santa Claus about presents. You can switch agents above.' },
-  { role: 'user', content: 'How many apples can I get from the food bank' },
-  { role: 'assistant', content: 'Would you like to confirm the default serving plan of one apple per person, or do you have any specific needs or preferences for the food bank distribution?' },
-  { role: 'user', content: '3 people' },
-  { role: 'assistant', content: 'You can get three apples from the food bank, with one apple per person. Is there anything else you would like to know or plan regarding the food bank distribution?' },
-];
+const FORGE_EXPLORATION_IDS = new Set(['forge', 'food-bank', 'mutual-aid']);
 const STOP_WORDS = new Set(
   'a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(
     ' ',
@@ -179,7 +171,7 @@ function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSele
       )}
 
       <div className="chat">
-        {(messages.length ? messages : APPLE_DEMO_MESSAGES).map((message, index) => (
+        {messages.map((message, index) => (
             <div className={`message ${message.role}`} key={`${index}-${message.content}`}>
               <div className="avatar role-label" aria-label={message.role === 'user' ? 'You' : agentName} title={message.role === 'user' ? 'You' : agentName}>{message.role === 'user' ? 'You' : agentName}</div>
               <div className="bubble">{message.content}</div>
@@ -206,7 +198,9 @@ function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSele
 }
 
 function AgentRoles({ activeAgentId, onSelect, showSpecialists }: { activeAgentId: string; onSelect: (id: string) => void; showSpecialists: boolean }) {
-  const visibleRoles = showSpecialists ? AGENT_ROLES : AGENT_ROLES.filter((role) => STARTING_AGENT_IDS.has(role.id));
+  const visibleRoles = activeAgentId === 'forge' || showSpecialists
+    ? AGENT_ROLES.filter((role) => FORGE_EXPLORATION_IDS.has(role.id))
+    : AGENT_ROLES.filter((role) => STARTING_AGENT_IDS.has(role.id));
 
   return (
     <section className="roles conversation-message" aria-labelledby="roles-title">
@@ -295,7 +289,7 @@ function PalettePanel({
 // ---------------------------------------------------------------------------
 
 export default function App() {
-  const [palette, setPalette] = useState(STARTER_WORDS);
+  const [palette, setPalette] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeAgentId, setActiveAgentId] = useState('forge');
   const [showSpecialists, setShowSpecialists] = useState(false);
@@ -303,6 +297,7 @@ export default function App() {
   const [wordDraft, setWordDraft] = useState('');
   const [region, setRegion] = useState('checking…');
   const [busy, setBusy] = useState(false);
+  const stateWrite = useRef(Promise.resolve());
 
   useEffect(() => {
     Promise.all([
@@ -310,7 +305,9 @@ export default function App() {
       fetch('/api/health').then((r) => r.json() as Promise<{ region?: string }>),
     ])
       .then(([saved, health]) => {
-        setPalette(saved.palette?.length ? saved.palette : STARTER_WORDS);
+        // The backend is authoritative. Do not replace an empty/changed backend
+        // palette with browser-side starter words during a refresh.
+        setPalette(saved.palette || []);
         setMessages(saved.messages || []);
         const savedAgentId = AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge';
         setActiveAgentId(savedAgentId);
@@ -320,15 +317,20 @@ export default function App() {
       .catch(() => setRegion('local preview'));
   }, []);
 
-  async function saveState(next: Partial<State>) {
-    const response = await fetch('/api/state', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(next),
+  function saveState(next: Partial<State>): Promise<State> {
+    // Serialize patches in the browser. Without this, quick palette edits can
+    // race and an older POST can become the value shown after a refresh.
+    const write = stateWrite.current.catch(() => undefined).then(async () => {
+      const response = await fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(next),
+      });
+      if (!response.ok) throw new Error('Could not save workspace state.');
+      return (await response.json()) as State;
     });
-    if (!response.ok) {
-      throw new Error('Could not save workspace state.');
-    }
+    stateWrite.current = write.then(() => undefined, () => undefined);
+    return write;
   }
 
   async function submitMessage(event: FormEvent) {
@@ -371,7 +373,8 @@ export default function App() {
     setPalette(nextPalette);
 
     try {
-      await saveState({ messages: nextMessages.slice(0, -1), palette: nextPalette });
+      const saved = await saveState({ messages: nextMessages.slice(0, -1), palette: nextPalette });
+      setPalette(saved.palette || nextPalette);
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -406,10 +409,12 @@ export default function App() {
     if (agentId === 'forge') setShowSpecialists(true);
     setActiveAgentId(agentId);
     setMessages([]);
-    void saveState({ agentId, messages: [], pendingPrompt: '' });
+    void saveState({ agentId, messages: [], pendingPrompt: '' }).catch(() => {
+      setActiveAgentId('forge');
+    });
   }
 
-  function addWords(event: FormEvent) {
+  async function addWords(event: FormEvent) {
     event.preventDefault();
     const additions = wordDraft
       .split('|')
@@ -418,13 +423,23 @@ export default function App() {
     const next = [...new Set([...additions, ...palette])].slice(0, 52);
     setPalette(next);
     setWordDraft('');
-    void saveState({ palette: next });
+    try {
+      const saved = await saveState({ palette: next });
+      setPalette(saved.palette || next);
+    } catch {
+      setPalette(palette);
+    }
   }
 
-  function removeWord(word: string) {
+  async function removeWord(word: string) {
     const next = palette.filter((item) => item !== word);
     setPalette(next);
-    void saveState({ palette: next });
+    try {
+      const saved = await saveState({ palette: next });
+      setPalette(saved.palette || next);
+    } catch {
+      setPalette(palette);
+    }
   }
 
   return (

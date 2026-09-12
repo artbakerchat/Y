@@ -73,20 +73,31 @@
     let lastWordClickAt = 0;
     let draggedPaletteIndex = -1;
 
-    async function savePromptWords() { await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ promptWords }) }); }
-    async function savePalette(palette) { await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ palette }) }); }
+    let stateWrite = Promise.resolve();
+    async function saveStatePatch(patch) {
+      const write = stateWrite.catch(() => {}).then(async () => {
+        const response = await fetch('/api/state', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) });
+        if (!response.ok) throw new Error('Could not save workspace state.');
+        window.backendState = await response.json();
+        return window.backendState;
+      });
+      stateWrite = write.then(() => {}, () => {});
+      return write;
+    }
+    async function savePromptWords() { return saveStatePatch({ promptWords }); }
+    async function savePalette(palette) { return saveStatePatch({ palette }); }
 
     function syncPromptWordsWithPalette() {
       const availableWords = getPalette();
       const filteredWords = promptWords.filter((word) => availableWords.includes(word));
       if (filteredWords.length !== promptWords.length) {
         promptWords = filteredWords;
-        savePromptWords();
+        savePromptWords().catch(() => {});
         renderPrompt();
       }
     }
 
-    function getPalette() { return Array.isArray(window.backendState?.palette) && window.backendState.palette.length ? window.backendState.palette : defaults; }
+    function getPalette() { return Array.isArray(window.backendState?.palette) ? window.backendState.palette : defaults; }
 
     function renderPalette() {
       paletteDisplay.replaceChildren(...getPalette().map((word, index) => {
@@ -121,7 +132,7 @@
           [reorderedPalette[draggedPaletteIndex], reorderedPalette[index]] = [reorderedPalette[index], reorderedPalette[draggedPaletteIndex]];
           window.backendState = { ...window.backendState, palette: reorderedPalette };
           draggedPaletteIndex = -1;
-          savePalette(reorderedPalette);
+          savePalette(reorderedPalette).catch(() => {});
           renderPalette();
         });
         button.addEventListener('click', () => {
@@ -133,7 +144,7 @@
           } else {
             promptWords.push(word);
           }
-          savePromptWords();
+          savePromptWords().catch(() => {});
           renderPalette();
           renderPrompt();
         });
@@ -154,7 +165,7 @@
           token.setAttribute('aria-label', `Remove ${word}`);
           token.addEventListener('click', () => {
             promptWords.splice(index, 1);
-        savePromptWords();
+        savePromptWords().catch(() => {});
             renderPalette();
             renderPrompt();
           });
@@ -196,7 +207,7 @@
       }
 
       promptWords = [];
-      savePromptWords();
+      savePromptWords().catch(() => {});
       renderPalette();
       renderPrompt();
       clearPromptButton.disabled = false;
