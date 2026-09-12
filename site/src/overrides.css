@@ -16,7 +16,7 @@
 .role-card p{margin:0;color:#8ea1b4;font-size:12px;line-height:1.5}
 .role-card .role-focus{margin-bottom:8px;color:#c4a7ff;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
 .role-card-2{background:linear-gradient(150deg,rgb(39 32 71 / 92%),rgb(17 27 51 / 94%))}.role-card-3{background:linear-gradient(150deg,rgb(45 35 64 / 92%),rgb(16 27 48 / 94%))}.role-card-4{background:linear-gradient(150deg,rgb(23 52 67 / 92%),rgb(10 27 44 / 94%))}.role-card-5{background:linear-gradient(150deg,rgb(41 37 72 / 92%),rgb(14 27 48 / 94%))}
-.workspace{margin-top:42px}
+.workspace{margin-top:0}
 /* Keep role labels readable without taking width away from the conversation. */
 .message{display:block}
 .message .avatar.role-label{display:inline-grid;margin:0 0 8px}

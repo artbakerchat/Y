@@ -464,25 +464,6 @@ export default function App() {
         </header>
 
         <main>
-          <section className="hero">
-            <div>
-              <p className="kicker">A thoughtful AI companion</p>
-              <h1>
-                Build with <em>intent.</em>
-                <br />
-                Ship with clarity.
-              </h1>
-              <p className="lead">
-                Bring a half-formed idea, a question, or a next step. Forge will talk it through
-                with you in plain language.
-              </p>
-              <p className="storage-note">
-                One shared place. Zero local storage. Zero stale app cache. Your inputs stay synced
-                to the backend.
-              </p>
-            </div>
-          </section>
-
           <section className="workspace">
             <ChatPanel
               messages={messages}
