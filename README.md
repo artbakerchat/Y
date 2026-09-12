@@ -82,6 +82,36 @@ When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards requests to the 
 - Amazon Bedrock access in the selected region
 - Python 3.10+ only when building or deploying the AgentCore runtime
 
+### Python peer-agent harness
+
+The three Python peers share one launcher. From the repository root:
+
+```bash
+python -m ai.harness --list
+python -m ai.harness --validate
+AGENT_ID=kiro AWS_REGION=ca-central-1 python -m ai.harness kiro
+```
+
+The launcher keeps fleet selection and process startup in one place; the
+selected peer still owns its provider, tools, region, and S3 session prefix.
+Use `--host` and `--port` for local development. Provider credentials and the
+peer invoke token remain environment/secret-manager configuration.
+
+To use Cloudflare as the model gateway, set the Worker URL and routing tokens:
+
+```bash
+export CLOUDFLARE_WORKER_URL=https://larboard.ca
+export CLOUDFLARE_GATEWAY_TOKEN='the-value-of-the-Worker-secret'
+export KIRO_INVOKE_TOKEN='local-peer-auth-token'
+python -m ai.harness kiro --port 8081
+```
+
+Set the matching `PYTHON_AGENT_GATEWAY_TOKEN` as a Worker secret. The Worker
+then uses its existing AWS credentials, `AWS_REGION`, `BEDROCK_MODEL_ID`, or
+`AGENTCORE_RUNTIME_ARN`; the Python host does not need provider or S3
+credentials. `CLOUDFLARE_GATEWAY_AGENT` selects the Worker profile and
+defaults to `forge`.
+
 ## Run locally
 
 ```powershell

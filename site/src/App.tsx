@@ -240,6 +240,14 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
   const suppressClickRef = useRef(false);
   const contextualAgentRoles = getContextualAgentRoles(activeAgentId);
 
+  // The selected role is promoted to the first card. Return the carousel to
+  // that edge after selection so the newly selected agent is visible at once.
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    requestAnimationFrame(() => track.scrollTo({ left: 0, behavior: 'smooth' }));
+  }, [activeAgentId]);
+
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === 'touch' || event.pointerType === 'mouse') {
       const track = trackRef.current;
@@ -294,7 +302,7 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
         aria-label="Available agents. Swipe or drag horizontally to browse."
       >
         {contextualAgentRoles.map((role, index) => (
-          <button className={`role-card role-card-${(index % 5) + 1}${agentMode === 'manual' && activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
+          <button className={`role-card role-card-${(index % 5) + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
             <span className="role-index">{String(index + 1).padStart(2, '0')}</span>
             <h3>{role.name}{RECOMMENDED_AGENT_IDS.includes(role.id) ? <span className="role-recommended">Recommended</span> : null}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
             <p className="role-focus">{role.focus}</p>

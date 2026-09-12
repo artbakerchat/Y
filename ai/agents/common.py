@@ -1,15 +1,41 @@
 """Authenticated peer service and isolated Strands sessions."""
 import asyncio
 import hmac
+import json
 import os
+import urllib.error
+import urllib.request
 
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field, field_validator
-from strands import Agent
-from strands.agent.conversation_manager import SlidingWindowConversationManager
-from strands.hooks import BeforeToolCallEvent, HookProvider, HookRegistry
-from strands.session import S3SessionManager
+try:
+    from strands import Agent
+    from strands.agent.conversation_manager import SlidingWindowConversationManager
+    from strands.hooks import BeforeToolCallEvent, HookProvider, HookRegistry
+    from strands.session import S3SessionManager
+except ModuleNotFoundError:  # Keep health checks and contract tests dependency-light.
+    class Agent:  # pragma: no cover - real agents use Strands in production.
+        def __init__(self, **kwargs):
+            raise RuntimeError("strands-agents is required to construct an agent")
+
+    class SlidingWindowConversationManager:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
+
+    class BeforeToolCallEvent:
+        pass
+
+    class HookProvider:
+        pass
+
+    class HookRegistry:
+        def add_callback(self, *_args, **_kwargs):
+            return None
+
+    class S3SessionManager:
+        def __init__(self, **kwargs):
+            self.kwargs = kwargs
 
 REGIONS = {"agy": "us-west-2", "kiro": "ca-central-1", "codex": "eu-west-3"}
 
@@ -146,3 +172,60 @@ def create_app(agent_id: str, factory) -> FastAPI:
         })
 
     return app
+
+
+def create_gateway_app(agent_id: str) -> FastAPI:
+    """Expose the peer contract while using the Cloudflare Worker as the model gateway."""
+    app = FastAPI(title=f"Larboard {agent_id} via Cloudflare gateway")
+    worker_url = os.environ.get("CLOUDFLARE_WORKER_URL", "").rstrip("/")
+    gateway_token = os.environ.get("CLOUDFLARE_GATEWAY_TOKEN", "")
+    gateway_agent = os.environ.get("CLOUDFLARE_GATEWAY_AGENT", "forge")
+
+    @app.get("/health")
+    def health():
+        configured = bool(worker_url and gateway_token)
+        missing = [name for name, value in (
+            ("CLOUDFLARE_WORKER_URL", worker_url),
+            ("CLOUDFLARE_GATEWAY_TOKEN", gateway_token),
+        ) if not value]
+        return JSONResponse({"agent": agent_id, "region": os.environ.get("AWS_REGION", REGIONS[agent_id]),
+                             "mode": "cloudflare-gateway", "gateway": worker_url or None,
+                             "status": "ok" if configured else "unconfigured", "missing": missing},
+                            status_code=200 if configured else 503)
+
+    @app.post("/invoke")
+    async def invoke(req: InvokeRequest, authorization: str | None = Header(default=None)):
+        expected = os.environ.get(f"{agent_id.upper()}_INVOKE_TOKEN", "")
+        if not expected:
+            raise HTTPException(503, "Agent invoke authentication is not configured.")
+        if not hmac.compare_digest((authorization or "").encode(), f"Bearer {expected}".encode()):
+            raise HTTPException(401, "Unauthorized.")
+        if not worker_url or not gateway_token:
+            raise HTTPException(503, "Cloudflare gateway configuration is incomplete.")
+        payload = json.dumps({"session_id": req.session_id, "prompt": req.prompt,
+                              "agent": gateway_agent}).encode()
+        gateway_request = urllib.request.Request(
+            f"{worker_url}/api/agent-gateway", data=payload, method="POST",
+            headers={"content-type": "application/json", "x-peer-gateway-token": gateway_token},
+        )
+        try:
+            answer = await asyncio.to_thread(_read_gateway_response, gateway_request)
+        except urllib.error.HTTPError as exc:
+            detail = (await asyncio.to_thread(exc.read)).decode(errors="replace")[:240]
+            raise HTTPException(exc.code, detail or "Cloudflare gateway request failed.") from None
+        except (OSError, ValueError) as exc:
+            raise HTTPException(502, f"Cloudflare gateway request failed: {exc}") from None
+        return StreamingResponse(iter([answer]), media_type="text/plain", headers={
+            "Cache-Control": "no-store", "X-Agent-Id": agent_id, "X-Agent-Mode": "cloudflare-gateway",
+        })
+
+    return app
+
+
+def _read_gateway_response(request: urllib.request.Request) -> str:
+    with urllib.request.urlopen(request, timeout=120) as response:
+        payload = json.loads(response.read().decode())
+    answer = payload.get("answer") if isinstance(payload, dict) else None
+    if not isinstance(answer, str) or not answer.strip():
+        raise ValueError("Worker returned no answer")
+    return answer

@@ -5,10 +5,18 @@ Provider: AWS Bedrock (Claude Sonnet)
 Domain: AWS-native workflows, S3 session persistence, AgentCore deployment
 """
 import os
-from strands import Agent, tool
-from strands.session import S3SessionManager
-from strands.agent.conversation_manager import SlidingWindowConversationManager
-from common import CONVERSATION_GUIDANCE, ToolBudget, missing_settings
+try:
+    from ai.agents.common import (Agent, S3SessionManager, SlidingWindowConversationManager,
+                                   CONVERSATION_GUIDANCE, ToolBudget, missing_settings)
+except ModuleNotFoundError:
+    from common import (Agent, S3SessionManager, SlidingWindowConversationManager,
+                        CONVERSATION_GUIDANCE, ToolBudget, missing_settings)
+
+try:
+    from strands import tool
+except ModuleNotFoundError:  # Allows offline health/contract tests without provider SDKs.
+    def tool(function):
+        return function
 
 # ---------------------------------------------------------------------------
 # Tools

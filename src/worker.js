@@ -143,6 +143,11 @@ async function hmac(key, value) {
   return new Uint8Array(await crypto.subtle.sign('HMAC', cryptoKey, encoder.encode(value)));
 }
 
+async function secureTokenEqual(left, right) {
+  const [leftHash, rightHash] = await Promise.all([sha256Hex(left), sha256Hex(right)]);
+  return leftHash === rightHash;
+}
+
 async function signingKey(secret, date, region, service) {
   const dateKey = await hmac(encoder.encode(`AWS4${secret}`), date);
   const regionKey = await hmac(dateKey, region);
@@ -707,6 +712,24 @@ export default {
         return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
+      if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
+        const configuredToken = env.PYTHON_AGENT_GATEWAY_TOKEN?.trim();
+        const suppliedToken = request.headers.get('x-peer-gateway-token') || '';
+        if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) {
+          return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+        }
+        const body = await request.json();
+        const sessionId = typeof body?.session_id === 'string' ? body.session_id.trim() : '';
+        const agent = typeof body?.agent === 'string' ? body.agent : 'forge';
+        const prompt = typeof body?.prompt === 'string' ? body.prompt.trim() : '';
+        if (!/^[A-Za-z0-9_-]{1,128}$/.test(sessionId) || !prompt) return json({ error: 'session_id and prompt are required.' }, 400);
+        const headers = new Headers(request.headers);
+        headers.set('cookie', `larboard_session=${sessionId}`);
+        const forwarded = new Request(new URL('/api/ask', request.url), {
+          method: 'POST', headers, body: JSON.stringify({ agent, prompt }),
+        });
+        return this.fetch(forwarded, env);
+      }
       const sessionId = sessionIdFrom(request);
       if (url.pathname === '/api/state' && request.method === 'GET') return stateResponse(await loadState(env.ASSETS, sessionId), sessionId);
       if (url.pathname === '/api/state' && request.method === 'POST') { const current = await loadState(env.ASSETS, sessionId); const next = cleanState({ ...current, ...(await request.json()) }); await saveState(env.ASSETS, sessionId, next); return stateResponse(next, sessionId); }
