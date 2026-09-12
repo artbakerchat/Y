@@ -8,8 +8,7 @@ import os
 from strands import Agent, tool
 from strands.session import S3SessionManager
 from strands.agent.conversation_manager import SlidingWindowConversationManager
-from common import CONVERSATION_GUIDANCE, missing_settings
-from strands.hooks import RateLimiterHook
+from common import CONVERSATION_GUIDANCE, ToolBudget, missing_settings
 
 # ---------------------------------------------------------------------------
 # Tools
@@ -81,7 +80,7 @@ def build_agent(session_id: str) -> Agent:
             "ca.anthropic.claude-3-5-haiku-20241022-v1:0"
         ),
         tools=[list_s3_buckets, describe_ec2_instances, agentcore_deploy],
-        hooks=[RateLimiterHook(max_calls=5)],
+        hooks=[ToolBudget()],
         system_prompt=SYSTEM_PROMPT,
         session_manager=session_manager,
         conversation_manager=SlidingWindowConversationManager(window_size=20),
