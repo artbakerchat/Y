@@ -6,7 +6,7 @@ import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, u
 
 type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
-type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string };
+type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string; agentId?: string };
 type AgentRole = { id: string; name: string; focus: string; description: string };
 
 // ---------------------------------------------------------------------------
@@ -15,11 +15,17 @@ type AgentRole = { id: string; name: string; focus: string; description: string 
 
 const STARTER_WORDS = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean'];
 const AGENT_ROLES: AgentRole[] = [
-  { id: 'neighbour', name: 'Good Neighbour', focus: 'Community support', description: 'Turn local needs into clear, practical next steps.' },
-  { id: 'food-bank', name: 'Food Bank', focus: 'Volunteer coordination', description: 'Organize shifts, donations, and welcoming pantry operations.' },
-  { id: 'nonprofit', name: 'Nonprofit Helpdesk', focus: 'Small-organization operations', description: 'Shape lightweight policies, templates, and plans.' },
-  { id: 'mutual-aid', name: 'Mutual Aid Hub', focus: 'Neighbour-to-neighbour care', description: 'Structure requests and offers with dignity and consent.' },
-  { id: 'civic', name: 'Civic Knowledge', focus: 'Local information', description: 'Make public processes easier to understand and act on.' },
+  { id: 'forge', name: 'Forge', focus: 'Good Neighbour Coordinator', description: 'Turn community needs and half-formed ideas into clear next steps.' },
+  { id: 'bob-dylan', name: 'Bob Dylan', focus: 'Music and songwriting', description: 'Explore folk, blues, songwriting, albums, and lyrical interpretation.' },
+  { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
+];
+const APPLE_DEMO_MESSAGES: Message[] = [
+  { role: 'assistant', content: "Hey — glad you're here. What are you working on?" },
+  { role: 'assistant', content: 'Try a community request, ask Bob Dylan about songwriting, or ask Santa Claus about presents. You can switch agents above.' },
+  { role: 'user', content: 'How many apples can I get from the food bank' },
+  { role: 'assistant', content: 'Would you like to confirm the default serving plan of one apple per person, or do you have any specific needs or preferences for the food bank distribution?' },
+  { role: 'user', content: '3 people' },
+  { role: 'assistant', content: 'You can get three apples from the food bank, with one apple per person. Is there anything else you would like to know or plan regarding the food bank distribution?' },
 ];
 const STOP_WORDS = new Set(
   'a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(
@@ -133,6 +139,7 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
 interface ChatPanelProps {
   messages: Message[];
+  agentName: string;
   busy: boolean;
   draft: string;
   onDraftChange: (value: string) => void;
@@ -142,7 +149,7 @@ interface ChatPanelProps {
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
   const [openingNote, setOpeningNote] = useState('');
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -156,7 +163,7 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
     <article className="card conversation">
       <div className="card-head">
         <h2>Conversation</h2>
-        <span className="badge">Forge</span>
+        <span className="badge">{agentName}</span>
       </div>
 
       {!messages.length && (
@@ -178,47 +185,12 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
       )}
 
       <div className="chat">
-        {messages.length ? (
-          messages.map((message, index) => (
+        {(messages.length ? messages : APPLE_DEMO_MESSAGES).map((message, index) => (
             <div className={`message ${message.role}`} key={`${index}-${message.content}`}>
-              <div className="avatar role-label" aria-label={message.role === 'user' ? 'You' : 'Larboard assistant'} title={message.role === 'user' ? 'You' : 'Larboard assistant'}>{message.role === 'user' ? 'You' : 'Forge'}</div>
+              <div className="avatar role-label" aria-label={message.role === 'user' ? 'You' : agentName} title={message.role === 'user' ? 'You' : agentName}>{message.role === 'user' ? 'You' : agentName}</div>
               <div className="bubble">{message.content}</div>
             </div>
-          ))
-        ) : (
-          <>
-            <div className="message assistant">
-              <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
-              <div className="bubble">Hey — glad you're here. What are you working on?</div>
-            </div>
-            <div className="message assistant">
-              <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
-              <div className="bubble">
-                Try a community request, such as “Help organize volunteers for a food-bank shift.” You can also ask for nonprofit help, mutual-aid coordination, or civic information. If Python is enabled, the response will identify the AgentCore runtime.
-              </div>
-            </div>
-            <div className="message user">
-              <div className="avatar role-label" aria-label="You" title="You">You</div>
-              <div className="bubble">How many apples can I get from the food bank</div>
-            </div>
-            <div className="message assistant">
-              <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
-              <div className="bubble">
-                Would you like to confirm the default serving plan of one apple per person, or do you have any specific needs or preferences for the food bank distribution?
-              </div>
-            </div>
-            <div className="message user">
-              <div className="avatar role-label" aria-label="You" title="You">You</div>
-              <div className="bubble">3 people</div>
-            </div>
-            <div className="message assistant">
-              <div className="avatar role-label" aria-label="Larboard assistant" title="Larboard assistant">Forge</div>
-              <div className="bubble">
-                You can get three apples from the food bank, with one apple per person. Is there anything else you would like to know or plan regarding the food bank distribution?
-              </div>
-            </div>
-          </>
-        )}
+          ))}
       </div>
 
       <form className="composer" onSubmit={onSubmit}>
@@ -239,7 +211,7 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
   );
 }
 
-function AgentRoles() {
+function AgentRoles({ activeAgentId, onSelect }: { activeAgentId: string; onSelect: (id: string) => void }) {
   return (
     <section className="roles" aria-labelledby="roles-title">
       <div className="roles-heading">
@@ -247,16 +219,16 @@ function AgentRoles() {
           <p className="kicker">Choose your starting point</p>
           <h2 id="roles-title">A role for the work ahead</h2>
         </div>
-        <p>Forge can help you find the right shape for an idea before you take the next step.</p>
+        <p>Choose the agent that fits the conversation. Your choice is sent to the same Worker and Python runtime.</p>
       </div>
       <div className="role-grid">
         {AGENT_ROLES.map((role, index) => (
-          <article className={`role-card role-card-${index + 1}`} key={role.id}>
+          <button className={`role-card role-card-${index + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => onSelect(role.id)} aria-pressed={activeAgentId === role.id}>
             <span className="role-index">0{index + 1}</span>
             <h3>{role.name}</h3>
             <p className="role-focus">{role.focus}</p>
             <p>{role.description}</p>
-          </article>
+          </button>
         ))}
       </div>
     </section>
@@ -329,6 +301,7 @@ function PalettePanel({
 export default function App() {
   const [palette, setPalette] = useState(STARTER_WORDS);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [activeAgentId, setActiveAgentId] = useState('forge');
   const [draft, setDraft] = useState('');
   const [wordDraft, setWordDraft] = useState('');
   const [region, setRegion] = useState('checking…');
@@ -342,6 +315,7 @@ export default function App() {
       .then(([saved, health]) => {
         setPalette(saved.palette?.length ? saved.palette : STARTER_WORDS);
         setMessages(saved.messages || []);
+        setActiveAgentId(AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge');
         setRegion(health.region || 'env default');
       })
       .catch(() => setRegion('local preview'));
@@ -402,7 +376,7 @@ export default function App() {
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, agent: activeAgentId }),
       });
       const data = (await response.json()) as { answer?: string; error?: string };
       if (!response.ok) {
@@ -423,6 +397,13 @@ export default function App() {
     } finally {
       setBusy(false);
     }
+  }
+
+  function selectAgent(agentId: string) {
+    if (agentId === activeAgentId) return;
+    setActiveAgentId(agentId);
+    setMessages([]);
+    void saveState({ agentId, messages: [], pendingPrompt: '' });
   }
 
   function addWords(event: FormEvent) {
@@ -480,11 +461,12 @@ export default function App() {
             </div>
           </section>
 
-          <AgentRoles />
+          <AgentRoles activeAgentId={activeAgentId} onSelect={selectAgent} />
 
           <section className="workspace">
             <ChatPanel
               messages={messages}
+              agentName={AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}
               busy={busy}
               draft={draft}
               onDraftChange={setDraft}
