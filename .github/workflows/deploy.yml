@@ -37,6 +37,16 @@ jobs:
             exit 1
           fi
 
+      - name: Prevent AgentCore ARN exposure
+        shell: bash
+        run: |
+          set -euo pipefail
+          if rg -n --hidden --glob '!*.lock' --glob '!.git/**' 'arn:aws(-[^:]+)?:bedrock-agentcore:[0-9]{12}:runtime/' .; then
+            echo "A concrete AgentCore ARN must not be committed to GitHub." >&2
+            echo "Store it only as the AGENTCORE_RUNTIME_ARN secret on the Cloudflare Worker." >&2
+            exit 1
+          fi
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -92,17 +102,6 @@ jobs:
             esac
             put_object "$key" "$asset" "$content_type" 'public, max-age=3600'
           done
-
-      - name: Configure AgentCore Worker secrets
-        env:
-          AGENTCORE_RUNTIME_ARN: ${{ secrets.AGENTCORE_RUNTIME_ARN }}
-        run: |
-          set -euo pipefail
-          if [ -n "${AGENTCORE_RUNTIME_ARN:-}" ]; then
-            printf '%s' "$AGENTCORE_RUNTIME_ARN" | npx --yes "wrangler@${WRANGLER_VERSION}" secret put AGENTCORE_RUNTIME_ARN
-          else
-            echo "AGENTCORE_RUNTIME_ARN is not configured; the Worker will use its Cloudflare/Bedrock path."
-          fi
 
       - name: Deploy Worker
         run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy

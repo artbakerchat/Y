@@ -201,9 +201,11 @@ Pushing to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy
 - `CLOUDFLARE_API_TOKEN` — a token allowed to deploy Workers and manage the configured R2 bucket;
 - `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account that owns `larboard` and `larboard-assets`.
 
-The Cloudflare workflow does not deploy the Python AgentCore runtime. Deploy `app/ForgeAgent/` separately with the AgentCore tooling, then add its runtime ARN as the optional GitHub secret `AGENTCORE_RUNTIME_ARN`. When that secret is present, the Worker forwards chat requests to the Python runtime; when it is absent, the Worker uses its Cloudflare/Bedrock agent loop. The two paths do not compete for the website route: Cloudflare owns `larboard.ca`, and Python is an upstream chat runtime selected by the Worker.
+The Cloudflare workflow does not deploy the Python AgentCore runtime or modify its Worker secret. Deploy `app/ForgeAgent/` separately with the AgentCore tooling, then set `AGENTCORE_RUNTIME_ARN` once as a Worker secret with `wrangler secret put AGENTCORE_RUNTIME_ARN` or the Cloudflare dashboard. When that Worker secret is present, the Worker forwards chat requests to the Python runtime; when it is absent, the Worker uses its Cloudflare/Bedrock agent loop. The two paths do not compete for the website route: Cloudflare owns `larboard.ca`, and Python is an upstream chat runtime selected by the Worker.
 
-The workflow intentionally fails early when the required Cloudflare secrets are missing. If an AgentCore ARN is not configured, it leaves the current Worker routing unchanged rather than replacing it with an empty value.
+Never commit the ARN value to the repository or add it as a GitHub Actions secret. The deploy workflow includes a guard against concrete AgentCore ARNs. The browser only calls the Worker; the Worker keeps the ARN and AWS signing credentials private while invoking AgentCore.
+
+The workflow intentionally fails early when the required Cloudflare secrets are missing. It does not read, replace, or delete `AGENTCORE_RUNTIME_ARN`, so an ARN already stored in the Worker remains available after every repository deployment.
 
 ## Edit skills
 
