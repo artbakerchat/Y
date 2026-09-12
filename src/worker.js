@@ -19,7 +19,6 @@ const HTML_ROUTES = {
   '/pricing': 'pricing.html',
   '/printer': 'printer.html',
   '/presentation': 'presentation.html',
-  '/architecture': 'architecture.html',
 };
 
 const LEGACY_HTML_ASSETS = {
@@ -29,7 +28,6 @@ const LEGACY_HTML_ASSETS = {
   '/pricing.html': 'pricing.html',
   '/printer.html': 'printer.html',
   '/presentation.html': 'presentation.html',
-  '/architecture.html': 'architecture.html',
 };
 
 const CANONICAL_HTML_ROUTES = {
@@ -39,7 +37,6 @@ const CANONICAL_HTML_ROUTES = {
   '/pricing.html': '/pricing',
   '/printer.html': '/printer',
   '/presentation.html': '/presentation',
-  '/architecture.html': '/architecture',
 };
 
 const encoder = new TextEncoder();

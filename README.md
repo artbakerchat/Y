@@ -107,7 +107,7 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 Full API documentation is in [`docs/API.md`](docs/API.md) with curl examples,
 and the machine-readable OpenAPI 3.0 spec is in [`docs/openapi.yaml`](docs/openapi.yaml).
 
-The runtime architecture is visualized in [`architecture.html`](architecture.html), a HyperFrames-compatible HTML composition showing the Worker, AgentCore, Python runtime, storage, and Good Neighbour roles.
+The runtime architecture is represented by the Worker, AgentCore, Python runtime, storage, and Good Neighbour components described throughout this document.
 
 The Good Neighbour launch post is drafted in [`docs/good-neighbour-agents.md`](docs/good-neighbour-agents.md).
 
