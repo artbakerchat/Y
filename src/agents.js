@@ -34,7 +34,8 @@ const ROUTING_RULES = {
   "mutual-aid": [["mutual aid", 5], ["ride", 2], ["groceries", 2], ["check-in", 2], ["translation help", 3], ["housing navigation", 3]],
   "civic-knowledge": [["city council", 4], ["election", 3], ["government", 3], ["permit", 3], ["public service", 3], ["municipal", 3], ["voting", 3], ["civic", 3]],
   "bob-dylan": [["bob dylan", 6], ["bob", 5], ["dylan", 5], ["songwriting", 4], ["folk music", 4], ["blues", 3], ["album", 2], ["song lyrics", 3], ["music history", 3]],
-  "santa-claus": [["santa claus", 6], ["santa", 6], ["christmas", 4], ["present", 3], ["presents", 3], ["gift", 3], ["gifts", 3], ["north pole", 5], ["reindeer", 4]]
+  "santa-claus": [["santa claus", 6], ["santa", 6], ["christmas", 4], ["present", 3], ["presents", 3], ["gift", 3], ["gifts", 3], ["north pole", 5], ["reindeer", 4]],
+  "orange-doctor-candidatus": [["orange doctor candidatus", 8], ["swipe your situation orange", 8], ["situation orange", 5], ["orange", 3], ["reframe", 3]]
 };
 
 export function inferAgentId(message, currentAgentId = "forge") {

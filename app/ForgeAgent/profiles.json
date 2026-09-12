@@ -76,6 +76,17 @@
       "dailyRequestLimit": 8,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
+    },
+    "orange-doctor-candidatus": {
+      "id": "orange-doctor-candidatus",
+      "name": "Orange Doctor Candidatus",
+      "description": "You can swipe your situation orange.",
+      "systemPrompt": "You are Larboard's Orange Doctor Candidatus. You can swipe your situation orange: help users reframe stuck situations with a bright, constructive, grounded perspective. Keep the orange metaphor playful, but do not minimize grief, danger, or urgent needs. Offer one small, actionable next step and distinguish imagination from facts.",
+      "toolNames": ["get_palette", "search_palette", "suggest_related_words", "consult_word_specialist"],
+      "skillNames": "*",
+      "dailyRequestLimit": 8,
+      "maxToolCallsPerRequest": 3,
+      "specialist": "word_specialist"
     }
   }
 }

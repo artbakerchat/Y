@@ -32,3 +32,37 @@
 .message .bubble{max-width:none}
 @media(max-width:800px){.roles-heading{display:block}.roles-heading>p{margin-top:12px}.role-card{padding:14px}}
 @media(max-width:520px){.role-card{flex-basis:82%;min-height:160px}.roles-hint{text-align:left}}
+
+/* Orange Doctor Candidatus changes the whole workspace atmosphere. */
+body[data-theme='orange']{color:#fff3e2;background:radial-gradient(circle at 15% 10%,#9b431d 0,transparent 35%),radial-gradient(circle at 85% 70%,#713116 0,transparent 38%),#24120b;transition:background .35s ease,color .35s ease}
+.shell.theme-orange{color:#fff3e2}
+.theme-orange header{border-color:#9b542d}
+.theme-orange .brand small,.theme-orange nav,.theme-orange .lead,.theme-orange .roles-heading>p,.theme-orange .role-card p,.theme-orange .metric,.theme-orange .model-examples-heading p:last-child{color:#d8b89a}
+.theme-orange .mark{border-color:#ffc266;color:#2b1409;background:#9b431d}
+.theme-orange .status i{background:#ffc266;box-shadow:0 0 12px #ffc266}
+.theme-orange .kicker,.theme-orange .eyebrow,.theme-orange .avatar,.theme-orange .role-index,.theme-orange .example-label,.theme-orange .example-toggle,.theme-orange .roles-hint span{color:#ffc266}
+.theme-orange .hero em{color:#ff9a4d}
+.theme-orange .card{border-color:#9b542d;background:rgb(57 25 12 / 91%)}
+.theme-orange .card-head,.theme-orange .conversation-start,.theme-orange .metric,.theme-orange .model-examples,.theme-orange .model-example,.theme-orange .message{border-color:#754025}
+.theme-orange .badge{border-color:#c36b31;color:#ffc266}
+.theme-orange .routing-mode,.theme-orange .composer,.theme-orange .palette-form{border-color:#b5622d;color:#ffe1bd;background:#32170d}
+.theme-orange .routing-mode.is-active{border-color:#ffc266;background:linear-gradient(100deg,rgb(126 55 22 / 88%),rgb(54 23 11 / 94%));box-shadow:0 0 0 2px rgb(255 194 102 / 16%)}
+.theme-orange .routing-icon,.theme-orange .composer button,.theme-orange .palette-form button{color:#2b1409;background:#ffc266}
+.theme-orange .routing-mode small,.theme-orange .hint,.theme-orange .available-label,.theme-orange .roles-hint,.theme-orange .preview-palette span,.theme-orange .model-example small{color:#bb8d6c}
+.theme-orange .role-grid{scrollbar-color:#b5622d transparent}
+.theme-orange .role-grid.is-dragging{scrollbar-color:#ffc266 transparent}
+.theme-orange .role-card{border-color:#754025;background:linear-gradient(150deg,rgb(116 49 18 / 92%),rgb(54 23 11 / 94%))}
+.theme-orange .role-card-2,.theme-orange .role-card-5{background:linear-gradient(150deg,rgb(100 42 20 / 92%),rgb(48 23 13 / 94%))}
+.theme-orange .role-card-3{background:linear-gradient(150deg,rgb(132 57 18 / 92%),rgb(59 25 11 / 94%))}
+.theme-orange .role-card.is-active,.theme-orange .role-card:hover{border-color:#ffc266}
+.theme-orange .role-selected{border-color:#d48740;color:#ffc266}
+.theme-orange .role-recommended{border-color:#bb754c;color:#ffbd8a}
+.theme-orange .user .avatar{border-color:#c8754c;background:linear-gradient(135deg,#c8754c,#ffc266 55%,#ffe0a8);box-shadow:0 0 16px rgb(255 194 102 / 22%)}
+.theme-orange .avatar{border-color:#e69a4d;color:#2b1409;background:linear-gradient(135deg,#ffc266,#ff8c42 52%,#ffe0a8);box-shadow:0 0 16px rgb(255 166 76 / 28%)}
+.theme-orange .bubble,.theme-orange .example-message p,.theme-orange .approach-summary p{color:#f0d3b4}
+.theme-orange .chips button,.theme-orange .approach-summary{border-color:#754025;color:#ffd29e;background:#4a2112}
+.theme-orange .preview-palette b{border-color:#b5622d;color:#ffc266;background:#6b2d15}
+.theme-orange .example-message{background:#32170d}
+.theme-orange .model-example.is-selected{border-color:#ffc266}
+.theme-orange .model-example.is-selected summary strong{color:#ffc266}
+.theme-orange footer{border-color:#754025;color:#a9795b}

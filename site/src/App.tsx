@@ -23,7 +23,9 @@ const AGENT_ROLES: AgentRole[] = [
   { id: 'civic-knowledge', name: 'Civic Knowledge Assistant', focus: 'Local civic information', description: 'Make public services, community programs, and civic processes easier to understand.' },
   { id: 'bob-dylan', name: 'Bob Dylan', focus: 'Music and songwriting', description: 'Explore folk, blues, songwriting, albums, and lyrical interpretation.' },
   { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
+  { id: 'orange-doctor-candidatus', name: 'Orange Doctor Candidatus', focus: 'Orange reframing', description: 'You can swipe your situation orange.' },
 ];
+const ORANGE_DOCTOR_AGENT_ID = 'orange-doctor-candidatus';
 const RECOMMENDED_AGENT_IDS = ['forge', 'bob-dylan', 'santa-claus'];
 const ORDERED_AGENT_ROLES = [
   ...RECOMMENDED_AGENT_IDS.map((id) => AGENT_ROLES.find((role) => role.id === id)! ),
@@ -47,6 +49,7 @@ const MODEL_EXAMPLES: Record<string, ModelExample> = {
   'civic-knowledge': { prompt: 'I do not understand how to speak at a city council meeting.', response: 'Check the meeting page for the agenda and public-comment deadline, prepare a short statement tied to one agenda item, and arrive or sign in before the comment period begins.', approach: 'Translate a formal process into plain-language steps and point to the decision point that matters.' },
   'bob-dylan': { prompt: 'How can I make a folk song feel more vivid?', response: 'Give the verse a place, a weather pattern, and one object the singer can touch. Let the image carry the emotion before you explain what the singer feels.', approach: 'Use concrete images, musical restraint, and implication to deepen the writing.' },
   'santa-claus': { prompt: 'I want to make a kind surprise for my neighbour.', response: 'Leave a warm note with a small treat, shovel their walkway, or offer one specific errand. The best surprises are thoughtful, useful, and easy to receive.', approach: 'Lead with warmth, keep the gesture practical, and make generosity feel comfortable.' },
+  'orange-doctor-candidatus': { prompt: 'Can you swipe this situation orange?', response: 'Keep the facts, soften the doom, and find the warmest useful angle: name one thing you can influence today, then take the smallest step toward it.', approach: 'Reframe without denying reality, then turn a brighter perspective into one grounded action.' },
 };
 const MODEL_PALETTE_WORDS: Record<string, string[]> = {
   forge: ['clarify', 'listen', 'organize', 'next-step'],
@@ -56,6 +59,7 @@ const MODEL_PALETTE_WORDS: Record<string, string[]> = {
   'civic-knowledge': ['agenda', 'public-comment', 'deadline', 'process'],
   'bob-dylan': ['image', 'verse', 'weather', 'rhythm'],
   'santa-claus': ['kindness', 'surprise', 'warmth', 'generosity'],
+  'orange-doctor-candidatus': ['orange', 'reframe', 'warmth', 'possibility'],
 };
 const STOP_WORDS = new Set(
   'a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(
@@ -271,7 +275,7 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
           <p className="eyebrow">BEFORE WE BEGIN</p>
           <h2 id="roles-title">Choose how we route your conversation</h2>
         </div>
-        <p>Larboard can choose the best specialist for each message, or you can pin one of the three available agents below.</p>
+          <p>Larboard can choose the best specialist for each message, or you can pin one of the available agents below.</p>
       </div>
       <button className={`routing-mode${agentMode === 'auto' ? ' is-active' : ''}`} type="button" onClick={() => onSelect('auto')} aria-pressed={agentMode === 'auto'}>
         <span className="routing-icon">✦</span>
@@ -405,6 +409,14 @@ export default function App() {
   const [region, setRegion] = useState('checking…');
   const [busy, setBusy] = useState(false);
   const stateWrite = useRef(Promise.resolve());
+
+  useEffect(() => {
+    const isOrange = activeAgentId === ORANGE_DOCTOR_AGENT_ID;
+    document.body.dataset.theme = isOrange ? 'orange' : '';
+    return () => {
+      delete document.body.dataset.theme;
+    };
+  }, [activeAgentId]);
 
   useEffect(() => {
     Promise.all([
@@ -555,7 +567,7 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <div className="shell">
+      <div className={`shell${activeAgentId === ORANGE_DOCTOR_AGENT_ID ? ' theme-orange' : ''}`}>
         <header>
           <a className="brand" href="/">
             <span className="mark">✦</span>
