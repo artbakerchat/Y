@@ -16,6 +16,10 @@ type AgentRole = { id: string; name: string; focus: string; description: string 
 const STARTER_WORDS = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean'];
 const AGENT_ROLES: AgentRole[] = [
   { id: 'forge', name: 'Forge', focus: 'Good Neighbour Coordinator', description: 'Turn community needs and half-formed ideas into clear next steps.' },
+  { id: 'food-bank', name: 'Food Bank Coordinator', focus: 'Food access and volunteers', description: 'Organize pantry operations, donations, pickup windows, and volunteer shifts.' },
+  { id: 'nonprofit-helpdesk', name: 'Nonprofit Helpdesk', focus: 'Small nonprofit support', description: 'Create practical policies, forms, agendas, grant notes, and operating plans.' },
+  { id: 'mutual-aid', name: 'Mutual Aid Hub', focus: 'Neighbour-to-neighbour support', description: 'Coordinate requests, offers, rides, supplies, check-ins, and follow-up safely.' },
+  { id: 'civic-knowledge', name: 'Civic Knowledge Assistant', focus: 'Local civic information', description: 'Make public services, community programs, and civic processes easier to understand.' },
   { id: 'bob-dylan', name: 'Bob Dylan', focus: 'Music and songwriting', description: 'Explore folk, blues, songwriting, albums, and lyrical interpretation.' },
   { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
 ];
@@ -169,7 +173,7 @@ function ChatPanel({ messages, agentName, activeAgentId, onSelectAgent, busy, dr
       </div>
 
       {!messages.length && (
-        <div className="conversation-start">
+        <div className="conversation-start" aria-label="Conversation setup">
           <AgentRoles activeAgentId={activeAgentId} onSelect={onSelectAgent} />
           <form className="pre-conversation" onSubmit={(event) => {
             event.preventDefault();
@@ -218,19 +222,19 @@ function ChatPanel({ messages, agentName, activeAgentId, onSelectAgent, busy, dr
 
 function AgentRoles({ activeAgentId, onSelect }: { activeAgentId: string; onSelect: (id: string) => void }) {
   return (
-    <section className="roles" aria-labelledby="roles-title">
+    <section className="roles conversation-message" aria-labelledby="roles-title">
       <div className="roles-heading">
         <div>
-          <p className="kicker">Choose your starting point</p>
-          <h2 id="roles-title">Choose a model</h2>
+          <p className="eyebrow">BEFORE WE BEGIN</p>
+          <h2 id="roles-title">Who would you like to talk with?</h2>
         </div>
-        <p>Choose the agent that fits the conversation. Your choice is sent to the same Worker and Python runtime.</p>
+        <p>Pick a model for this conversation. Your choice will stay with the conversation while you get started.</p>
       </div>
       <div className="role-grid">
         {AGENT_ROLES.map((role, index) => (
           <button className={`role-card role-card-${index + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => onSelect(role.id)} aria-pressed={activeAgentId === role.id}>
             <span className="role-index">0{index + 1}</span>
-            <h3>{role.name}</h3>
+            <h3>{role.name}{activeAgentId === role.id ? <span className="role-selected">Selected</span> : null}</h3>
             <p className="role-focus">{role.focus}</p>
             <p>{role.description}</p>
           </button>
