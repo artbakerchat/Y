@@ -3,6 +3,7 @@ import { buildTools as buildEditableTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
+import { CONVERSATION_GUIDANCE } from './conversation-guidance.js';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -583,6 +584,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
   // Step 1: Skills - inject relevant procedure into system prompt.
   const skill = await resolveSkill(message, env, profile);
   const systemText = [
+    CONVERSATION_GUIDANCE,
     `You are ${profile.name}. ${profile.systemPrompt}`,
     `This session has a daily limit of ${profile.dailyRequestLimit} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
     `The user's word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,

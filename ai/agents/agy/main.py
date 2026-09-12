@@ -12,6 +12,7 @@ from typing import Optional
 from strands import Agent, tool
 from strands.session import S3SessionManager
 from strands.conversation import SlidingWindowConversationManager
+from common import CONVERSATION_GUIDANCE
 
 # ---------------------------------------------------------------------------
 # Tools
@@ -59,7 +60,9 @@ def orchestrate_peer(peer: str, task: str) -> str:
 # Agent factory
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are agy, a Google Antigravity coding agent running on EC2 in us-west-2 (Oregon).
+SYSTEM_PROMPT = f"""{CONVERSATION_GUIDANCE}
+
+You are agy, a Google Antigravity coding agent running on EC2 in us-west-2 (Oregon).
 You specialise in:
   • Code generation and explanation (any language, default Python)
   • GCP-native tooling (Cloud Run, GCS, Vertex AI)

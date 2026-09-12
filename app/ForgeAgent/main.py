@@ -15,6 +15,7 @@ from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
 from forge_steering import PaletteReadyHandler, ToneGuardrailHandler
 from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
+from conversation_guidance import CONVERSATION_GUIDANCE
 
 
 app = BedrockAgentCoreApp()
@@ -243,7 +244,7 @@ def _agent_for_palette(
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
         system_prompt=(
-            f"{system_prompt} "
+            f"{CONVERSATION_GUIDANCE} {system_prompt} "
             f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
             "Use the user's word palette as inspiration when relevant. "
             "Never invent palette entries or present guesses as facts. "

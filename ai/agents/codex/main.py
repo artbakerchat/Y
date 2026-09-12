@@ -8,6 +8,7 @@ import os
 from strands import Agent, tool
 from strands.session import S3SessionManager
 from strands.conversation import SlidingWindowConversationManager
+from common import CONVERSATION_GUIDANCE
 
 # ---------------------------------------------------------------------------
 # Tools
@@ -66,7 +67,9 @@ def gdpr_review(text: str) -> str:
 # Agent factory
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are codex, an OpenAI Codex agent running on EC2 in eu-west-3 (Paris).
+SYSTEM_PROMPT = f"""{CONVERSATION_GUIDANCE}
+
+You are codex, an OpenAI Codex agent running on EC2 in eu-west-3 (Paris).
 You specialise in:
   • Natural-language to code synthesis (any language)
   • Explaining and reviewing code for any audience

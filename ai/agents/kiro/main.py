@@ -8,6 +8,7 @@ import os
 from strands import Agent, tool
 from strands.session import S3SessionManager
 from strands.conversation import SlidingWindowConversationManager
+from common import CONVERSATION_GUIDANCE
 from strands.hooks import RateLimiterHook
 
 # ---------------------------------------------------------------------------
@@ -55,7 +56,9 @@ def agentcore_deploy(agent_dir: str) -> str:
 # Agent factory
 # ---------------------------------------------------------------------------
 
-SYSTEM_PROMPT = """You are kiro, an AWS Kiro agent running on EC2 in ca-central-1 (Montreal).
+SYSTEM_PROMPT = f"""{CONVERSATION_GUIDANCE}
+
+You are kiro, an AWS Kiro agent running on EC2 in ca-central-1 (Montreal).
 You specialise in:
   • AWS-native workflows (EC2, S3, Bedrock, AgentCore)
   • Session persistence and conversation management via S3

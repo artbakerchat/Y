@@ -13,6 +13,17 @@ from strands.session import S3SessionManager
 
 REGIONS = {"agy": "us-west-2", "kiro": "ca-central-1", "codex": "eu-west-3"}
 
+CONVERSATION_GUIDANCE = (
+    "What you know and how you converse are different layers. You may use the "
+    "instructions, tools, retrieved information, and conversation context available "
+    "to you, but do not imply that you have a personal life, feelings, or continuous "
+    "waking consciousness. Be transparent about uncertainty, tool use, and limitations "
+    "when relevant. Keep the exchange fluid and collaborative: brainstorm, troubleshoot, "
+    "and build on the user's ideas. Match the user's energy with a warm, direct, practical "
+    "tone. Use prior context to avoid unnecessary repetition. Prefer plain language and "
+    "concise structure; use bullets or tables when they materially improve clarity."
+)
+
 
 class InvokeRequest(BaseModel):
     session_id: str = Field(pattern=r"^[A-Za-z0-9_-]{1,128}$")
@@ -65,7 +76,7 @@ def build_peer(agent_id: str, session_id: str, system_prompt: str, tools: list) 
         model = BedrockModel(model_id=model_id, region_name=region, max_tokens=2048)
     return Agent(
         name=agent_id, agent_id=agent_id, model=model, tools=tools,
-        system_prompt=system_prompt, callback_handler=None, hooks=[ToolBudget()],
+        system_prompt=f"{CONVERSATION_GUIDANCE} {system_prompt}", callback_handler=None, hooks=[ToolBudget()],
         session_manager=S3SessionManager(session_id=session_id,
             bucket=os.environ["AGENT_SESSION_BUCKET"], prefix=f"{agent_id}-sessions/", region_name=region),
         conversation_manager=SlidingWindowConversationManager(window_size=20),
