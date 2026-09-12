@@ -23,6 +23,7 @@ const AGENT_ROLES: AgentRole[] = [
   { id: 'bob-dylan', name: 'Bob Dylan', focus: 'Music and songwriting', description: 'Explore folk, blues, songwriting, albums, and lyrical interpretation.' },
   { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
 ];
+const STARTING_AGENT_IDS = new Set(['forge', 'bob-dylan', 'santa-claus']);
 const APPLE_DEMO_MESSAGES: Message[] = [
   { role: 'assistant', content: "Hey — glad you're here. What are you working on?" },
   { role: 'assistant', content: 'Try a community request, ask Bob Dylan about songwriting, or ask Santa Claus about presents. You can switch agents above.' },
@@ -145,6 +146,7 @@ interface ChatPanelProps {
   messages: Message[];
   agentName: string;
   activeAgentId: string;
+  showSpecialists: boolean;
   onSelectAgent: (id: string) => void;
   busy: boolean;
   draft: string;
@@ -155,9 +157,7 @@ interface ChatPanelProps {
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, agentName, activeAgentId, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
-  const [openingNote, setOpeningNote] = useState('');
-
+function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -174,22 +174,7 @@ function ChatPanel({ messages, agentName, activeAgentId, onSelectAgent, busy, dr
 
       {!messages.length && (
         <div className="conversation-start" aria-label="Conversation setup">
-          <AgentRoles activeAgentId={activeAgentId} onSelect={onSelectAgent} />
-          <form className="pre-conversation" onSubmit={(event) => {
-            event.preventDefault();
-            if (openingNote.trim()) {
-              onDraftChange(openingNote.trim());
-              setOpeningNote('');
-            }
-          }}>
-            <div>
-              <p className="eyebrow">BEFORE WE BEGIN</p>
-              <h3>Leave your comments</h3>
-              <p className="pre-conversation__copy">Share a little context, a question, or the outcome you’re hoping for.</p>
-            </div>
-            <textarea value={openingNote} onChange={(event) => setOpeningNote(event.target.value)} placeholder="What’s on your mind?" aria-label="Leave your comments" rows={3} />
-            <button type="submit" disabled={!openingNote.trim()}>Use as opening note</button>
-          </form>
+          <AgentRoles activeAgentId={activeAgentId} onSelect={onSelectAgent} showSpecialists={showSpecialists} />
         </div>
       )}
 
@@ -220,7 +205,9 @@ function ChatPanel({ messages, agentName, activeAgentId, onSelectAgent, busy, dr
   );
 }
 
-function AgentRoles({ activeAgentId, onSelect }: { activeAgentId: string; onSelect: (id: string) => void }) {
+function AgentRoles({ activeAgentId, onSelect, showSpecialists }: { activeAgentId: string; onSelect: (id: string) => void; showSpecialists: boolean }) {
+  const visibleRoles = showSpecialists ? AGENT_ROLES : AGENT_ROLES.filter((role) => STARTING_AGENT_IDS.has(role.id));
+
   return (
     <section className="roles conversation-message" aria-labelledby="roles-title">
       <div className="roles-heading">
@@ -231,7 +218,7 @@ function AgentRoles({ activeAgentId, onSelect }: { activeAgentId: string; onSele
         <p>Pick a model for this conversation. Your choice will stay with the conversation while you get started.</p>
       </div>
       <div className="role-grid">
-        {AGENT_ROLES.map((role, index) => (
+        {visibleRoles.map((role, index) => (
           <button className={`role-card role-card-${index + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => onSelect(role.id)} aria-pressed={activeAgentId === role.id}>
             <span className="role-index">0{index + 1}</span>
             <h3>{role.name}{activeAgentId === role.id ? <span className="role-selected">Selected</span> : null}</h3>
@@ -311,6 +298,7 @@ export default function App() {
   const [palette, setPalette] = useState(STARTER_WORDS);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeAgentId, setActiveAgentId] = useState('forge');
+  const [showSpecialists, setShowSpecialists] = useState(false);
   const [draft, setDraft] = useState('');
   const [wordDraft, setWordDraft] = useState('');
   const [region, setRegion] = useState('checking…');
@@ -324,7 +312,9 @@ export default function App() {
       .then(([saved, health]) => {
         setPalette(saved.palette?.length ? saved.palette : STARTER_WORDS);
         setMessages(saved.messages || []);
-        setActiveAgentId(AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge');
+        const savedAgentId = AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge';
+        setActiveAgentId(savedAgentId);
+        setShowSpecialists(savedAgentId !== 'forge' && !STARTING_AGENT_IDS.has(savedAgentId));
         setRegion(health.region || 'env default');
       })
       .catch(() => setRegion('local preview'));
@@ -409,7 +399,11 @@ export default function App() {
   }
 
   function selectAgent(agentId: string) {
-    if (agentId === activeAgentId) return;
+    if (agentId === activeAgentId) {
+      if (agentId === 'forge') setShowSpecialists(true);
+      return;
+    }
+    if (agentId === 'forge') setShowSpecialists(true);
     setActiveAgentId(agentId);
     setMessages([]);
     void saveState({ agentId, messages: [], pendingPrompt: '' });
@@ -475,6 +469,7 @@ export default function App() {
               messages={messages}
               agentName={AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}
               activeAgentId={activeAgentId}
+              showSpecialists={showSpecialists}
               onSelectAgent={selectAgent}
               busy={busy}
               draft={draft}
