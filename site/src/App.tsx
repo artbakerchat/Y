@@ -245,8 +245,6 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
       const track = trackRef.current;
       if (!track) return;
       dragRef.current = { active: true, startX: event.clientX, scrollLeft: track.scrollLeft, moved: false };
-      track.setPointerCapture(event.pointerId);
-      track.classList.add('is-dragging');
     }
   }
 
@@ -254,7 +252,11 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
     const track = trackRef.current;
     if (!track || !dragRef.current.active) return;
     const distance = event.clientX - dragRef.current.startX;
-    if (Math.abs(distance) > 5) dragRef.current.moved = true;
+    if (Math.abs(distance) > 5 && !dragRef.current.moved) {
+      dragRef.current.moved = true;
+      track.setPointerCapture(event.pointerId);
+      track.classList.add('is-dragging');
+    }
     track.scrollLeft = dragRef.current.scrollLeft - distance;
   }
 
@@ -265,7 +267,6 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
     suppressClickRef.current = dragRef.current.moved;
     dragRef.current.active = false;
     track.classList.remove('is-dragging');
-    window.setTimeout(() => { suppressClickRef.current = false; }, 0);
   }
 
   return (
@@ -293,7 +294,7 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
         aria-label="Available agents. Swipe or drag horizontally to browse."
       >
         {contextualAgentRoles.map((role, index) => (
-          <button className={`role-card role-card-${(index % 5) + 1}${agentMode === 'manual' && activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (!suppressClickRef.current) onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
+          <button className={`role-card role-card-${(index % 5) + 1}${agentMode === 'manual' && activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
             <span className="role-index">{String(index + 1).padStart(2, '0')}</span>
             <h3>{role.name}{RECOMMENDED_AGENT_IDS.includes(role.id) ? <span className="role-recommended">Recommended</span> : null}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
             <p className="role-focus">{role.focus}</p>
