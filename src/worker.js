@@ -47,6 +47,11 @@ const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
 
+// Entry points and legacy assets keep stable URLs, so browsers must check for
+// a new deployment on every visit. Vite-generated files include a content hash
+// and can remain cached for a long time without serving an old app shell.
+const FINGERPRINTED_ASSET = /-[a-z0-9_-]{8,}(?=\.[a-z0-9]+$)/i;
+
 // ---------------------------------------------------------------------------
 // State schema versioning
 //
@@ -664,13 +669,27 @@ async function serveAsset(request, env) {
     return new Response('Too many legacy URL requests. Please try again in a minute.', { status: 429, headers: { 'cache-control': 'no-store', 'retry-after': String(REDIRECT_RATE_PERIOD_SECONDS) } });
   }
   if (CANONICAL_HTML_ROUTES[originalPathname]) {
-    return Response.redirect(`${url.origin}${CANONICAL_HTML_ROUTES[originalPathname]}${url.search}`, 301);
+    return new Response(null, { status: 301, headers: {
+      location: `${url.origin}${CANONICAL_HTML_ROUTES[originalPathname]}${url.search}`,
+      'cache-control': 'no-store, no-cache, must-revalidate',
+    } });
   }
   const key = HTML_ROUTES[originalPathname] || LEGACY_HTML_ASSETS[originalPathname] || originalPathname.slice(1);
   if (!key || !/^\/[a-zA-Z0-9._/-]+$/.test(`/${key}`) || key.includes('..')) return new Response('Not found.', { status: 404 });
   const object = await env.ASSETS.get(key);
   if (!object) return new Response('Not found.', { status: 404 });
-  const headers = new Headers({ 'cache-control': key.endsWith('.html') ? 'no-store' : 'public, max-age=3600', 'strict-transport-security': 'max-age=31536000; includeSubDomains' });
+  const isHtml = key.endsWith('.html');
+  const isFingerprinted = FINGERPRINTED_ASSET.test(key);
+  const headers = new Headers({
+    'cache-control': isHtml || !isFingerprinted
+      ? 'no-store, no-cache, must-revalidate, proxy-revalidate'
+      : 'public, max-age=31536000, immutable',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains',
+  });
+  if (isHtml || !isFingerprinted) {
+    headers.set('pragma', 'no-cache');
+    headers.set('expires', '0');
+  }
   const extension = key.slice(key.lastIndexOf('.'));
   headers.set('content-type', CONTENT_TYPES[extension] || object.httpMetadata?.contentType || 'application/octet-stream');
   if (object.httpEtag) headers.set('etag', object.httpEtag);

@@ -476,6 +476,10 @@ export default function App() {
                 Bring a half-formed idea, a question, or a next step. Forge will talk it through
                 with you in plain language.
               </p>
+              <p className="storage-note">
+                One shared place. Zero local storage. Zero stale app cache. Your inputs stay synced
+                to the backend.
+              </p>
             </div>
           </section>
 

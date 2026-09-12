@@ -100,7 +100,15 @@ jobs:
               *.json) content_type='application/json; charset=utf-8' ;;
               *) content_type='application/octet-stream' ;;
             esac
-            put_object "$key" "$asset" "$content_type" 'public, max-age=3600'
+            # The Worker applies the final response policy. Keep the R2
+            # metadata conservative so direct/object-layer caches do not hold
+            # an old app shell or an unversioned asset after a deploy.
+            if [[ "$key" =~ -[A-Za-z0-9_-]{8,}\.[A-Za-z0-9]+$ ]]; then
+              asset_cache='public, max-age=31536000, immutable'
+            else
+              asset_cache='no-store, no-cache, must-revalidate'
+            fi
+            put_object "$key" "$asset" "$content_type" "$asset_cache"
           done
 
       - name: Deploy Worker
