@@ -1,4 +1,6 @@
 /* Structured role layout additions. */
+.conversation{align-self:start}
+
 .conversation-start{border-bottom:1px solid #24506a}
 .roles{margin:0;padding:24px 20px 4px;border-top:0}
 .conversation-message{border-bottom:1px solid #1e3447}
