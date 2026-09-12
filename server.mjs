@@ -66,9 +66,9 @@ async function ask(message, palette = [], pendingPrompt = '', requestsRemaining 
     });
     let result;
     try { result = await agent.invoke(message); } catch (error) { throw error; }
-    return { answer: result.toString?.() || result.text || String(result), agent: true };
+    return { answer: cleanAssistantResponse(result.toString?.() || result.text || String(result)), agent: true };
   }
-  return { answer: await askWithBedrock(message, palette), agent: false };
+  return { answer: cleanAssistantResponse(await askWithBedrock(message, palette)), agent: false };
 }
 
 function send(res, status, body, type = 'application/json') { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store' }); res.end(type === 'application/json' ? JSON.stringify(body) : body); }
@@ -88,6 +88,16 @@ function allowLegacyAlias(req) {
 async function body(req) { let data = ''; for await (const chunk of req) data += chunk; return JSON.parse(data || '{}'); }
 function requestWordCount(message) { return message.trim() ? message.trim().split(/\s+/).length : 0; }
 function hasOversizedWord(message) { return message.trim().split(/\s+/).some((word) => word.length > maxWordCharacters); }
+
+function cleanAssistantResponse(value) {
+  const text = typeof value === 'string' ? value : String(value ?? '');
+  const cleaned = text
+    .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<analysis[^>]*>[\s\S]*?<\/analysis>/gi, '')
+    .trim();
+  return cleaned || 'I’m here with you. What would you like to work through?';
+}
 
 const server = http.createServer(async (req, res) => {
   try {

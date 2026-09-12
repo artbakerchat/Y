@@ -106,6 +106,15 @@ function json(data, status = 200) {
   });
 }
 
+function cleanAssistantResponse(value) {
+  const text = typeof value === 'string' ? value : String(value ?? '');
+  const cleaned = text
+    .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<analysis[^>]*>[\s\S]*?<\/analysis>/gi, '')
+    .trim();
+  return cleaned || 'I’m here with you. What would you like to work through?';
+}
 async function sha256Hex(value) {
   const digest = await crypto.subtle.digest('SHA-256', typeof value === 'string' ? encoder.encode(value) : value);
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
@@ -175,7 +184,7 @@ async function invokeAgentCore(message, palette, history, env, request, requests
   if (!response.ok) throw new Error(`AgentCore request failed (${response.status}): ${(await response.text()).slice(0, 240)}`);
   const result = await response.json();
   const answer = result.output?.message?.content?.map((part) => part.text || '').join('') || result.output || result.response || result.text || 'AgentCore returned an empty response.';
-  return { answer: typeof answer === 'string' ? answer : JSON.stringify(answer), agent: true, runtime: 'agentcore' };
+  return { answer: cleanAssistantResponse(typeof answer === 'string' ? answer : JSON.stringify(answer)), agent: true, runtime: 'agentcore' };
 }
 
 // ---------------------------------------------------------------------------
@@ -626,7 +635,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
       const answer = assistantMessage.content?.map((b) => b.text || '').join('') || 'The model returned an empty response.';
       // Step 5: Post-response steering check.
       const finalAnswer = await steerPostResponse(answer, env);
-      return { answer: finalAnswer, agent: true, toolCallCounts: controller.getCounts() };
+      return { answer: cleanAssistantResponse(finalAnswer), agent: true, toolCallCounts: controller.getCounts() };
     }
 
     if (stopReason === 'tool_use') {
@@ -641,7 +650,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     } else {
       // Unexpected stop reason - surface whatever text is available.
       const answer = assistantMessage.content?.map((b) => b.text || '').join('') || `Unexpected stop reason: ${stopReason}`;
-      return { answer, agent: true };
+      return { answer: cleanAssistantResponse(answer), agent: true };
     }
   }
 

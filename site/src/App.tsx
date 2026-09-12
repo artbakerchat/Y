@@ -19,6 +19,16 @@ const STOP_WORDS = new Set(
   ),
 );
 
+function cleanAssistantResponse(value) {
+  const text = typeof value === 'string' ? value : String(value ?? '');
+  const cleaned = text
+    .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<analysis[^>]*>[\s\S]*?<\/analysis>/gi, '')
+    .trim();
+  return cleaned || 'I’m here with you. What would you like to work through?';
+}
+
 function extractWords(text: string): string[] {
   return [
     ...new Set(
@@ -348,7 +358,7 @@ export default function App() {
       }
       setMessages([
         ...nextMessages.slice(0, -1),
-        { role: 'assistant', content: data.answer || 'The agent returned an empty response.' },
+        { role: 'assistant', content: cleanAssistantResponse(data.answer || '') },
       ]);
     } catch (error) {
       setMessages([
