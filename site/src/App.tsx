@@ -140,6 +140,8 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 interface ChatPanelProps {
   messages: Message[];
   agentName: string;
+  activeAgentId: string;
+  onSelectAgent: (id: string) => void;
   busy: boolean;
   draft: string;
   onDraftChange: (value: string) => void;
@@ -149,7 +151,7 @@ interface ChatPanelProps {
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+function ChatPanel({ messages, agentName, activeAgentId, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
   const [openingNote, setOpeningNote] = useState('');
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -167,21 +169,24 @@ function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }
       </div>
 
       {!messages.length && (
-        <form className="pre-conversation" onSubmit={(event) => {
-          event.preventDefault();
-          if (openingNote.trim()) {
-            onDraftChange(openingNote.trim());
-            setOpeningNote('');
-          }
-        }}>
-          <div>
-            <p className="eyebrow">BEFORE WE BEGIN</p>
-            <h3>Leave your comments</h3>
-            <p className="pre-conversation__copy">Share a little context, a question, or the outcome you’re hoping for.</p>
-          </div>
-          <textarea value={openingNote} onChange={(event) => setOpeningNote(event.target.value)} placeholder="What’s on your mind?" aria-label="Leave your comments" rows={3} />
-          <button type="submit" disabled={!openingNote.trim()}>Use as opening note</button>
-        </form>
+        <div className="conversation-start">
+          <AgentRoles activeAgentId={activeAgentId} onSelect={onSelectAgent} />
+          <form className="pre-conversation" onSubmit={(event) => {
+            event.preventDefault();
+            if (openingNote.trim()) {
+              onDraftChange(openingNote.trim());
+              setOpeningNote('');
+            }
+          }}>
+            <div>
+              <p className="eyebrow">BEFORE WE BEGIN</p>
+              <h3>Leave your comments</h3>
+              <p className="pre-conversation__copy">Share a little context, a question, or the outcome you’re hoping for.</p>
+            </div>
+            <textarea value={openingNote} onChange={(event) => setOpeningNote(event.target.value)} placeholder="What’s on your mind?" aria-label="Leave your comments" rows={3} />
+            <button type="submit" disabled={!openingNote.trim()}>Use as opening note</button>
+          </form>
+        </div>
       )}
 
       <div className="chat">
@@ -217,7 +222,7 @@ function AgentRoles({ activeAgentId, onSelect }: { activeAgentId: string; onSele
       <div className="roles-heading">
         <div>
           <p className="kicker">Choose your starting point</p>
-          <h2 id="roles-title">A role for the work ahead</h2>
+          <h2 id="roles-title">Choose a model</h2>
         </div>
         <p>Choose the agent that fits the conversation. Your choice is sent to the same Worker and Python runtime.</p>
       </div>
@@ -461,12 +466,12 @@ export default function App() {
             </div>
           </section>
 
-          <AgentRoles activeAgentId={activeAgentId} onSelect={selectAgent} />
-
           <section className="workspace">
             <ChatPanel
               messages={messages}
               agentName={AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}
+              activeAgentId={activeAgentId}
+              onSelectAgent={selectAgent}
               busy={busy}
               draft={draft}
               onDraftChange={setDraft}
