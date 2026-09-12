@@ -8,6 +8,7 @@ type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
 type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string; agentId?: string };
 type AgentRole = { id: string; name: string; focus: string; description: string };
+type ModelExample = { prompt: string; response: string; approach: string };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -24,6 +25,24 @@ const AGENT_ROLES: AgentRole[] = [
 ];
 const STARTING_AGENT_IDS = new Set(['forge', 'bob-dylan', 'santa-claus']);
 const FORGE_EXPLORATION_IDS = new Set(['forge', 'food-bank', 'mutual-aid']);
+const MODEL_EXAMPLES: Record<string, ModelExample> = {
+  forge: { prompt: 'Our neighbourhood wants to start a monthly repair café. Where do we begin?', response: 'Start with a small pilot: choose a venue, invite two or three repair volunteers, list the tools you have, and set a simple intake process. I can turn that into a one-page launch checklist.', approach: 'Clarify the shared goal, reduce it to a manageable first step, and offer a concrete next action.' },
+  'food-bank': { prompt: 'We have a donation event next Saturday but only four volunteers.', response: 'Prioritize three roles: one person for intake, two for sorting, and one for the handoff table. Add a short shift schedule and ask a partner organization for one backup volunteer.', approach: 'Match limited capacity to essential tasks, then identify the smallest useful backup plan.' },
+  'nonprofit-helpdesk': { prompt: 'Can you help us make our board meeting more focused?', response: 'Use a consent agenda for routine approvals, reserve the first 30 minutes for decisions, and end each item with an owner and due date. I can draft the agenda template.', approach: 'Separate routine information from decisions and make accountability visible.' },
+  'mutual-aid': { prompt: 'A neighbour needs a ride to a medical appointment on Tuesday.', response: 'Share only the details a driver needs, confirm the pickup window privately, and arrange a backup contact. Afterward, check in with both people so the request is fully closed.', approach: 'Protect dignity and privacy while coordinating a safe handoff and follow-up.' },
+  'civic-knowledge': { prompt: 'I do not understand how to speak at a city council meeting.', response: 'Check the meeting page for the agenda and public-comment deadline, prepare a short statement tied to one agenda item, and arrive or sign in before the comment period begins.', approach: 'Translate a formal process into plain-language steps and point to the decision point that matters.' },
+  'bob-dylan': { prompt: 'How can I make a folk song feel more vivid?', response: 'Give the verse a place, a weather pattern, and one object the singer can touch. Let the image carry the emotion before you explain what the singer feels.', approach: 'Use concrete images, musical restraint, and implication to deepen the writing.' },
+  'santa-claus': { prompt: 'I want to make a kind surprise for my neighbour.', response: 'Leave a warm note with a small treat, shovel their walkway, or offer one specific errand. The best surprises are thoughtful, useful, and easy to receive.', approach: 'Lead with warmth, keep the gesture practical, and make generosity feel comfortable.' },
+};
+const MODEL_PALETTE_WORDS: Record<string, string[]> = {
+  forge: ['clarify', 'listen', 'organize', 'next-step'],
+  'food-bank': ['donation', 'inventory', 'shift', 'dignity'],
+  'nonprofit-helpdesk': ['agenda', 'policy', 'owner', 'deadline'],
+  'mutual-aid': ['request', 'privacy', 'match', 'follow-up'],
+  'civic-knowledge': ['agenda', 'public-comment', 'deadline', 'process'],
+  'bob-dylan': ['image', 'verse', 'weather', 'rhythm'],
+  'santa-claus': ['kindness', 'surprise', 'warmth', 'generosity'],
+};
 const STOP_WORDS = new Set(
   'a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(
     ' ',
@@ -170,7 +189,7 @@ function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSele
         </div>
       )}
 
-      <div className="chat">
+      <div className={`chat${messages.length ? '' : ' is-empty'}`}>
         {messages.map((message, index) => (
             <div className={`message ${message.role}`} key={`${index}-${message.content}`}>
               <div className="avatar role-label" aria-label={message.role === 'user' ? 'You' : agentName} title={message.role === 'user' ? 'You' : agentName}>{message.role === 'user' ? 'You' : agentName}</div>
@@ -232,6 +251,7 @@ function AgentRoles({ activeAgentId, onSelect, showSpecialists }: { activeAgentI
 interface PalettePanelProps {
   palette: string[];
   region: string;
+  activeAgentId: string;
   wordDraft: string;
   onWordDraftChange: (value: string) => void;
   onAddWords: (event: FormEvent) => void;
@@ -244,6 +264,7 @@ interface PalettePanelProps {
 function PalettePanel({
   palette,
   region,
+  activeAgentId,
   wordDraft,
   onWordDraftChange,
   onAddWords,
@@ -271,6 +292,34 @@ function PalettePanel({
           </button>
         ))}
       </div>
+
+      <section className="model-examples" aria-labelledby="model-examples-title">
+        <div className="model-examples-heading">
+          <p className="eyebrow">MODEL PREVIEWS</p>
+          <h2 id="model-examples-title">See how each model thinks</h2>
+          <p>Short examples show the model’s style and decision approach.</p>
+          <div className="preview-palette" aria-label={`${AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Selected model'} example palette`}>
+            <span>Example palette</span>
+            {MODEL_PALETTE_WORDS[activeAgentId].map((word) => <b key={word}>{word}</b>)}
+          </div>
+        </div>
+        {AGENT_ROLES.map((role) => {
+          const example = MODEL_EXAMPLES[role.id];
+          return (
+            <details className={`model-example${role.id === activeAgentId ? ' is-selected' : ''}`} key={role.id}>
+              <summary>
+                <span><strong>{role.name}</strong><small>{role.focus}</small></span>
+                <span className="example-toggle">View</span>
+              </summary>
+              <div className="example-body">
+                <div className="example-message"><span className="example-label user-label">USER</span><p>{example.prompt}</p></div>
+                <div className="example-message"><span className="example-label">{role.name.toUpperCase()}</span><p>{example.response}</p></div>
+                <div className="approach-summary"><span className="example-label">APPROACH SUMMARY</span><p>{example.approach}</p></div>
+              </div>
+            </details>
+          );
+        })}
+      </section>
 
       <div className="metric">
         <span>Region</span>
@@ -479,6 +528,7 @@ export default function App() {
             <PalettePanel
               palette={palette}
               region={region}
+              activeAgentId={activeAgentId}
               wordDraft={wordDraft}
               onWordDraftChange={setWordDraft}
               onAddWords={addWords}
