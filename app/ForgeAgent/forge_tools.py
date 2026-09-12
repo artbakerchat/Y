@@ -8,7 +8,7 @@ from collections.abc import Callable
 
 from strands import tool
 
-from forge_specialists import tech_support_specialist
+from forge_specialists import consult_word_specialist, tech_support_specialist
 from community_tools import build_community_tools
 
 
@@ -60,4 +60,11 @@ def build_tools(palette: list[str], profile_id: str = "forge") -> list[Callable[
         words = banks.get(key, ["horizon", "ember", "mosaic", "compass", "echo"])
         return f'Suggested words for theme "{theme}": {", ".join(words)}'
 
-    return [get_palette, search_palette, suggest_related_words, *build_community_tools(profile_id), tech_support_specialist]
+    return [
+        get_palette,
+        search_palette,
+        suggest_related_words,
+        consult_word_specialist,
+        *build_community_tools(profile_id),
+        tech_support_specialist,
+    ]

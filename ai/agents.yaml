@@ -21,6 +21,7 @@ agents:
     env:
       GOOGLE_CLOUD_PROJECT: "${GCP_PROJECT_ID}"
       GOOGLE_CLOUD_REGION: "us-west1"
+      AGENT_SESSION_BUCKET: "larboard-agy-sessions"
 
   kiro:
     name: "kiro"
@@ -38,7 +39,7 @@ agents:
     auth_env: KIRO_INVOKE_TOKEN
     env:
       AWS_DEFAULT_REGION: "ca-central-1"
-      FORGE_SESSION_BUCKET: "larboard-kiro-sessions"
+      AGENT_SESSION_BUCKET: "larboard-kiro-sessions"
       FORGE_SESSION_PREFIX: "kiro-sessions/"
 
   codex:
@@ -58,3 +59,4 @@ agents:
     env:
       OPENAI_API_KEY: "${OPENAI_API_KEY}"
       AWS_DEFAULT_REGION: "eu-west-3"
+      AGENT_SESSION_BUCKET: "larboard-codex-sessions"

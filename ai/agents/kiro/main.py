@@ -8,7 +8,7 @@ import os
 from strands import Agent, tool
 from strands.session import S3SessionManager
 from strands.conversation import SlidingWindowConversationManager
-from common import CONVERSATION_GUIDANCE
+from common import CONVERSATION_GUIDANCE, missing_settings
 from strands.hooks import RateLimiterHook
 
 # ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ Always identify yourself as 'kiro (Montreal)' at the start of a session.
 def build_agent(session_id: str) -> Agent:
     session_manager = S3SessionManager(
         session_id=session_id,
-        bucket=os.environ["FORGE_SESSION_BUCKET"],
+        bucket=os.environ["AGENT_SESSION_BUCKET"],
         prefix=os.environ.get("FORGE_SESSION_PREFIX", "kiro-sessions/"),
     )
     return Agent(
@@ -93,7 +93,7 @@ def build_agent(session_id: str) -> Agent:
 # ---------------------------------------------------------------------------
 
 from fastapi import FastAPI, Header, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 from typing import Optional
 
@@ -130,4 +130,9 @@ async def invoke(req: InvokeRequest, authorization: Optional[str] = Header(defau
 
 @app.get("/health")
 def health():
-    return {"agent": "kiro", "region": "ca-central-1", "status": "ok"}
+    missing = missing_settings("kiro")
+    return JSONResponse(
+        {"agent": "kiro", "region": "ca-central-1",
+         "status": "unconfigured" if missing else "ok", "missing": missing},
+        status_code=503 if missing else 200,
+    )
