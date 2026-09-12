@@ -78,7 +78,12 @@ jobs:
 
           # Keep this list aligned with HTML_ROUTES in src/worker.js.
           for page in index pinball prompt pricing printer presentation architecture; do
-            put_object "$page.html" "$page.html" 'text/html; charset=utf-8' 'no-cache'
+            file="$page.html"
+            if [ ! -f "$file" ]; then
+              echo "Skipping missing root page: $file"
+              continue
+            fi
+            put_object "$file" "$file" 'text/html; charset=utf-8' 'no-cache'
           done
 
           find site/dist -type f -print0 | while IFS= read -r -d '' asset; do
