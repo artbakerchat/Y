@@ -203,8 +203,8 @@ function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSele
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Say hello to Forge…"
-          aria-label="Message Forge"
+          placeholder={`Say hello to ${agentName}…`}
+          aria-label={`Message ${agentName}`}
           rows={1}
         />
         <button disabled={busy} type="submit" aria-label="Send message">
