@@ -29,6 +29,16 @@ const ORDERED_AGENT_ROLES = [
   ...RECOMMENDED_AGENT_IDS.map((id) => AGENT_ROLES.find((role) => role.id === id)! ),
   ...AGENT_ROLES.filter((role) => !RECOMMENDED_AGENT_IDS.includes(role.id)),
 ];
+
+function getContextualAgentRoles(activeAgentId: string): AgentRole[] {
+  const activeRole = ORDERED_AGENT_ROLES.find((role) => role.id === activeAgentId);
+  if (!activeRole) return ORDERED_AGENT_ROLES;
+
+  return [
+    activeRole,
+    ...ORDERED_AGENT_ROLES.filter((role) => role.id !== activeAgentId),
+  ];
+}
 const MODEL_EXAMPLES: Record<string, ModelExample> = {
   forge: { prompt: 'Our neighbourhood wants to start a monthly repair café. Where do we begin?', response: 'Start with a small pilot: choose a venue, invite two or three repair volunteers, list the tools you have, and set a simple intake process. I can turn that into a one-page launch checklist.', approach: 'Clarify the shared goal, reduce it to a manageable first step, and offer a concrete next action.' },
   'food-bank': { prompt: 'We have a donation event next Saturday but only four volunteers.', response: 'Prioritize three roles: one person for intake, two for sorting, and one for the handoff table. Add a short shift schedule and ask a partner organization for one backup volunteer.', approach: 'Match limited capacity to essential tasks, then identify the smallest useful backup plan.' },
@@ -173,6 +183,8 @@ interface ChatPanelProps {
  * Renders the conversation history and the message composer.
  */
 function ChatPanel({ messages, agentName, activeAgentId, agentMode, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+  const composerTarget = agentName || 'Larboard';
+
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -205,8 +217,8 @@ function ChatPanel({ messages, agentName, activeAgentId, agentMode, onSelectAgen
           value={draft}
           onChange={(event) => onDraftChange(event.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={`Say hello to ${agentName}…`}
-          aria-label={`Message ${agentName}`}
+          placeholder={`Say hello to ${composerTarget}…`}
+          aria-label={`Message ${composerTarget}`}
           rows={1}
         />
         <button disabled={busy} type="submit" aria-label="Send message">
@@ -222,6 +234,7 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
   const suppressClickRef = useRef(false);
+  const contextualAgentRoles = getContextualAgentRoles(activeAgentId);
 
   function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
     if (event.pointerType === 'touch' || event.pointerType === 'mouse') {
@@ -275,9 +288,9 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
         onPointerCancel={handlePointerUp}
         aria-label="Available agents. Swipe or drag horizontally to browse."
       >
-        {ORDERED_AGENT_ROLES.map((role, index) => (
-          <button className={`role-card role-card-${(index % 5) + 1}${agentMode === 'manual' && activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (!suppressClickRef.current) onSelect(role.id); }} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
-            <span className="role-index">0{index + 1}</span>
+        {contextualAgentRoles.map((role, index) => (
+          <button className={`role-card role-card-${(index % 5) + 1}${agentMode === 'manual' && activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (!suppressClickRef.current) onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
+            <span className="role-index">{String(index + 1).padStart(2, '0')}</span>
             <h3>{role.name}{RECOMMENDED_AGENT_IDS.includes(role.id) ? <span className="role-recommended">Recommended</span> : null}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
             <p className="role-focus">{role.focus}</p>
             <p>{role.description}</p>
