@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-runtime';
 import { getPaletteTemplate, detectPaletteContext } from './src/palettes.js';
 import { CONVERSATION_GUIDANCE } from './src/conversation-guidance.js';
-import { DEFAULT_APPLE_CONVERSATION } from './src/default-conversation.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -35,7 +34,7 @@ const emptyState = (paletteId = 'default', paletteStory = '') => {
     paletteStory: paletteStory || template.story,
     palette: template.words.slice(0, 52),
     promptWords: [],
-    messages: DEFAULT_APPLE_CONVERSATION,
+    messages: [],
     pendingPrompt: '',
     printer: { note: '', images: [null, null, null] },
     rate: { day: new Date().toISOString().slice(0, 10), count: 0 },

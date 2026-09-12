@@ -4,7 +4,6 @@ import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
 import { CONVERSATION_GUIDANCE } from './conversation-guidance.js';
-import { DEFAULT_APPLE_CONVERSATION } from './default-conversation.js';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -83,7 +82,7 @@ const emptyState = (paletteId = 'default', paletteStory = '') => {
     paletteStory: paletteStory || template.story,
     palette: template.words.slice(0, 52),
     promptWords: [],
-    messages: DEFAULT_APPLE_CONVERSATION,
+    messages: [],
     pendingPrompt: '',
     printer: { note: '', images: [null, null, null] },
     rate: { day: new Date().toISOString().slice(0, 10), count: 0 },
