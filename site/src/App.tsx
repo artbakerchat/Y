@@ -7,19 +7,27 @@ import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, u
 type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
 type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string };
+type AgentRole = { id: string; name: string; focus: string; description: string };
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
 const STARTER_WORDS = ['anchor', 'pinnacle', 'summit', 'twilight', 'static', 'ocean'];
+const AGENT_ROLES: AgentRole[] = [
+  { id: 'neighbour', name: 'Good Neighbour', focus: 'Community support', description: 'Turn local needs into clear, practical next steps.' },
+  { id: 'food-bank', name: 'Food Bank', focus: 'Volunteer coordination', description: 'Organize shifts, donations, and welcoming pantry operations.' },
+  { id: 'nonprofit', name: 'Nonprofit Helpdesk', focus: 'Small-organization operations', description: 'Shape lightweight policies, templates, and plans.' },
+  { id: 'mutual-aid', name: 'Mutual Aid Hub', focus: 'Neighbour-to-neighbour care', description: 'Structure requests and offers with dignity and consent.' },
+  { id: 'civic', name: 'Civic Knowledge', focus: 'Local information', description: 'Make public processes easier to understand and act on.' },
+];
 const STOP_WORDS = new Set(
   'a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(
     ' ',
   ),
 );
 
-function cleanAssistantResponse(value) {
+function cleanAssistantResponse(value: unknown) {
   const text = typeof value === 'string' ? value : String(value ?? '');
   const cleaned = text
     .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
@@ -135,6 +143,8 @@ interface ChatPanelProps {
  * Renders the conversation history and the message composer.
  */
 function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+  const [openingNote, setOpeningNote] = useState('');
+
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -148,6 +158,24 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
         <h2>Conversation</h2>
         <span className="badge">Forge</span>
       </div>
+
+      {!messages.length && (
+        <form className="pre-conversation" onSubmit={(event) => {
+          event.preventDefault();
+          if (openingNote.trim()) {
+            onDraftChange(openingNote.trim());
+            setOpeningNote('');
+          }
+        }}>
+          <div>
+            <p className="eyebrow">BEFORE WE BEGIN</p>
+            <h3>Leave your comments</h3>
+            <p className="pre-conversation__copy">Share a little context, a question, or the outcome you’re hoping for.</p>
+          </div>
+          <textarea value={openingNote} onChange={(event) => setOpeningNote(event.target.value)} placeholder="What’s on your mind?" aria-label="Leave your comments" rows={3} />
+          <button type="submit" disabled={!openingNote.trim()}>Use as opening note</button>
+        </form>
+      )}
 
       <div className="chat">
         {messages.length ? (
@@ -208,6 +236,30 @@ function ChatPanel({ messages, busy, draft, onDraftChange, onSubmit }: ChatPanel
       </form>
       <p className="hint">Enter to send · Shift + Enter for a new line</p>
     </article>
+  );
+}
+
+function AgentRoles() {
+  return (
+    <section className="roles" aria-labelledby="roles-title">
+      <div className="roles-heading">
+        <div>
+          <p className="kicker">Choose your starting point</p>
+          <h2 id="roles-title">A role for the work ahead</h2>
+        </div>
+        <p>Forge can help you find the right shape for an idea before you take the next step.</p>
+      </div>
+      <div className="role-grid">
+        {AGENT_ROLES.map((role, index) => (
+          <article className={`role-card role-card-${index + 1}`} key={role.id}>
+            <span className="role-index">0{index + 1}</span>
+            <h3>{role.name}</h3>
+            <p className="role-focus">{role.focus}</p>
+            <p>{role.description}</p>
+          </article>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -427,6 +479,8 @@ export default function App() {
               </p>
             </div>
           </section>
+
+          <AgentRoles />
 
           <section className="workspace">
             <ChatPanel

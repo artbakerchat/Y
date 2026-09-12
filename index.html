@@ -24,6 +24,15 @@
       .message { grid-template-columns: 58px minmax(0, 1fr) !important; gap: 10px !important; }
     }
   </style>
+  <style>
+    .business-status{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #285b64;border-radius:999px;color:var(--muted);font-size:11px;font-weight:800;letter-spacing:.04em;white-space:nowrap}
+    .business-status .dot{background:#718294;box-shadow:none}
+    .business-status.is-open{border-color:#327e71;color:var(--cyan)}
+    .business-status.is-open .dot{background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+    .business-status.is-closed{border-color:#5b4058;color:#c4a7b9}
+    .business-status.is-closed .dot{background:#ff7bd5;box-shadow:0 0 10px rgb(255 123 213 / 65%)}
+    @media(max-width:520px){.business-status{order:3;width:100%;justify-content:center}}
+  </style>
 </head>
 <script></script>
 <body><div class="shell"><header><a class="brand" href="/"><span class="mark">✦</span><span>Larboard<small>agent workspace</small></span></a><nav class="nav" aria-label="Primary navigation"><a href="/" aria-current="page">Workspace</a><a href="/prompt">Prompt lab</a><a href="/pinball">Pinball</a><a href="/pricing">Pricing</a><span class="status"><i class="dot"></i> ready to chat</span></nav></header><main><section class="hero"><div><p class="kicker">A thoughtful AI companion</p><h1>Build with <em>intent.</em><br>Ship with clarity.</h1><p class="lead">Bring a half-formed idea, a question, or a next step. Forge will talk it through with you in plain language.</p><div id="palette-story" style="display:none;margin:24px 0 0;padding:16px;border-left:3px solid var(--cyan);color:var(--muted);font-size:14px;line-height:1.6;font-style:italic;"></div></div><aside class="hero-note"><div class="signal"><span>◉ conversation</span><span>OPEN</span></div><p>Ask naturally. Forge will listen, ask when something is unclear, and help you move forward without making the conversation feel complicated.</p></aside></section><section class="workspace" aria-label="Agent workspace"><article class="card"><div class="card-head"><h2>Conversation</h2><span class="badge">Forge</span></div><div class="chat" id="chat"><div class="message"><div class="avatar">L</div><div class="bubble">Hey — glad you’re here. What are you working on?</div></div><div class="message user"><div class="avatar">YOU</div><div class="bubble">What can we build today?</div></div><div class="message"><div class="avatar">L</div><div class="bubble">Try a community request, such as “Help organize volunteers for a food-bank shift.” You can also ask for nonprofit help, mutual-aid coordination, or civic information. If Python is enabled, the response will identify the AgentCore runtime.</div></div></div><form class="composer" id="ask-form"><textarea id="prompt" rows="1" maxlength="4000" placeholder="Say hello to Forge…" aria-label="Message Forge"></textarea><button class="send" id="send" type="submit" aria-label="Send message">↑</button></form><p class="hint" id="hint">Enter to send · Shift + Enter for a new line</p></article><aside class="card side"><h3>Your word garden</h3><p>Add a few words on the right and use them as inspiration in the chat.</p><div class="model"><small>Conversation</small><strong>Friendly, focused, and private</strong></div><div class="metric"><label>Region</label><b id="region">checking…</b></div><div class="metric"><label>Palette words</label><b id="palette-count">0 / 52</b></div><div class="capabilities"><span>Ideas</span><span>Questions</span><span>Next steps</span></div></aside></section></main><footer><span>Larboard / a quiet place for useful work</span><span><a href="/prompt">Prompt lab</a> ·  · <a href="/pinball">Pinball</a> · <a href="/pricing">Pricing</a></span></footer></div><script>
@@ -155,3 +164,27 @@ async function loadBackendState(){const response=await fetch('/api/state');if(!r
      background: linear-gradient(135deg, #6f55c7, #c4a7ff 55%, var(--orange)) !important;
    }
  </style>
+ <script>
+   (() => {
+     const status = document.querySelector('.status');
+     if (!status) return;
+     status.className = 'business-status';
+     status.id = 'business-status';
+     status.setAttribute('aria-live', 'polite');
+     status.innerHTML = '<i class="dot"></i><span>Checking hours…</span>';
+     const label = status.querySelector('span');
+     let modelEnabled = false;
+     const clock = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Vancouver', hour: 'numeric', minute: 'numeric', hour12: false });
+     const updateBusinessStatus = () => {
+       const parts = Object.fromEntries(clock.formatToParts(new Date()).filter(({ type }) => type !== 'literal').map(({ type, value }) => [type, value]));
+       const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+       const inBusinessHours = minutes >= 9 * 60 && minutes < 17 * 60;
+       status.classList.toggle('is-open', inBusinessHours && modelEnabled);
+       status.classList.toggle('is-closed', !(inBusinessHours && modelEnabled));
+       label.textContent = inBusinessHours && modelEnabled ? 'Open for business · model requests enabled' : inBusinessHours ? 'Closed · model requests unavailable' : 'Closed · opens at 9:00 AM Vancouver';
+     };
+     fetch('/api/health').then((response) => response.ok ? response.json() : Promise.reject(new Error('Health check failed'))).then((data) => { modelEnabled = Boolean(data?.ok && data?.model); updateBusinessStatus(); }).catch(() => { modelEnabled = false; updateBusinessStatus(); });
+     updateBusinessStatus();
+     window.setInterval(updateBusinessStatus, 60 * 1000);
+   })();
+ </script>

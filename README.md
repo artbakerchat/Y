@@ -194,6 +194,17 @@ Set the required AWS credentials and runtime variables as encrypted Worker secre
 
 The Worker signs both AgentCore and Bedrock requests with AWS Signature Version 4.
 
+### GitHub deployment checklist
+
+Pushing to `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). The workflow builds the React site, validates the Worker, uploads the static pages and `site/dist` assets to the `larboard-assets` R2 bucket, and deploys the Worker to the `larboard.ca` custom domain. The GitHub repository must contain these Actions secrets:
+
+- `CLOUDFLARE_API_TOKEN` — a token allowed to deploy Workers and manage the configured R2 bucket;
+- `CLOUDFLARE_ACCOUNT_ID` — the Cloudflare account that owns `larboard` and `larboard-assets`.
+
+The Cloudflare workflow does not deploy the Python AgentCore runtime. Deploy `app/ForgeAgent/` separately with the AgentCore tooling, then add its runtime ARN as the optional GitHub secret `AGENTCORE_RUNTIME_ARN`. When that secret is present, the Worker forwards chat requests to the Python runtime; when it is absent, the Worker uses its Cloudflare/Bedrock agent loop. The two paths do not compete for the website route: Cloudflare owns `larboard.ca`, and Python is an upstream chat runtime selected by the Worker.
+
+The workflow intentionally fails early when the required Cloudflare secrets are missing. If an AgentCore ARN is not configured, it leaves the current Worker routing unchanged rather than replacing it with an empty value.
+
 ## Edit skills
 
 The editable skill source files live in [`skills/`](skills/). Add a Markdown file with frontmatter, commit it, and push to `main`. The GitHub Actions workflow uploads every `skills/*.md` file to the `skills/` prefix in R2 before deploying the Worker.

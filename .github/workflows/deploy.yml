@@ -5,6 +5,10 @@ on:
     branches: [main]
   workflow_dispatch:
 
+concurrency:
+  group: larboard-production-deploy
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -14,10 +18,24 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_VERSION: 4.129.0
 
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+
+      - name: Verify Cloudflare deployment secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || missing+=(CLOUDFLARE_API_TOKEN)
+          [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] || missing+=(CLOUDFLARE_ACCOUNT_ID)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing required GitHub Actions secret(s): ${missing[*]}" >&2
+            echo "Add them under Settings > Secrets and variables > Actions before pushing to main." >&2
+            exit 1
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -36,17 +54,44 @@ jobs:
       - name: Validate Worker source
         run: npm run check
 
+      - name: Validate Python AgentCore source
+        run: python3 -m py_compile app/ForgeAgent/*.py
+
       - name: Build Worker (dry run)
-        run: npx --yes wrangler@4.129.0 deploy --dry-run
+        run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy --dry-run
 
       - name: Validate Markdown skills
         run: node scripts/validate-skills.js
 
       - name: Upload website assets to R2
         run: |
-          find skills -type f -name '*.md' -print0 | while IFS= read -r -d '' skill; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$skill" --file "$skill" --content-type 'text/markdown; charset=utf-8' --cache-control 'no-cache' --remote; done
-          for page in index pinball prompt pricing printer presentation; do npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$page.html" --file "$page.html" --content-type 'text/html; charset=utf-8' --cache-control 'no-cache' --remote; done
-          find site/dist -type f -print0 | while IFS= read -r -d '' asset; do key="${asset#site/dist/}"; case "$asset" in *.html) content_type='text/html; charset=utf-8' ;; *.js) content_type='text/javascript; charset=utf-8' ;; *.css) content_type='text/css; charset=utf-8' ;; *) content_type='application/octet-stream' ;; esac; npx --yes wrangler@4.129.0 r2 object put "larboard-assets/$key" --file "$asset" --content-type "$content_type" --cache-control 'public, max-age=3600' --remote; done
+          set -euo pipefail
+          put_object() {
+            local key="$1" file="$2" content_type="$3" cache_control="$4"
+            npx --yes "wrangler@${WRANGLER_VERSION}" r2 object put "larboard-assets/$key" \
+              --file "$file" --content-type "$content_type" --cache-control "$cache_control" --remote
+          }
+
+          find skills -type f -name '*.md' -print0 | while IFS= read -r -d '' skill; do
+            put_object "$skill" "$skill" 'text/markdown; charset=utf-8' 'no-cache'
+          done
+
+          # Keep this list aligned with HTML_ROUTES in src/worker.js.
+          for page in index pinball prompt pricing printer presentation architecture; do
+            put_object "$page.html" "$page.html" 'text/html; charset=utf-8' 'no-cache'
+          done
+
+          find site/dist -type f -print0 | while IFS= read -r -d '' asset; do
+            key="${asset#site/dist/}"
+            case "$asset" in
+              *.html) content_type='text/html; charset=utf-8' ;;
+              *.js) content_type='text/javascript; charset=utf-8' ;;
+              *.css) content_type='text/css; charset=utf-8' ;;
+              *.json) content_type='application/json; charset=utf-8' ;;
+              *) content_type='application/octet-stream' ;;
+            esac
+            put_object "$key" "$asset" "$content_type" 'public, max-age=3600'
+          done
 
       - name: Configure AgentCore Worker secrets
         env:
@@ -54,10 +99,10 @@ jobs:
         run: |
           set -euo pipefail
           if [ -n "${AGENTCORE_RUNTIME_ARN:-}" ]; then
-            printf '%s' "$AGENTCORE_RUNTIME_ARN" | npx --yes wrangler@4.129.0 secret put AGENTCORE_RUNTIME_ARN
+            printf '%s' "$AGENTCORE_RUNTIME_ARN" | npx --yes "wrangler@${WRANGLER_VERSION}" secret put AGENTCORE_RUNTIME_ARN
           else
-            echo "AGENTCORE_RUNTIME_ARN is not configured; preserving the current Worker routing."
+            echo "AGENTCORE_RUNTIME_ARN is not configured; the Worker will use its Cloudflare/Bedrock path."
           fi
 
       - name: Deploy Worker
-        run: npx --yes wrangler@4.129.0 deploy
+        run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy
