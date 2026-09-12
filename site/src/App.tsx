@@ -303,10 +303,10 @@ function PalettePanel({
             {MODEL_PALETTE_WORDS[activeAgentId].map((word) => <b key={word}>{word}</b>)}
           </div>
         </div>
-        {AGENT_ROLES.map((role) => {
+        {AGENT_ROLES.filter((role) => role.id === activeAgentId).map((role) => {
           const example = MODEL_EXAMPLES[role.id];
           return (
-            <details className={`model-example${role.id === activeAgentId ? ' is-selected' : ''}`} key={role.id}>
+            <details className="model-example is-selected" key={role.id} open>
               <summary>
                 <span><strong>{role.name}</strong><small>{role.focus}</small></span>
                 <span className="example-toggle">View</span>
