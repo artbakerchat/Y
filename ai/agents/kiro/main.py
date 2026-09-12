@@ -7,7 +7,7 @@ Domain: AWS-native workflows, S3 session persistence, AgentCore deployment
 import os
 from strands import Agent, tool
 from strands.session import S3SessionManager
-from strands.conversation import SlidingWindowConversationManager
+from strands.agent.conversation_manager import SlidingWindowConversationManager
 from common import CONVERSATION_GUIDANCE, missing_settings
 from strands.hooks import RateLimiterHook
 
