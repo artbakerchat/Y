@@ -33,8 +33,8 @@ const ROUTING_RULES = {
   "nonprofit-helpdesk": [["nonprofit", 4], ["non-profit", 4], ["grant", 3], ["bylaws", 3], ["intake form", 3], ["meeting agenda", 3], ["operating plan", 3]],
   "mutual-aid": [["mutual aid", 5], ["ride", 2], ["groceries", 2], ["check-in", 2], ["translation help", 3], ["housing navigation", 3]],
   "civic-knowledge": [["city council", 4], ["election", 3], ["government", 3], ["permit", 3], ["public service", 3], ["municipal", 3], ["voting", 3], ["civic", 3]],
-  "bob-dylan": [["bob dylan", 6], ["songwriting", 4], ["folk music", 4], ["blues", 3], ["album", 2], ["song lyrics", 3], ["music history", 3]],
-  "santa-claus": [["santa", 6], ["christmas", 4], ["present", 3], ["presents", 3], ["gift", 3], ["gifts", 3], ["north pole", 5], ["reindeer", 4]]
+  "bob-dylan": [["bob dylan", 6], ["bob", 5], ["dylan", 5], ["songwriting", 4], ["folk music", 4], ["blues", 3], ["album", 2], ["song lyrics", 3], ["music history", 3]],
+  "santa-claus": [["santa claus", 6], ["santa", 6], ["christmas", 4], ["present", 3], ["presents", 3], ["gift", 3], ["gifts", 3], ["north pole", 5], ["reindeer", 4]]
 };
 
 export function inferAgentId(message, currentAgentId = "forge") {

@@ -8,21 +8,27 @@
 .roles-heading h2{margin:0;font-size:clamp(24px,3vw,36px);letter-spacing:-.04em}
 .roles-heading .kicker{margin:0 0 10px}
 .roles-heading>p{max-width:360px;margin:0;color:#8ea1b4;font-size:13px;line-height:1.6}
-.role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
-.role-card{min-height:174px;padding:18px;border:1px solid #24506a;border-radius:14px;background:linear-gradient(150deg,rgb(17 48 67 / 92%),rgb(10 27 44 / 94%));transition:transform .2s ease,border-color .2s ease;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.routing-mode{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 18px;padding:12px 14px;border:1px solid #326d7d;border-radius:12px;color:#c4d1dc;background:#071d2d;font:inherit;text-align:left;cursor:pointer}
+.routing-mode.is-active{border-color:#7fffe5;background:linear-gradient(100deg,rgb(23 67 76 / 80%),rgb(10 29 46 / 94%));box-shadow:0 0 0 2px rgb(127 255 229 / 10%)}
+.routing-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;color:#061522;background:#7fffe5;font-weight:900}.routing-mode strong,.routing-mode small{display:block}.routing-mode strong{font-size:13px}.routing-mode small{margin-top:3px;color:#8ea1b4;font-size:11px}.routing-mode>b{margin-left:auto;color:#7fffe5;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.available-label{margin:0 0 9px;color:#607386;font-size:10px;font-weight:800;letter-spacing:.16em}
+.role-grid{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#326d7d transparent;cursor:grab;touch-action:pan-x}
+.role-grid.is-dragging{cursor:grabbing;scroll-snap-type:none;scrollbar-color:#7fffe5 transparent}
+.role-card{flex:0 0 calc((100% - 20px) / 3);min-height:174px;padding:18px;border:1px solid #24506a;border-radius:14px;background:linear-gradient(150deg,rgb(17 48 67 / 92%),rgb(10 27 44 / 94%));transition:transform .2s ease,border-color .2s ease;color:inherit;font:inherit;text-align:left;cursor:pointer;scroll-snap-align:start}
 .role-card.is-active{border-color:#7fffe5;box-shadow:0 0 0 2px rgb(127 255 229 / 18%)}
 .role-card:hover{transform:translateY(-3px);border-color:#57f3d2}
 .role-index{color:#7fffe5;font-size:11px;font-weight:800;letter-spacing:.12em}
 .role-card h3{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:30px 0 6px;font-size:15px}
 .role-selected{padding:3px 6px;border:1px solid #4b8f86;border-radius:99px;color:#7fffe5;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
+.role-recommended{padding:3px 6px;border:1px solid #8069d8;border-radius:99px;color:#c4a7ff;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
 .role-card p{margin:0;color:#8ea1b4;font-size:12px;line-height:1.5}
 .role-card .role-focus{margin-bottom:8px;color:#c4a7ff;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+.roles-hint{margin:3px 0 0;color:#607386;font-size:10px;text-align:right}.roles-hint span{color:#7fffe5;font-size:14px}
 .role-card-2{background:linear-gradient(150deg,rgb(39 32 71 / 92%),rgb(17 27 51 / 94%))}.role-card-3{background:linear-gradient(150deg,rgb(45 35 64 / 92%),rgb(16 27 48 / 94%))}.role-card-4{background:linear-gradient(150deg,rgb(23 52 67 / 92%),rgb(10 27 44 / 94%))}.role-card-5{background:linear-gradient(150deg,rgb(41 37 72 / 92%),rgb(14 27 48 / 94%))}
 .workspace{margin-top:0}
 /* Keep role labels readable without taking width away from the conversation. */
 .message{display:block}
 .message .avatar.role-label{display:inline-grid;margin:0 0 8px}
 .message .bubble{max-width:none}
-@media(max-width:1000px){.role-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:800px){.roles-heading{display:block}.roles-heading>p{margin-top:12px}.role-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:520px){.role-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.roles-heading{display:block}.roles-heading>p{margin-top:12px}.role-card{padding:14px}}
+@media(max-width:520px){.role-card{flex-basis:82%;min-height:160px}.roles-hint{text-align:left}}

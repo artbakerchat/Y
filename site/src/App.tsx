@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { Component, ErrorInfo, FormEvent, KeyboardEvent, PointerEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -6,7 +6,8 @@ import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, u
 
 type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
-type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string; agentId?: string };
+type AgentMode = 'auto' | 'manual';
+type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string; agentId?: string; agentMode?: AgentMode };
 type AgentRole = { id: string; name: string; focus: string; description: string };
 type ModelExample = { prompt: string; response: string; approach: string };
 
@@ -23,8 +24,11 @@ const AGENT_ROLES: AgentRole[] = [
   { id: 'bob-dylan', name: 'Bob Dylan', focus: 'Music and songwriting', description: 'Explore folk, blues, songwriting, albums, and lyrical interpretation.' },
   { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
 ];
-const STARTING_AGENT_IDS = new Set(['forge', 'bob-dylan', 'santa-claus']);
-const FORGE_EXPLORATION_IDS = new Set(['forge', 'food-bank', 'mutual-aid']);
+const RECOMMENDED_AGENT_IDS = ['forge', 'bob-dylan', 'santa-claus'];
+const ORDERED_AGENT_ROLES = [
+  ...RECOMMENDED_AGENT_IDS.map((id) => AGENT_ROLES.find((role) => role.id === id)! ),
+  ...AGENT_ROLES.filter((role) => !RECOMMENDED_AGENT_IDS.includes(role.id)),
+];
 const MODEL_EXAMPLES: Record<string, ModelExample> = {
   forge: { prompt: 'Our neighbourhood wants to start a monthly repair café. Where do we begin?', response: 'Start with a small pilot: choose a venue, invite two or three repair volunteers, list the tools you have, and set a simple intake process. I can turn that into a one-page launch checklist.', approach: 'Clarify the shared goal, reduce it to a manageable first step, and offer a concrete next action.' },
   'food-bank': { prompt: 'We have a donation event next Saturday but only four volunteers.', response: 'Prioritize three roles: one person for intake, two for sorting, and one for the handoff table. Add a short shift schedule and ask a partner organization for one backup volunteer.', approach: 'Match limited capacity to essential tasks, then identify the smallest useful backup plan.' },
@@ -157,7 +161,7 @@ interface ChatPanelProps {
   messages: Message[];
   agentName: string;
   activeAgentId: string;
-  showSpecialists: boolean;
+  agentMode: AgentMode;
   onSelectAgent: (id: string) => void;
   busy: boolean;
   draft: string;
@@ -168,7 +172,7 @@ interface ChatPanelProps {
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+function ChatPanel({ messages, agentName, activeAgentId, agentMode, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
@@ -183,11 +187,9 @@ function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSele
         <span className="badge">{agentName}</span>
       </div>
 
-      {!messages.length && (
-        <div className="conversation-start" aria-label="Conversation setup">
-          <AgentRoles activeAgentId={activeAgentId} onSelect={onSelectAgent} showSpecialists={showSpecialists} />
-        </div>
-      )}
+      <div className="conversation-start" aria-label="Conversation setup">
+        <AgentRoles activeAgentId={activeAgentId} agentMode={agentMode} onSelect={onSelectAgent} />
+      </div>
 
       <div className={`chat${messages.length ? '' : ' is-empty'}`}>
         {messages.map((message, index) => (
@@ -216,30 +218,73 @@ function ChatPanel({ messages, agentName, activeAgentId, showSpecialists, onSele
   );
 }
 
-function AgentRoles({ activeAgentId, onSelect, showSpecialists }: { activeAgentId: string; onSelect: (id: string) => void; showSpecialists: boolean }) {
-  const visibleRoles = activeAgentId === 'forge' || showSpecialists
-    ? AGENT_ROLES.filter((role) => FORGE_EXPLORATION_IDS.has(role.id))
-    : AGENT_ROLES.filter((role) => STARTING_AGENT_IDS.has(role.id));
+function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: string; agentMode: AgentMode; onSelect: (id: string) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const dragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
+  const suppressClickRef = useRef(false);
+
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === 'touch' || event.pointerType === 'mouse') {
+      const track = trackRef.current;
+      if (!track) return;
+      dragRef.current = { active: true, startX: event.clientX, scrollLeft: track.scrollLeft, moved: false };
+      track.setPointerCapture(event.pointerId);
+      track.classList.add('is-dragging');
+    }
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
+    const track = trackRef.current;
+    if (!track || !dragRef.current.active) return;
+    const distance = event.clientX - dragRef.current.startX;
+    if (Math.abs(distance) > 5) dragRef.current.moved = true;
+    track.scrollLeft = dragRef.current.scrollLeft - distance;
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    const track = trackRef.current;
+    if (!track || !dragRef.current.active) return;
+    if (track.hasPointerCapture(event.pointerId)) track.releasePointerCapture(event.pointerId);
+    suppressClickRef.current = dragRef.current.moved;
+    dragRef.current.active = false;
+    track.classList.remove('is-dragging');
+    window.setTimeout(() => { suppressClickRef.current = false; }, 0);
+  }
 
   return (
     <section className="roles conversation-message" aria-labelledby="roles-title">
       <div className="roles-heading">
         <div>
           <p className="eyebrow">BEFORE WE BEGIN</p>
-          <h2 id="roles-title">Who would you like to talk with?</h2>
+          <h2 id="roles-title">Choose how we route your conversation</h2>
         </div>
-        <p>Pick a model for this conversation. Your choice will stay with the conversation while you get started.</p>
+        <p>Larboard can choose the best specialist for each message, or you can pin one of the three available agents below.</p>
       </div>
-      <div className="role-grid">
-        {visibleRoles.map((role, index) => (
-          <button className={`role-card role-card-${index + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => onSelect(role.id)} aria-pressed={activeAgentId === role.id}>
+      <button className={`routing-mode${agentMode === 'auto' ? ' is-active' : ''}`} type="button" onClick={() => onSelect('auto')} aria-pressed={agentMode === 'auto'}>
+        <span className="routing-icon">✦</span>
+        <span><strong>Automatic routing</strong><small>{agentMode === 'auto' ? `Currently with ${AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}` : 'Let Larboard choose the best fit'}</small></span>
+        {agentMode === 'auto' ? <b>Active</b> : null}
+      </button>
+      <p className="available-label">AVAILABLE AGENTS</p>
+      <div
+        className="role-grid"
+        ref={trackRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        aria-label="Available agents. Swipe or drag horizontally to browse."
+      >
+        {ORDERED_AGENT_ROLES.map((role, index) => (
+          <button className={`role-card role-card-${(index % 5) + 1}${agentMode === 'manual' && activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (!suppressClickRef.current) onSelect(role.id); }} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
             <span className="role-index">0{index + 1}</span>
-            <h3>{role.name}{activeAgentId === role.id ? <span className="role-selected">Selected</span> : null}</h3>
+            <h3>{role.name}{RECOMMENDED_AGENT_IDS.includes(role.id) ? <span className="role-recommended">Recommended</span> : null}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
             <p className="role-focus">{role.focus}</p>
             <p>{role.description}</p>
           </button>
         ))}
       </div>
+      <p className="roles-hint">Grab and drag to browse all agents <span aria-hidden="true">↔</span></p>
     </section>
   );
 }
@@ -341,7 +386,7 @@ export default function App() {
   const [palette, setPalette] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeAgentId, setActiveAgentId] = useState('forge');
-  const [showSpecialists, setShowSpecialists] = useState(false);
+  const [agentMode, setAgentMode] = useState<AgentMode>('auto');
   const [draft, setDraft] = useState('');
   const [wordDraft, setWordDraft] = useState('');
   const [region, setRegion] = useState('checking…');
@@ -360,7 +405,7 @@ export default function App() {
         setMessages(saved.messages || []);
         const savedAgentId = AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge';
         setActiveAgentId(savedAgentId);
-        setShowSpecialists(savedAgentId !== 'forge' && !STARTING_AGENT_IDS.has(savedAgentId));
+        setAgentMode(saved.agentMode === 'manual' ? 'manual' : 'auto');
         setRegion(health.region || 'env default');
       })
       .catch(() => setRegion('local preview'));
@@ -427,11 +472,14 @@ export default function App() {
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, agent: activeAgentId }),
+        body: JSON.stringify({ message, ...(agentMode === 'manual' ? { agent: activeAgentId } : {}) }),
       });
       const data = (await response.json()) as { answer?: string; error?: string };
       if (!response.ok) {
         throw new Error(data.error || 'Request failed');
+      }
+      if (agentMode === 'auto' && typeof (data as { agentId?: string }).agentId === 'string') {
+        setActiveAgentId((data as { agentId: string }).agentId);
       }
       setMessages([
         ...nextMessages.slice(0, -1),
@@ -451,16 +499,17 @@ export default function App() {
   }
 
   function selectAgent(agentId: string) {
-    if (agentId === activeAgentId) {
-      if (agentId === 'forge') setShowSpecialists(true);
+    if (agentId === 'auto') {
+      setAgentMode('auto');
+      void saveState({ agentMode: 'auto', messages: [], pendingPrompt: '' }).catch(() => undefined);
+      setMessages([]);
       return;
     }
-    if (agentId === 'forge') setShowSpecialists(true);
+    if (agentMode === 'manual' && agentId === activeAgentId) return;
+    setAgentMode('manual');
     setActiveAgentId(agentId);
     setMessages([]);
-    void saveState({ agentId, messages: [], pendingPrompt: '' }).catch(() => {
-      setActiveAgentId('forge');
-    });
+    void saveState({ agentId, agentMode: 'manual', messages: [], pendingPrompt: '' }).catch(() => undefined);
   }
 
   async function addWords(event: FormEvent) {
@@ -518,7 +567,7 @@ export default function App() {
               messages={messages}
               agentName={AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}
               activeAgentId={activeAgentId}
-              showSpecialists={showSpecialists}
+              agentMode={agentMode}
               onSelectAgent={selectAgent}
               busy={busy}
               draft={draft}
