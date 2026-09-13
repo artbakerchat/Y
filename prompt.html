@@ -216,6 +216,5 @@
 
     fetch('/api/state').then((response) => response.json()).then((state) => { window.backendState = state; promptWords = Array.isArray(state.promptWords) ? state.promptWords : []; renderPalette(); renderPrompt(); }).catch(() => { renderPalette(); renderPrompt(); });
   </script>
-  <script src="/global-timer.js" defer></script>
 </body>
 </html>

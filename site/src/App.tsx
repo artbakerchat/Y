@@ -369,10 +369,14 @@ function PalettePanel({
           <p className="eyebrow">MODEL PREVIEWS</p>
           <h2 id="model-examples-title">See how each model thinks</h2>
           <p>Short examples show the model’s style and decision approach.</p>
-          <div className="preview-palette" aria-label={`${AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Selected model'} example palette`}>
+          <a
+            className="preview-palette"
+            href="/prompt"
+            aria-label={`Open Prompt Lab with the ${AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'selected model'} example palette`}
+          >
             <span>Example palette</span>
             {MODEL_PALETTE_WORDS[activeAgentId].map((word) => <b key={word}>{word}</b>)}
-          </div>
+          </a>
         </div>
         {AGENT_ROLES.filter((role) => role.id === activeAgentId).map((role) => {
           const example = MODEL_EXAMPLES[role.id];
