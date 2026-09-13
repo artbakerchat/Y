@@ -6,14 +6,47 @@ button, input, textarea, select { max-width: 100%; }
 @media (max-width: 700px) {
   body { overflow-x: hidden; }
 
+  /* Flex and grid children otherwise keep their desktop min-content width. */
+  .shell,
+  main,
+  section,
+  article,
+  aside,
+  footer,
+  .workspace,
+  .card,
+  .hero,
+  .intro,
+  .slide-stage,
+  .slide { min-width: 0; }
+
   /* Workspace and pinball navigation stay readable without horizontal scrolling. */
   .shell { width: min(calc(100% - 28px), 1180px) !important; }
   header { gap: 12px !important; }
   .nav { width: 100%; justify-content: flex-start !important; gap: 8px 16px !important; flex-wrap: wrap; }
 
+  /* The workspace sidebar used a desktop-height inner layout, which leaves a
+     large clipped/empty panel after the columns stack on a phone. */
+  .workspace > .side {
+    height: auto !important;
+    min-height: 0;
+  }
+  .workspace > .side .garden-runtime {
+    height: auto !important;
+    min-height: 0;
+  }
+
   /* Prompt lab */
   .page-navigation { position: static !important; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem !important; margin-top: 1rem; }
   .prompt-palette button { flex: 1 1 calc(33.333% - 0.35rem) !important; }
+
+  /* Long status labels and footer links must wrap inside the viewport. */
+  .business-status,
+  footer > span,
+  footer > span:last-child,
+  footer a { white-space: normal !important; overflow-wrap: anywhere; }
+  .business-status span { min-width: 0; overflow-wrap: anywhere; }
+  footer { align-items: flex-start; flex-wrap: wrap !important; }
 
   /* Pinball controls remain large enough for touch. */
   .intro { display: block !important; }
