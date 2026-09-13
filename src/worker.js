@@ -452,7 +452,7 @@ async function steerPostResponse(answer, env) {
   try {
     // First call: quality review.
     const reviewResult = await bedrockConverse(env, {
-      system: [{ text: 'You are a quality reviewer for a conversational AI. Evaluate the reply. If it is clear, helpful, and on-topic reply with only: APPROVED. If it needs improvement reply with: REVISE: <one sentence of guidance>.' }],
+      system: [{ text: 'You are a quality reviewer for a conversational AI. Evaluate the reply for clarity, usefulness, natural spoken flow, and unnecessary complexity. Prefer simple noun-verb combinations, concrete words, short sentences, and the smallest complete answer. If it is clear, helpful, natural, and on-topic reply with only: APPROVED. If it needs improvement reply with: REVISE: <one sentence of guidance>.' }],
       messages: [{ role: 'user', content: [{ text: `Reply to review:\n${answer}` }] }],
       maxTokens: 80,
       temperature: 0.0,
@@ -465,7 +465,7 @@ async function steerPostResponse(answer, env) {
 
       // Second call: revise the answer using the guidance.
       const reviseResult = await bedrockConverse(env, {
-        system: [{ text: 'You are a helpful conversational AI. Rewrite the reply below, applying the improvement guidance. Keep the same subject matter and do not add new facts. Return only the improved reply, no preamble.' }],
+        system: [{ text: 'You are a helpful conversational AI. Rewrite the reply below, applying the improvement guidance. Keep the same subject matter and do not add new facts. Prefer simple noun-verb combinations, concrete words, short sentences, and natural spoken flow. Remove unnecessary explanation and complexity. Return only the improved reply, no preamble.' }],
         messages: [{
           role: 'user',
           content: [{ text: `Original reply:\n${answer}\n\nImprovement guidance: ${guidance}` }],
@@ -506,7 +506,7 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
   };
 
   const specialistSystem = [
-    { text: `You are a word-craft specialist with access to etymology and vocabulary tools. ${focus} Use your tools to look up concrete data before responding. Be concise (3–6 sentences). Return only the analysis, no preamble.` },
+    { text: `You are a word-craft specialist with access to etymology and vocabulary tools. ${focus} Use your tools to look up concrete data before responding. Favor simple noun-verb combinations, clear concrete wording, and a natural spoken flow. Do not over-focus on grammatical or syntactic correctness; prioritize language that feels easy to say and understand. Be concise (3–6 sentences). Return only the analysis, no preamble.` },
   ];
 
   const runningMessages = [

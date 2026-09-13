@@ -261,10 +261,10 @@ def _agent_for_palette(
 
 
 def _profile_id_from(payload: dict[str, Any]) -> str:
-    """Extract profile ID from payload, defaulting to 'forge'."""
+    """Extract profile ID from payload, defaulting to this Runtime's profile."""
     profile_id = payload.get("agent_id") or payload.get("profile_id")
     if not isinstance(profile_id, str) or not profile_id.strip():
-        return 'forge'
+        profile_id = os.getenv("FORGE_DEFAULT_PROFILE", "forge")
     profile_id = profile_id.strip().lower()
     # Validate that profile exists
     if not get_profile(profile_id):

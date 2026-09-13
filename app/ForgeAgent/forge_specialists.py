@@ -92,8 +92,11 @@ def consult_word_specialist(word: str, aspect: str = "connotation") -> str:
         tools=[look_up_word_details, find_related_words_deep],
         system_prompt=(
             "You are a concise word-craft specialist. Use the available tools to look "
-            f"up concrete data before responding. {focus} Return only 3–6 sentences "
-            "of analysis, with no preamble."
+            f"up concrete data before responding. {focus} Favor simple noun-verb "
+            "combinations, clear concrete wording, and a natural spoken flow. Do not "
+            "over-focus on grammatical or syntactic correctness; prioritize language "
+            "that feels easy to say and understand. Return only 3–6 sentences of "
+            "analysis, with no preamble."
         ),
         callback_handler=None,
     )
