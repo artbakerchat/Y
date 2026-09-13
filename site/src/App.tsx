@@ -6,6 +6,8 @@ import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, u
 
 type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
+type FeedbackRating = 'up' | 'down';
+type FeedbackState = { rating: FeedbackRating; submitted: boolean };
 type State = { messages?: Message[]; pendingPrompt?: string; agentId?: string; agentMode?: 'auto' | 'manual' };
 type AgentRole = { id: string; name: string; focus: string; description: string };
 
@@ -117,12 +119,40 @@ interface ChatPanelProps {
   inputError: string;
   onDraftChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
+  feedback: Record<number, FeedbackState>;
+  onFeedback: (messageIndex: number, rating: FeedbackRating, correction: string) => Promise<void>;
+}
+
+function FeedbackControls({ messageIndex, state, onSubmit }: { messageIndex: number; state?: FeedbackState; onSubmit: ChatPanelProps['onFeedback'] }) {
+  const [correction, setCorrection] = useState('');
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  if (state?.submitted) return <p className="feedback-thanks">Thanks — this helps improve future reviews.</p>;
+  async function send(rating: FeedbackRating) {
+    setBusy(true);
+    try {
+      await onSubmit(messageIndex, rating, correction);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div className="feedback" aria-label="Rate this answer">
+      <span>Helpful?</span>
+      <button type="button" disabled={busy} onClick={() => void send('up')} aria-label="Helpful">Yes</button>
+      <button type="button" disabled={busy} onClick={() => { setOpen(true); }} aria-label="Not helpful">No</button>
+      {open && <form onSubmit={(event) => { event.preventDefault(); void send('down'); }}>
+        <textarea value={correction} onChange={(event) => setCorrection(event.target.value)} maxLength={2000} placeholder="What should be better? (optional)" rows={2} />
+        <button type="submit" disabled={busy}>Send feedback</button>
+      </form>}
+    </div>
+  );
 }
 
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange, onSubmit }: ChatPanelProps) {
+function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange, onSubmit, feedback, onFeedback }: ChatPanelProps) {
   const composerTarget = agentName || 'Larboard';
   const [serviceStatus, setServiceStatus] = useState('CHECKING');
   const isAvailable = serviceStatus === 'OPEN';
@@ -179,6 +209,7 @@ function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange
             <div className={`message ${message.role}`} key={`${index}-${message.content}`}>
               <div className="avatar role-label" aria-label={message.role === 'user' ? 'You' : agentName} title={message.role === 'user' ? 'You' : agentName}>{message.role === 'user' ? 'You' : agentName}</div>
               <div className="bubble">{message.content}</div>
+              {message.role === 'assistant' && message.content !== 'One moment…' && <FeedbackControls messageIndex={index} state={feedback[index]} onSubmit={onFeedback} />}
             </div>
           ))}
       </div>
@@ -212,6 +243,7 @@ export default function App() {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
   const [inputError, setInputError] = useState('');
+  const [feedback, setFeedback] = useState<Record<number, FeedbackState>>({});
   const stateWrite = useRef(Promise.resolve());
 
   useEffect(() => {
@@ -309,6 +341,17 @@ export default function App() {
     }
   }
 
+  async function submitFeedback(messageIndex: number, rating: FeedbackRating, correction: string) {
+    const response = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageIndex, rating, correction }),
+    });
+    const data = (await response.json()) as { error?: string };
+    if (!response.ok) throw new Error(data.error || 'Could not record feedback.');
+    setFeedback((current) => ({ ...current, [messageIndex]: { rating, submitted: true } }));
+  }
+
   return (
     <ErrorBoundary>
       <div className="shell">
@@ -322,6 +365,8 @@ export default function App() {
               inputError={inputError}
               onDraftChange={setDraft}
               onSubmit={submitMessage}
+              feedback={feedback}
+              onFeedback={submitFeedback}
             />
           </section>
         </main>

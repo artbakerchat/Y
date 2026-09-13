@@ -502,7 +502,36 @@ test('GET /api/health returns ok with region and model', async () => {
 });
 
 // ---------------------------------------------------------------------------
-// TEST 10 — Expired session is treated as new
+// TEST 10 — Explicit feedback is tied to a stored turn and review-protected
+// export is available to the improvement workflow.
+// ---------------------------------------------------------------------------
+test('feedback: records correction for a turn and protects export', async () => {
+  const bucket = createMockBucket();
+  const worker = await loadWorker();
+  const env = { ...makeEnv(bucket), FEEDBACK_ADMIN_TOKEN: 'review-secret' };
+  await withMockFetch([bedrockEndTurnResponse('Use the official city calendar.')], () => worker.fetch(
+    makeAskRequest({ message: 'How do I find a meeting schedule?' }, { cookie: 'larboard_session=feedback-session' }), env,
+  ));
+
+  const feedbackResponse = await worker.fetch(new Request('https://example.com/api/feedback', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', cookie: 'larboard_session=feedback-session' },
+    body: JSON.stringify({ messageIndex: 1, rating: 'down', correction: 'Mention the local government website.' }),
+  }), env);
+  assert.equal(feedbackResponse.status, 200);
+  assert.equal(JSON.parse(bucket._store.get('feedback/feedback-session-1.json')).prompt, 'How do I find a meeting schedule?');
+
+  const denied = await worker.fetch(new Request('https://example.com/api/feedback/export'), env);
+  assert.equal(denied.status, 401);
+  const exported = await worker.fetch(new Request('https://example.com/api/feedback/export', { headers: { 'x-feedback-admin-token': 'review-secret' } }), env);
+  assert.equal(exported.status, 200);
+  const body = await exported.json();
+  assert.equal(body.count, 1);
+  assert.equal(body.feedback[0].rating, 'down');
+});
+
+// ---------------------------------------------------------------------------
+// TEST 11 — Expired session is treated as new
 //
 // Storage contains a session whose expiresAt is in the past.  The Worker
 // must delete it and initialise a fresh session (default palette, count=0).

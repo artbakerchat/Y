@@ -124,6 +124,8 @@ The runtime architecture is represented by the Worker, AgentCore, Python runtime
 - `GET /api/state` — loads the browser session state.
 - `POST /api/state` — saves palette and workspace state.
 - `POST /api/ask` — sends a prompt to the configured agent path.
+- `POST /api/feedback` — records an explicit rating and optional correction for a completed answer.
+- `GET /api/feedback/export` — exports collected feedback for authenticated review (`x-feedback-admin-token`).
 - `GET /api/agents` — lists available agent profiles (Cloudflare Worker only).
 
 Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each agent has a daily limit of 10 model requests per session.
@@ -258,6 +260,18 @@ The Worker records `agentId` in session state and clears conversation history wh
 When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards `agent_id` to the Python runtime. The Python runtime resolves the same profile registry, system prompt, tool allow-list, and limits, with the bundled registry kept synchronized for deployment. Keep profile definitions synchronized across both paths, or choose one path as the source of truth.
 
 Agent tools follow the same source-controlled workflow. Executable tools live as JavaScript modules in [`tools/`](tools/); edit an existing module or add one and register it in [`tools/index.js`](tools/index.js). Pushing to `main` bundles the updated tool code into the Worker deployment. Tool descriptions and input schemas are exposed to Bedrock, while implementations execute inside the Worker, so review new tools carefully before deployment.
+
+## Feedback and improvement pipeline
+
+The chat UI provides a helpful/not-helpful control below each completed answer. A submitted rating is linked to the exact user request and assistant response, then stored under `feedback/` in the Worker R2 bucket. The correction field is optional and limited to 2,000 characters. Feedback is not inserted into prompts automatically and cannot deploy code.
+
+Set the Worker secret `FEEDBACK_ADMIN_TOKEN` to protect the review export, then retrieve records with:
+
+```bash
+curl -H "x-feedback-admin-token: $FEEDBACK_ADMIN_TOKEN" https://larboard.ca/api/feedback/export
+```
+
+Reviewers can turn repeated corrections into tested prompt, skill, or tool changes. Run the offline suites and deploy the resulting Worker/AgentCore artifact only after review. The export contains the submitted request and response, so treat it as sensitive operational data and restrict access accordingly.
 
 ## AgentCore runtime
 

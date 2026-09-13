@@ -31,6 +31,7 @@ const STATE_TTL_MS = 48 * 60 * 60 * 1000;
 const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
+const MAX_FEEDBACK_CORRECTION_CHARACTERS = 2000;
 // Entry points and legacy assets keep stable URLs, so browsers must check for
 // a new deployment on every visit. Vite-generated files include a content hash
 // and can remain cached for a long time without serving an old app shell.
@@ -161,6 +162,58 @@ async function hmac(key, value) {
 async function secureTokenEqual(left, right) {
   const [leftHash, rightHash] = await Promise.all([sha256Hex(left), sha256Hex(right)]);
   return leftHash === rightHash;
+}
+
+function feedbackKey(sessionId, messageIndex) {
+  return `feedback/${sessionId}-${messageIndex}.json`;
+}
+
+async function feedbackFromRequest(request, bucket, sessionId) {
+  const body = await request.json();
+  const rating = body?.rating === 'up' || body?.rating === 'down' ? body.rating : null;
+  const messageIndex = Number.isInteger(body?.messageIndex) ? body.messageIndex : Number(body?.messageIndex);
+  const correction = typeof body?.correction === 'string' ? body.correction.trim() : '';
+  if (!rating) return json({ error: 'rating must be up or down.' }, 400);
+  if (!Number.isInteger(messageIndex) || messageIndex < 1 || messageIndex > 99) return json({ error: 'A valid messageIndex is required.' }, 400);
+  if (correction.length > MAX_FEEDBACK_CORRECTION_CHARACTERS) return json({ error: `Correction is limited to ${MAX_FEEDBACK_CORRECTION_CHARACTERS} characters.` }, 413);
+
+  const state = await loadState(bucket, sessionId);
+  const assistant = state.messages[messageIndex];
+  const prompt = state.messages[messageIndex - 1];
+  if (!assistant || assistant.role !== 'assistant' || !prompt || prompt.role !== 'user') return json({ error: 'That conversation turn is no longer available.' }, 404);
+  const agentId = getAgentProfile(state.agentId)?.id || 'forge';
+  const record = {
+    schemaVersion: 1,
+    id: `${sessionId}-${messageIndex}`,
+    sessionHash: await sha256Hex(sessionId),
+    messageIndex,
+    agentId,
+    rating,
+    correction,
+    prompt: prompt.content,
+    response: assistant.content,
+    createdAt: new Date().toISOString(),
+  };
+  await bucket.put(feedbackKey(sessionId, messageIndex), JSON.stringify(record), { httpMetadata: { contentType: 'application/json' } });
+  return json({ ok: true, message: 'Feedback recorded. It will be reviewed for future improvements.' });
+}
+
+async function exportFeedback(request, env) {
+  const configuredToken = env.FEEDBACK_ADMIN_TOKEN?.trim();
+  const suppliedToken = request.headers.get('x-feedback-admin-token') || '';
+  if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+  let cursor;
+  const records = [];
+  do {
+    const listed = await env.ASSETS.list({ prefix: 'feedback/', cursor, limit: 1000 });
+    const page = await Promise.all(listed.objects.map(async (object) => {
+      const item = await env.ASSETS.get(object.key);
+      try { return item ? await item.json() : null; } catch { return null; }
+    }));
+    records.push(...page.filter(Boolean));
+    cursor = listed.truncated ? listed.cursor : undefined;
+  } while (cursor);
+  return json({ schemaVersion: 1, count: records.length, feedback: records });
 }
 
 async function signingKey(secret, date, region, service) {
@@ -732,6 +785,7 @@ export default {
         return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
+      if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);
       if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
         const configuredToken = env.PYTHON_AGENT_GATEWAY_TOKEN?.trim();
         const suppliedToken = request.headers.get('x-peer-gateway-token') || '';
@@ -751,6 +805,7 @@ export default {
         return this.fetch(forwarded, env);
       }
       const sessionId = sessionIdFrom(request);
+      if (url.pathname === '/api/feedback' && request.method === 'POST') return feedbackFromRequest(request, env.ASSETS, sessionId);
       if (url.pathname === '/api/state' && request.method === 'GET') return stateResponse(await loadState(env.ASSETS, sessionId), sessionId);
       if (url.pathname === '/api/state' && request.method === 'POST') { const current = await loadState(env.ASSETS, sessionId); const next = cleanState({ ...current, ...(await request.json()) }); await saveState(env.ASSETS, sessionId, next); return stateResponse(next, sessionId); }
       if (url.pathname === '/api/ask' && request.method === 'POST') {

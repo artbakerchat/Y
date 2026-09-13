@@ -2,7 +2,7 @@
 
 This is the selected deployment target. Eight profiles run in the Python Strands runtime, with a nested language specialist. `agent_id: "word-specialist"` also invokes the specialist directly. The Node harness and EC2 files are optional alternatives.
 
-Verified deployment (2026-09-12): `larboard_forge_agents-5C4THCBvpZ`, version 2, is READY in `ca-central-1`. All nine deployed smoke cases passed. `https://larboard.ca` is connected, and live website checks passed for conversation recall and profile isolation. Offline checks passed: 76 JavaScript tests and 6 Python harness tests (including all eight profile configurations).
+Verified deployment (2026-09-13): `larboard_forge_agents-5C4THCBvpZ`, version 3, is READY in `ca-central-1`, using the repository artifact `052b8922…`. Live website checks passed for AgentCore routing, conversation recall, and profile isolation. Offline checks passed: the repository JavaScript and Python harness suites (including all eight profile configurations).
 
 The runtime has a shared per-request ceiling of 10 model calls and 6 tool calls, a 90-second deadline, per-tool limits, profile-specific tools and prompts, palette prerequisites, and response cleanup with a 52-word cap. Operational input values must appear in user-supplied context; this is a conservative input check, not a complete fact verifier. Logs contain profile/tool names and call counts, not prompt text.
 
@@ -53,4 +53,4 @@ Conversation history is isolated by runtime session and profile. With no externa
 
 Smoke evaluations exercise all nine roles but do not establish perfect output or factual accuracy. Review answers and traces before broad release.
 
-The [expanded quality report](../../evaluations/2026-09-12/REPORT.md) supersedes smoke checks as evidence about answer quality. Repository improvements have not been deployed. Python now injects relevant, profile-authorized skill instructions directly, uses a bounded calculator, retains direct specialist history, and allows one repair attempt for empty answers or obvious output-contract failures within the existing request budget. Canada-only Nova Lite remains the default; `quality.env.example` is an explicit global-routing option, not an automatic fallback.
+The [expanded quality report](../../evaluations/2026-09-12/REPORT.md) supersedes smoke checks as evidence about answer quality. The repository improvements are deployed in runtime version 3. Python injects relevant, profile-authorized skill instructions directly, uses a bounded calculator, retains direct specialist history, and allows one repair attempt for empty answers or obvious output-contract failures within the existing request budget. Canada-only Nova Lite remains the default; `quality.env.example` is an explicit global-routing option, not an automatic fallback.
