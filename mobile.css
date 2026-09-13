@@ -4,7 +4,11 @@ img, video, canvas, svg { max-width: 100%; }
 button, input, textarea, select { max-width: 100%; }
 
 @media (max-width: 700px) {
-  body { overflow-x: hidden; }
+  /* Some pages append their own mobile styles after this shared sheet. Keep
+     the viewport guardrail authoritative so those rules cannot widen body. */
+  html,
+  body { overflow-x: clip !important; }
+  body { max-width: 100%; }
 
   /* Flex and grid children otherwise keep their desktop min-content width. */
   .shell,
@@ -19,6 +23,10 @@ button, input, textarea, select { max-width: 100%; }
   .intro,
   .slide-stage,
   .slide { min-width: 0; }
+  .card-head > *,
+  .roles-heading > *,
+  .word-garden__heading > * { min-width: 0; max-width: 100%; }
+  .avatar.role-label { max-width: 100%; overflow-wrap: anywhere; white-space: normal !important; }
 
   /* Workspace and pinball navigation stay readable without horizontal scrolling. */
   .shell { width: min(calc(100% - 28px), 1180px) !important; }
@@ -47,6 +55,11 @@ button, input, textarea, select { max-width: 100%; }
   footer a { white-space: normal !important; overflow-wrap: anywhere; }
   .business-status span { min-width: 0; overflow-wrap: anywhere; }
   footer { align-items: flex-start; flex-wrap: wrap !important; }
+  footer > span:last-child { flex: 1 1 100% !important; margin-left: 0 !important; text-align: left !important; white-space: normal !important; }
+
+  /* The homepage footer and status badge add their own nowrap rules later in
+     the document; long labels still need to wrap on a phone. */
+  .business-status { white-space: normal !important; }
 
   /* Pinball controls remain large enough for touch. */
   .intro { display: block !important; }
