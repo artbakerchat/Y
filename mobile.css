@@ -89,3 +89,57 @@ button, input, textarea, select { max-width: 100%; }
   .billing-note-images { gap: 0.35rem !important; }
   .billing-note-page { padding: 0.75rem !important; }
 }
+
+/* Final portrait layout pass. Keep every flexible child allowed to shrink;
+   clipping the document alone hides the overflow but does not fix its source. */
+@media (max-width: 600px) {
+  body { overflow-x: hidden !important; }
+
+  .shell,
+  main,
+  #deck-container,
+  .deck-header,
+  .workspace,
+  .card,
+  .card-head,
+  .chat,
+  .composer,
+  .garden-runtime,
+  .running-machine,
+  .word-garden,
+  .prompt-card,
+  .response-composer,
+  .billing-note,
+  .note,
+  .board { max-width: 100%; min-width: 0 !important; }
+
+  header { align-items: flex-start; }
+  .brand { min-width: 0; }
+  .brand > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+  .nav { min-width: 0; }
+
+  .chat { overflow-x: hidden; }
+  .message { min-width: 0; }
+  .message .avatar.role-label { min-width: 0; max-width: 100%; }
+  .message .bubble,
+  .message.user .bubble { min-width: 0; overflow-wrap: anywhere; word-break: break-word; }
+  .composer { align-items: flex-end; }
+  .composer textarea { min-width: 0; width: 0; }
+  .send { flex: 0 0 44px; }
+
+  /* Keep wide presentation tables usable inside their own scroller. */
+  .gap-table-container { max-width: 100%; overflow-x: auto; }
+  .gap-table { width: max-content; min-width: 620px; }
+
+  /* Portrait pricing cards should never preserve the two-column desktop grid. */
+  .billing-barcode-container { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
+@media (max-width: 380px) {
+  .shell { width: calc(100% - 20px) !important; }
+  .message { grid-template-columns: 54px minmax(0, 1fr) !important; gap: 8px !important; }
+  .chat { padding-inline: 12px !important; }
+  .card-head { padding-inline: 14px !important; }
+  .composer { gap: 6px; padding: 7px; }
+  .send { flex-basis: 40px; width: 40px; }
+}
