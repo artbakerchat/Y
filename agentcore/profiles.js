@@ -13,7 +13,7 @@ export default {
         "calculate"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -31,7 +31,7 @@ export default {
         "match_food_bank_shifts"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -50,7 +50,7 @@ export default {
         "search_internal_policies"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -69,7 +69,7 @@ export default {
         "pair_mutual_aid_needs"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -87,7 +87,7 @@ export default {
         "verify_civic_sources"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -104,7 +104,7 @@ export default {
         "calculate"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -121,7 +121,7 @@ export default {
         "calculate"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     },
@@ -138,7 +138,7 @@ export default {
         "calculate"
       ],
       "skillNames": "*",
-      "dailyRequestLimit": 100,
+      "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
     }

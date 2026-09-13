@@ -248,7 +248,7 @@ def _agent_for_palette(
     profile = get_profile(profile_id) or get_profile('forge')
     system_prompt = get_system_prompt(profile_id)
     max_tool_calls = min(_max_tool_calls(), profile_max_tool_calls(profile_id))
-    daily_limit = profile.get('dailyRequestLimit', 100)
+    daily_limit = profile.get('dailyRequestLimit', 10)
     
     skill_guidance = select_skill_guidance(_skills_path(), profile_id, supplied_text)
     session_manager = _native_session_manager(session_id)
@@ -303,7 +303,7 @@ def _profile_id_from(payload: dict[str, Any]) -> str:
 async def invoke(payload: dict[str, Any], context: Any):
     prompt = _prompt_from(payload)
     profile_id = _profile_id_from(payload)
-    daily_limit = (get_profile(profile_id) or {}).get('dailyRequestLimit', 100)
+    daily_limit = (get_profile(profile_id) or {}).get('dailyRequestLimit', 10)
     requests_remaining = max(0, min(daily_limit, int(payload.get("requests_remaining", daily_limit))))
     raw_session_id = _session_id(context)
     # A profile change must never expose another profile's conversation.

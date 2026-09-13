@@ -126,7 +126,7 @@ The runtime architecture is represented by the Worker, AgentCore, Python runtime
 - `POST /api/ask` — sends a prompt to the configured agent path.
 - `GET /api/agents` — lists available agent profiles (Cloudflare Worker only).
 
-Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each agent has a daily limit of 100 model requests per session.
+Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each agent has a daily limit of 10 model requests per session.
 
 ## Context-aware palette loading
 
