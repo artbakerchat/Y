@@ -93,7 +93,10 @@ AGENT_ID=kiro AWS_REGION=ca-central-1 python -m ai.harness kiro
 ```
 
 The launcher keeps fleet selection and process startup in one place; the
-selected peer still owns its provider, tools, region, and S3 session prefix.
+selected peer still owns its provider, tools, region, and session backend.
+Forge is included as an AgentCore-backed peer through the adapter in
+`ai/agents/forge/`; it uses the existing `AGENTCORE_RUNTIME_ARN` and does not
+require a second runtime or harness ARN.
 Use `--host` and `--port` for local development. Provider credentials and the
 peer invoke token remain environment/secret-manager configuration.
 

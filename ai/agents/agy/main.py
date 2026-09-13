@@ -45,6 +45,7 @@ def orchestrate_peer(peer: str, task: str) -> str:
     endpoints = {
         "kiro":  os.environ.get("KIRO_ENDPOINT",  "https://kiro.larboard.ca/invoke"),
         "codex": os.environ.get("CODEX_ENDPOINT", "https://codex.larboard.ca/invoke"),
+        "forge": os.environ.get("FORGE_ENDPOINT", "https://forge.larboard.ca/invoke"),
     }
     if peer not in endpoints:
         return f"[agy] Unknown peer: {peer}"

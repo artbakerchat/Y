@@ -29,7 +29,7 @@ export function getAgentProfile(id = 'forge') {
 }
 
 const ROUTING_RULES = {
-  "food-bank": [["food bank", 4], ["foodbank", 4], ["pantry", 3], ["donation", 2], ["pickup window", 3], ["volunteer shift", 3]],
+  "food-bank": [["food bank", 4], ["foodbank", 4], ["apple", 3], ["apples", 3], ["pantry", 3], ["donation", 2], ["pickup window", 3], ["volunteer shift", 3]],
   "nonprofit-helpdesk": [["nonprofit", 4], ["non-profit", 4], ["grant", 3], ["bylaws", 3], ["intake form", 3], ["meeting agenda", 3], ["operating plan", 3]],
   "mutual-aid": [["mutual aid", 5], ["ride", 2], ["groceries", 2], ["check-in", 2], ["translation help", 3], ["housing navigation", 3]],
   "civic-knowledge": [["city council", 4], ["election", 3], ["government", 3], ["permit", 3], ["public service", 3], ["municipal", 3], ["voting", 3], ["civic", 3]],

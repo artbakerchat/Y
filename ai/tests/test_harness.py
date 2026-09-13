@@ -6,7 +6,7 @@ from ai.harness import AGENTS, get_agent, main, validate_fleet
 class HarnessTests(unittest.TestCase):
     def test_registry_is_valid(self):
         self.assertEqual(validate_fleet(), [])
-        self.assertEqual(set(AGENTS), {"agy", "kiro", "codex"})
+        self.assertEqual(set(AGENTS), {"agy", "kiro", "codex", "forge"})
 
     def test_list_is_dependency_light(self):
         self.assertEqual(main(["--list"]), 0)

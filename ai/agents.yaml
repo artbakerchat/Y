@@ -4,6 +4,16 @@
 
 agents:
 
+  forge:
+    name: "forge"
+    description: "Forge coordinator — AgentCore Runtime peer"
+    ec2_region: ca-central-1
+    provider: aws
+    model: "configured by the Forge AgentCore runtime"
+    endpoint: "agentcore://forge-runtime"
+    runtime_arn_env: AGENTCORE_RUNTIME_ARN
+    auth_env: FORGE_INVOKE_TOKEN
+
   agy:
     name: "agy"
     description: "Google Antigravity agent — code generation, GCP tooling, multi-agent orchestration"

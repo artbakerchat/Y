@@ -25,6 +25,9 @@ AGENTS = {
     "agy": AgentSpec("agy", "us-west-2", "ai.agents.agy.main", "https://agy.larboard.ca/invoke"),
     "kiro": AgentSpec("kiro", "ca-central-1", "ai.agents.kiro.main", "https://kiro.larboard.ca/invoke"),
     "codex": AgentSpec("codex", "eu-west-3", "ai.agents.codex.main", "https://codex.larboard.ca/invoke"),
+    # Forge is hosted by AgentCore rather than on the peer EC2 hosts. Its
+    # adapter keeps the same authenticated HTTP contract for fleet callers.
+    "forge": AgentSpec("forge", "ca-central-1", "ai.agents.forge.main", "agentcore://forge-runtime"),
 }
 
 
@@ -50,10 +53,7 @@ def get_app(agent_id: str):
 def validate_fleet() -> list[str]:
     """Return configuration errors without importing provider SDKs."""
     errors = []
-    regions = [spec.region for spec in AGENTS.values()]
     endpoints = [spec.endpoint for spec in AGENTS.values()]
-    if len(regions) != len(set(regions)):
-        errors.append("each agent must have a unique AWS region")
     if len(endpoints) != len(set(endpoints)):
         errors.append("each agent must have a unique endpoint")
     for agent_id, spec in AGENTS.items():
