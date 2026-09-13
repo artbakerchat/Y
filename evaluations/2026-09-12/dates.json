@@ -1,0 +1,101 @@
+[
+  {
+    "agentId": "forge",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:28.702Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed].",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3730
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:28.765Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed].",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3777
+  },
+  {
+    "agentId": "food-bank",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:28.784Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed].",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3803
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:29.375Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us for our event on [date to be confirmed].",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4391
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:32.620Z",
+    "surface": "local-python-agentcore",
+    "answer": "hi y’all! Join us on [date to be confirmed] for the event. We can’t wait to see you there!",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3853
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:32.667Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed].",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3960
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:32.982Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed]. Please let us know which day works best.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4196
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:33.037Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed].",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3660
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:59:35.368Z",
+    "surface": "local-python-agentcore",
+    "answer": "Join us on [date to be confirmed] and [date to be confirmed]. We look forward to your presence.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 2746
+  }
+]

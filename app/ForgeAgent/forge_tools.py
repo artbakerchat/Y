@@ -10,6 +10,7 @@ from strands import tool
 
 from forge_specialists import consult_word_specialist, tech_support_specialist
 from community_tools import build_community_tools
+from calculator import calculate
 
 
 def build_tools(palette: list[str], profile_id: str = "forge") -> list[Callable[..., str]]:
@@ -65,6 +66,7 @@ def build_tools(palette: list[str], profile_id: str = "forge") -> list[Callable[
         search_palette,
         suggest_related_words,
         consult_word_specialist,
+        calculate,
         *build_community_tools(profile_id),
         tech_support_specialist,
     ]

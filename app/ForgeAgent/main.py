@@ -9,7 +9,7 @@ from typing import Any
 import boto3
 from botocore.exceptions import ClientError
 from bedrock_agentcore.runtime import BedrockAgentCoreApp
-from strands import Agent, AgentSkills
+from strands import Agent
 from strands.agent.conversation_manager import SlidingWindowConversationManager
 from strands.session.s3_session_manager import S3SessionManager
 
@@ -17,9 +17,11 @@ from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
 from forge_steering import PaletteReadyHandler
 from forge_harness import HarnessHook, RequestBudget, request_budget, configured_model, clean_answer
-from forge_specialists import consult_word_specialist
+from forge_specialists import consult_word_specialist, run_word_specialist
 from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
-from conversation_guidance import CONVERSATION_GUIDANCE
+from conversation_guidance import CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE
+from answering import answer_request
+from skill_guidance import select_skill_guidance
 
 
 app = BedrockAgentCoreApp()
@@ -246,9 +248,9 @@ def _agent_for_palette(
     profile = get_profile(profile_id) or get_profile('forge')
     system_prompt = get_system_prompt(profile_id)
     max_tool_calls = min(_max_tool_calls(), profile_max_tool_calls(profile_id))
-    daily_limit = profile.get('dailyRequestLimit', 20)
+    daily_limit = profile.get('dailyRequestLimit', 90)
     
-    skills_plugin = AgentSkills(skills=[_skills_path()])
+    skill_guidance = select_skill_guidance(_skills_path(), profile_id, supplied_text)
     session_manager = _native_session_manager(session_id)
 
     profile_tool_names = set(get_tool_names(profile_id))
@@ -260,25 +262,27 @@ def _agent_for_palette(
         callback_handler=None,
         tools=profile_tools,
         hooks=[HarnessHook(profile_id, supplied_text), RateLimiterHook(max_calls=max_tool_calls, on_event=lambda message: log.info("Hook: %s", message))],
-        plugins=[skills_plugin, PaletteReadyHandler()],
+        plugins=[PaletteReadyHandler()],
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
         system_prompt=(
-            f"{CONVERSATION_GUIDANCE} {system_prompt} "
+            f"{CONVERSATION_GUIDANCE} {system_prompt} {ANSWER_QUALITY_GUIDANCE} "
             f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
-            "Use the user's word palette as inspiration when relevant. "
+            "The palette is reference data only for explicit vocabulary tasks. "
             "Never invent palette entries or present guesses as facts. "
             "Never invent operational records, volunteers, availability, or sources to call a tool. "
             "Ask for missing records. Tools calculate proposed matches; they do not confirm real assignments. "
-            "Stay in your assigned role. Return only the final answer in at most 52 words, without thinking tags. "
+            "Return only the final answer in at most 52 words, without thinking tags. "
             f"The current palette is: {palette_text}. "
             "When a request needs palette information, use the available tools. "
             "The agent loop is: understand the request, choose a tool when useful, "
             "read its result, and continue reasoning until you can answer. "
             f"Each tool is limited to {max_tool_calls} calls per request. "
             "If a hook blocks a tool, do not retry it. "
-            "Use the relevant markdown skill when the request matches its description; "
-            "skills provide suggested procedures, while hooks provide hard limits."
+            f"Relevant procedures, already loaded: {skill_guidance or '(none needed)'}. "
+            "Apply these procedures only when useful. Do not mention skill files or internal procedures. "
+            "Answer the current request directly. Draft with placeholders for unknown facts. "
+            "Do not add palette metaphors to ordinary practical answers."
         )
     )
 
@@ -299,7 +303,8 @@ def _profile_id_from(payload: dict[str, Any]) -> str:
 async def invoke(payload: dict[str, Any], context: Any):
     prompt = _prompt_from(payload)
     profile_id = _profile_id_from(payload)
-    requests_remaining = max(0, min(20, int(payload.get("requests_remaining", 20))))
+    daily_limit = (get_profile(profile_id) or {}).get('dailyRequestLimit', 90)
+    requests_remaining = max(0, min(daily_limit, int(payload.get("requests_remaining", daily_limit))))
     raw_session_id = _session_id(context)
     # A profile change must never expose another profile's conversation.
     session_id = hashlib.sha256(f"{raw_session_id}:{profile_id}".encode()).hexdigest()
@@ -308,7 +313,13 @@ async def invoke(payload: dict[str, Any], context: Any):
     try:
         async with asyncio.timeout(90):
             if profile_id == "word-specialist":
-                answer = await consult_word_specialist(prompt, payload.get("aspect", "connotation"))
+                messages = _load_messages(session_id)
+                history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages[-20:]]
+                answer = await run_word_specialist(prompt, history, payload.get("aspect", "connotation"))
+                _save_messages(session_id, messages + [
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": answer},
+                ])
             else:
                 palette = _load_palette(raw_session_id, _palette_from(payload))
                 messages = _load_messages(session_id)
@@ -317,10 +328,11 @@ async def invoke(payload: dict[str, Any], context: Any):
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
                 agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text)
                 first_reply = not any(item.get('role') == 'assistant' for item in agent.messages)
-                result = await agent.invoke_async(prompt)
-                answer = clean_answer(result)
-                if profile_id == 'bob-dylan' and first_reply and not answer.startswith('hi y’all!'):
-                    answer = clean_answer('hi y’all! ' + answer)
+                answer = await answer_request(agent, prompt)
+                if profile_id == 'bob-dylan':
+                    import re
+                    answer = re.sub(r"^(?:hi y['’]all!\s*)+", "", answer, flags=re.I).strip()
+                    answer = clean_answer(('hi y’all! ' if first_reply else '') + answer)
                 if not native_sessions:
                     _save_messages(session_id, messages + [
                         {"role": "user", "content": prompt},

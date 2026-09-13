@@ -11,7 +11,7 @@ Use this skill when the user wants to rewrite text, compare voices, adjust forma
 
 ## Procedure
 
-1. Identify the text to revise and the intended audience. If either is missing, ask one concise question before drafting.
+1. Produce a useful rewrite or draft using the supplied facts. Default to a general audience when none is specified; use clear placeholders for unknown details. Ask only when ambiguity prevents a useful draft.
 2. Identify the requested direction: formal, casual, warm, direct, concise, vivid, or poetic. If the user has not chosen one, offer two or three useful options.
 3. Use `search_palette` with a focused query when the palette can supply vocabulary for the requested direction.
 4. Produce one primary rewrite that preserves the original meaning. Add one clearly labeled alternative when a different register would help.

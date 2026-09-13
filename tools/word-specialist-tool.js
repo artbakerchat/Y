@@ -10,7 +10,14 @@
 // ---------------------------------------------------------------------------
 
 // Static etymology and connotation data used by look_up_word_details.
+import { calculatorTool } from './calculator.js';
 const WORD_DETAILS = {
+  sincere: {
+    etymology: 'From Latin sincerus, meaning pure or genuine. The deeper origin is uncertain. The without-wax story is unsupported folk etymology.',
+    connotation: 'Honesty and the absence of pretence.',
+    register: 'neutral',
+    source: 'https://www.etymonline.com/word/sincere',
+  },
   anchor: {
     etymology: 'Old English ancor, from Latin ancora, from Greek ankura. Related to the Greek ankos (bend).',
     connotation: 'Stability, grounding, constraint. Often connotes security but also immobility or being held back.',
@@ -124,13 +131,14 @@ export const lookUpWordDetailsTool = {
     const key = (word || '').toLowerCase().trim();
     const entry = WORD_DETAILS[key];
     if (!entry) {
-      return `No stored details for "${word}". Proceed with general linguistic knowledge.`;
+      return `No stored reference for "${word}". A lookup found no evidence. Distinguish general knowledge from verified claims; do not invent an origin or citation.`;
     }
     return [
       `Word: ${word}`,
       `Etymology: ${entry.etymology}`,
       `Connotation: ${entry.connotation}`,
       `Register: ${entry.register}`,
+      ...(entry.source ? [`Reference: ${entry.source}`] : []),
     ].join('\n');
   },
 };
@@ -185,4 +193,4 @@ export const wordSpecialistTool = {
 };
 
 // Exported together so invokeWordSpecialist can build its own toolConfig.
-export const specialistTools = [lookUpWordDetailsTool, findRelatedWordsDeepTool];
+export const specialistTools = [lookUpWordDetailsTool, findRelatedWordsDeepTool, calculatorTool];

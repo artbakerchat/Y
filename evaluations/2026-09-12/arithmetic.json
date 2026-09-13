@@ -1,0 +1,101 @@
+[
+  {
+    "agentId": "mutual-aid",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:19.161Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4599
+  },
+  {
+    "agentId": "food-bank",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:19.412Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4857
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:19.485Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4926
+  },
+  {
+    "agentId": "forge",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:19.522Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4976
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:23.748Z",
+    "surface": "local-python-agentcore",
+    "answer": "hi y’all! Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4333
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:23.970Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4446
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:23.999Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4833
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:24.226Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4738
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:27.468Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 2.25 apples. We can't split apples evenly, so some people will get 2 apples and others 3.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 3713
+  }
+]

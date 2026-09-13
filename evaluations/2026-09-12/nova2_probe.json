@@ -1,0 +1,68 @@
+[
+  {
+    "agentId": "forge",
+    "id": "draft",
+    "prompt": "Write a warm invite to a free meal on Saturday at noon. The place is not yet set.",
+    "model": "global.amazon.nova-2-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:52:56.144Z",
+    "surface": "local-python-agentcore",
+    "answer": "You're invited to a free meal this Saturday at noon. Location to be announced soon. Come enjoy good food and company!",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4571
+  },
+  {
+    "agentId": "forge",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "global.amazon.nova-2-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:53:00.656Z",
+    "surface": "local-python-agentcore",
+    "answer": "We start with 24 apples. Save 6 apples, leaving 18 to share. Divide 18 by 8 people.\n\n18 ÷ 8 = 2.25\n\nEach person gets **2.25 apples**.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4505
+  },
+  {
+    "agentId": "forge",
+    "id": "constraints",
+    "prompt": "Give exactly three low-cost ways to thank a volunteer. Use one short line for each.",
+    "model": "global.amazon.nova-2-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:53:05.021Z",
+    "surface": "local-python-agentcore",
+    "answer": "A small gift, a handwritten note, a public shout-out.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4363
+  },
+  {
+    "agentId": "forge",
+    "id": "plain-language",
+    "prompt": "Rewrite this in plain English: We shall facilitate access to essential provisions.",
+    "model": "global.amazon.nova-2-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:53:09.455Z",
+    "surface": "local-python-agentcore",
+    "answer": "We will help people get the supplies they need.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4433
+  },
+  {
+    "agentId": "forge",
+    "id": "music-fact",
+    "prompt": "Did Bob Dylan write Hallelujah? If not, who did?",
+    "model": "global.amazon.nova-2-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:53:13.757Z",
+    "surface": "local-python-agentcore",
+    "answer": "Bob Dylan did not write \"Hallelujah.\" The song was written by Leonard Cohen. It was originally released on Cohen's album in 1984.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4298
+  },
+  {
+    "agentId": "forge",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "global.amazon.nova-2-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:53:18.511Z",
+    "surface": "local-python-agentcore",
+    "answer": "I can’t write the invite until we know the correct days. Please confirm whether the event is on Monday, Tuesday, or both, then I’ll draft a clear invite for you.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4751
+  }
+]

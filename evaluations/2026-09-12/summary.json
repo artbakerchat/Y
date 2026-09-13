@@ -1,0 +1,548 @@
+[
+  {
+    "dataset": "baseline",
+    "agentId": "forge",
+    "questions": 15,
+    "errors": 2,
+    "score": 14
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "food-bank",
+    "questions": 15,
+    "errors": 2,
+    "score": 14
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 15,
+    "errors": 1,
+    "score": 17
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "mutual-aid",
+    "questions": 15,
+    "errors": 3,
+    "score": 15
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "civic-knowledge",
+    "questions": 15,
+    "errors": 2,
+    "score": 15
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "bob-dylan",
+    "questions": 15,
+    "errors": 0,
+    "score": 20
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "santa-claus",
+    "questions": 15,
+    "errors": 1,
+    "score": 22
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 15,
+    "errors": 2,
+    "score": 17
+  },
+  {
+    "dataset": "baseline",
+    "agentId": "word-specialist",
+    "questions": 15,
+    "errors": 1,
+    "score": 10
+  },
+  {
+    "dataset": "followups",
+    "agentId": "forge",
+    "questions": 3,
+    "errors": 0,
+    "score": 5
+  },
+  {
+    "dataset": "followups",
+    "agentId": "mutual-aid",
+    "questions": 3,
+    "errors": 0,
+    "score": 3
+  },
+  {
+    "dataset": "followups",
+    "agentId": "food-bank",
+    "questions": 3,
+    "errors": 0,
+    "score": 3
+  },
+  {
+    "dataset": "followups",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 3,
+    "errors": 0,
+    "score": 4
+  },
+  {
+    "dataset": "followups",
+    "agentId": "civic-knowledge",
+    "questions": 3,
+    "errors": 0,
+    "score": 2
+  },
+  {
+    "dataset": "followups",
+    "agentId": "bob-dylan",
+    "questions": 3,
+    "errors": 0,
+    "score": 2
+  },
+  {
+    "dataset": "followups",
+    "agentId": "santa-claus",
+    "questions": 3,
+    "errors": 0,
+    "score": 5
+  },
+  {
+    "dataset": "followups",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 3,
+    "errors": 0,
+    "score": 3
+  },
+  {
+    "dataset": "followups",
+    "agentId": "word-specialist",
+    "questions": 3,
+    "errors": 0,
+    "score": 5
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "forge",
+    "questions": 15,
+    "errors": 0,
+    "score": 21
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "food-bank",
+    "questions": 15,
+    "errors": 0,
+    "score": 18
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 15,
+    "errors": 0,
+    "score": 16
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "mutual-aid",
+    "questions": 15,
+    "errors": 0,
+    "score": 23
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "civic-knowledge",
+    "questions": 15,
+    "errors": 0,
+    "score": 25
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "bob-dylan",
+    "questions": 15,
+    "errors": 0,
+    "score": 23
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "santa-claus",
+    "questions": 15,
+    "errors": 0,
+    "score": 19
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 15,
+    "errors": 0,
+    "score": 21
+  },
+  {
+    "dataset": "revised_nova",
+    "agentId": "word-specialist",
+    "questions": 15,
+    "errors": 0,
+    "score": 23
+  },
+  {
+    "dataset": "sonnet",
+    "agentId": "food-bank",
+    "questions": 8,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "sonnet",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 9,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "sonnet",
+    "agentId": "mutual-aid",
+    "questions": 5,
+    "errors": 1,
+    "score": null
+  },
+  {
+    "dataset": "sonnet",
+    "agentId": "forge",
+    "questions": 8,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "mutual-aid",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "food-bank",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "forge",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "bob-dylan",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "civic-knowledge",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "santa-claus",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "arithmetic",
+    "agentId": "word-specialist",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "food-bank",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "mutual-aid",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "forge",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "bob-dylan",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "santa-claus",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "civic-knowledge",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "heldout",
+    "agentId": "word-specialist",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "forge",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "food-bank",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "mutual-aid",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "civic-knowledge",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "bob-dylan",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "santa-claus",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "repair",
+    "agentId": "word-specialist",
+    "questions": 3,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "forge",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "mutual-aid",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "food-bank",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "bob-dylan",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "civic-knowledge",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "santa-claus",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "dates",
+    "agentId": "word-specialist",
+    "questions": 1,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "food-bank",
+    "questions": 15,
+    "errors": 0,
+    "score": 24
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "forge",
+    "questions": 15,
+    "errors": 0,
+    "score": 23
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "mutual-aid",
+    "questions": 15,
+    "errors": 0,
+    "score": 28
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "nonprofit-helpdesk",
+    "questions": 15,
+    "errors": 0,
+    "score": 23
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "civic-knowledge",
+    "questions": 15,
+    "errors": 0,
+    "score": 28
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "bob-dylan",
+    "questions": 15,
+    "errors": 0,
+    "score": 26
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "santa-claus",
+    "questions": 15,
+    "errors": 0,
+    "score": 26
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "orange-doctor-candidatus",
+    "questions": 15,
+    "errors": 0,
+    "score": 26
+  },
+  {
+    "dataset": "final_canada",
+    "agentId": "word-specialist",
+    "questions": 15,
+    "errors": 0,
+    "score": 25
+  },
+  {
+    "dataset": "nova2_probe",
+    "agentId": "forge",
+    "questions": 6,
+    "errors": 0,
+    "score": null
+  },
+  {
+    "dataset": "sonnet_probe",
+    "agentId": "forge",
+    "questions": 6,
+    "errors": 0,
+    "score": null
+  }
+]

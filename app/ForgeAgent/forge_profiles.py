@@ -87,7 +87,7 @@ def get_daily_limit(profile_id: str = "forge") -> int:
     profile = get_profile(profile_id)
     if not profile:
         raise ValueError(f"Unknown profile: {profile_id}")
-    return profile.get("dailyRequestLimit", 20)
+    return profile.get("dailyRequestLimit", 90)
 
 
 def get_max_tool_calls(profile_id: str = "forge") -> int:

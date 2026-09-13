@@ -3,9 +3,18 @@
 from strands import Agent, tool
 from forge_harness import HarnessHook, configured_model, clean_answer
 from forge_hooks import RateLimiterHook
+from conversation_guidance import ANSWER_QUALITY_GUIDANCE
+from answering import answer_request
+from calculator import calculate
 
 
 WORD_DETAILS = {
+    "sincere": {
+        "etymology": "From Latin sincerus, meaning pure or genuine. The deeper origin is uncertain. The without-wax story is unsupported folk etymology.",
+        "connotation": "Honesty and the absence of pretence.",
+        "register": "neutral",
+        "source": "https://www.etymonline.com/word/sincere",
+    },
     "anchor": {
         "etymology": "Old English ancor, from Latin ancora, from Greek ankura. Related to the Greek ankos (bend).",
         "connotation": "Stability, grounding, constraint. Often connotes security but also immobility or being held back.",
@@ -60,12 +69,13 @@ def look_up_word_details(word: str) -> str:
     """Look up stored etymology, connotation, and register data for a word."""
     entry = WORD_DETAILS.get(word.strip().lower())
     if not entry:
-        return f'No stored details for "{word}". Proceed with general linguistic knowledge.'
+        return f'No stored reference for "{word}". A lookup found no evidence. Distinguish general knowledge from verified claims; do not invent an origin or citation.'
     return (
         f"Word: {word}\n"
         f"Etymology: {entry['etymology']}\n"
         f"Connotation: {entry['connotation']}\n"
         f"Register: {entry['register']}"
+        + (f"\nReference: {entry['source']}" if entry.get('source') else "")
     )
 
 
@@ -89,6 +99,11 @@ async def consult_word_specialist(word: str, aspect: str = "connotation") -> str
         raise ValueError("A word of 1–100 characters is required")
     if aspect not in {"etymology", "connotation", "poetic_use"}:
         raise ValueError("Unknown specialist aspect")
+    return await run_word_specialist(f"Analyse the word: {word}", aspect=aspect)
+
+
+async def run_word_specialist(prompt: str, history=None, aspect: str = "connotation") -> str:
+    """Accept a complete direct question and retained conversation context."""
     focus = {
         "etymology": "Focus on the word's origin, historical evolution, and linguistic roots.",
         "connotation": "Focus on the emotional, cultural, and contextual connotations of the word.",
@@ -96,21 +111,24 @@ async def consult_word_specialist(word: str, aspect: str = "connotation") -> str
     }.get(aspect, "Focus on the emotional, cultural, and contextual connotations of the word.")
     specialist = Agent(
         model=configured_model(),
+        messages=history,
         hooks=[HarnessHook("word-specialist"), RateLimiterHook(max_calls=3)],
-        tools=[look_up_word_details, find_related_words_deep],
+        tools=[look_up_word_details, find_related_words_deep, calculate],
         system_prompt=(
-            "You are a concise word-craft specialist. Use the available tools to look "
+            "You are a concise word-craft specialist. Answer the actual question; do not "
+            "treat a complete request as a single word to define. Use tools when needed to look "
             f"up concrete data before responding. {focus} Favor simple noun-verb "
             "combinations, clear concrete wording, and a natural spoken flow. Do not "
             "over-focus on grammatical or syntactic correctness; prioritize language "
             "that feels easy to say and understand. Return only 3–6 sentences of "
             "analysis, with no preamble. Return only the final answer in at most 52 words, "
             "without internal thinking tags. Stored entries are limited notes, not verified sources. "
-            "If evidence is missing, acknowledge uncertainty and never invent a word origin."
+            "If evidence is missing, acknowledge uncertainty and never invent a word origin. "
+            f"{ANSWER_QUALITY_GUIDANCE}"
         ),
         callback_handler=None,
     )
-    return clean_answer(await specialist.invoke_async(f"Analyse the word: {word}"))
+    return await answer_request(specialist, prompt)
 
 
 @tool

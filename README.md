@@ -10,6 +10,12 @@ The Node server now uses `src/agent-harness.js` for all eight profiles, with a s
 
 Run `npm run test:harness` for deterministic harness checks and `npm run eval:agents` for nine live Bedrock smoke cases with JSON response/trace output. Live checks incur model usage and do not establish that the agents are perfect or that every answer is accurate.
 
+The [September 12 quality evaluation](evaluations/2026-09-12/REPORT.md) records 15 questions across all nine roles, follow-up conversations, and repository retests. The Canadian model remains the default. Changes include retained specialist history, response formatting, a finite arithmetic tool, source-aware word notes, selective profile-authorized skill loading in Python, and one bounded retry for an empty final answer. Model answers still need review; successful execution does not establish factual quality.
+
+Run `npm run eval:quality -- live .data/evaluations/new-live.json` for the public-site evaluation (eight public agents plus the local internal specialist), or use `python` instead of `live` for the local AgentCore entrypoint with real Bedrock calls. The Python mode requires `.venv`. Use a new output file for each code/model version; existing records are resumed, not rerun. Follow-ups: `npm run eval:quality -- live .data/evaluations/new-followups.json --followups .data/evaluations/new-live.json`. These commands incur inference charges and create synthetic test sessions.
+
+An explicit, higher-cost global-routing model option is documented in [quality.env.example](deploy/agentcore/quality.env.example). It does not change Canadian defaults. Compare it using `--model=global.anthropic.claude-sonnet-4-6`; use `--agents=forge` or `--questions=draft,arithmetic` for a smaller run. Confirm the runtime execution role can invoke the chosen inference profile before deployment. No deployment is performed by these evaluation commands.
+
 The selected deployment target is **Amazon Bedrock AgentCore**. See [AgentCore deployment instructions](deploy/agentcore/README.md) for the Python harness, direct-code packaging, deployment, and live evaluations. The Canadian default is `ca.amazon.nova-lite-v1:0`. The [EC2 files](deploy/ec2/README.md) remain an optional alternative. The Worker retains its separate implementation.
 
 ## Offline checks
@@ -33,7 +39,7 @@ Critical paths covered:
 
 - **Palette fetch → word suggestion flow** — the agent calls `get_palette`, then `suggest_related_words`, then produces a final text reply; the answer and saved session state are verified.
 - **Empty palette** — `get_palette` returns the "palette is empty" message and the cycle completes without error.
-- **Daily rate-limit enforcement** — a session pre-loaded at `count=8` receives a `429` response and Bedrock is never called.
+- **Daily rate-limit enforcement** — an agent pre-loaded at `count=90` receives a `429` response and Bedrock is never called.
 - **Session state persistence** — two consecutive requests to the same session accumulate history and increment the rate counter correctly.
 - **Agent profile isolation** — continuing with the same `forge` profile preserves conversation history.
 - **Input validation** — oversized word counts, oversized individual words, and empty messages are all rejected before reaching Bedrock.
@@ -120,7 +126,7 @@ The runtime architecture is represented by the Worker, AgentCore, Python runtime
 - `POST /api/ask` — sends a prompt to the configured agent path.
 - `GET /api/agents` — lists available agent profiles (Cloudflare Worker only).
 
-Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each session has a daily limit of 8 model requests.
+Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each agent has a daily limit of 90 model requests per session.
 
 ## Context-aware palette loading
 

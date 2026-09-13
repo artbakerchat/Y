@@ -35,6 +35,7 @@ def configured_model():
 def clean_answer(value):
     text = re.sub(r"<(think|thinking|analysis)\b[^>]*>[\s\S]*?</\1>", "", str(value), flags=re.I)
     text = re.sub(r"<(think|thinking|analysis)\b[^>]*>[\s\S]*$", "", text, flags=re.I).strip()
+    text = re.sub(r"</?(answer|final|response)\b[^>]*>", "", text, flags=re.I).strip()
     if not text:
         raise ValueError("Model returned no user-facing answer")
     words = text.split()
