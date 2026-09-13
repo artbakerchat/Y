@@ -17,54 +17,11 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// ── Import the validator internals ─────────────────────────────────────────
-// We test the two exported-style functions by importing the module as text
-// and re-evaluating the helpers.  Because the script uses top-level `main()`
-// guarded by process.argv, we extract only the helper functions we need.
+import { parseFrontmatter } from '../scripts/validate-skills.js';
 
-// Re-implement the helpers locally so tests do not depend on the script's
-// process.exit() path.  This keeps tests deterministic and isolated.
-
-/** Minimal YAML frontmatter parser (copied from validate-skills.js). */
-function parseFrontmatter(raw) {
-  const DELIMITER = '---';
-  const lines = raw.split('\n');
-
-  if (lines[0].trimEnd() !== DELIMITER) {
-    return { fields: null, body: null, error: 'Frontmatter block not found — file must start with ---' };
-  }
-
-  const closeIdx = lines.findIndex((l, i) => i > 0 && l.trimEnd() === DELIMITER);
-  if (closeIdx === -1) {
-    return { fields: null, body: null, error: 'Frontmatter block is not closed — missing closing ---' };
-  }
-
-  const frontLines = lines.slice(1, closeIdx);
-  const fields = {};
-
-  for (let i = 0; i < frontLines.length; i++) {
-    const line = frontLines[i];
-    if (!line.trim()) continue;
-    if (/^\s+/.test(line)) {
-      return { fields: null, body: null, error: `Frontmatter line ${i + 2}: indented / multi-line values are not supported` };
-    }
-    if (line.startsWith('-')) {
-      return { fields: null, body: null, error: `Frontmatter line ${i + 2}: YAML list items are not supported — use a comma-separated string` };
-    }
-    const colonIdx = line.indexOf(':');
-    if (colonIdx === -1) {
-      return { fields: null, body: null, error: `Frontmatter line ${i + 2}: invalid syntax — expected "key: value", got "${line}"` };
-    }
-    const key = line.slice(0, colonIdx).trim();
-    const value = line.slice(colonIdx + 1).trim();
-    if (!key) return { fields: null, body: null, error: `Frontmatter line ${i + 2}: key is empty` };
-    if (fields[key] !== undefined) return { fields: null, body: null, error: `Frontmatter: duplicate key "${key}"` };
-    fields[key] = value;
-  }
-
-  const body = lines.slice(closeIdx + 1).join('\n');
-  return { fields, body, error: null };
-}
+test('quoted wildcard is compatible with YAML skill loaders', () => {
+  assert.equal(parseFrontmatter('---\nagents: "*"\n---\nBody').fields.agents, '*');
+});
 
 const REQUIRED_FIELDS = ['name', 'description', 'keywords', 'agents'];
 const KEBAB_CASE_PATTERN = /^[a-z][a-z0-9-]*[a-z0-9]$|^[a-z]$/;

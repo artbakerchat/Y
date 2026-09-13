@@ -1,4 +1,6 @@
 import json
+import asyncio
+import hashlib
 import os
 import time
 from pathlib import Path
@@ -13,7 +15,9 @@ from strands.session.s3_session_manager import S3SessionManager
 
 from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
-from forge_steering import PaletteReadyHandler, ToneGuardrailHandler
+from forge_steering import PaletteReadyHandler
+from forge_harness import HarnessHook, RequestBudget, request_budget, configured_model, clean_answer
+from forge_specialists import consult_word_specialist
 from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
 from conversation_guidance import CONVERSATION_GUIDANCE
 
@@ -192,11 +196,15 @@ def _native_session_manager(session_id: str) -> S3SessionManager | None:
 def _load_messages(session_id: str) -> list[dict[str, str]]:
     table = _session_table()
     if not table:
-        return []
-    response = table.get_item(Key={"session_id": session_id})
-    item = response.get("Item", {})
+        try:
+            item = json.loads((Path('/tmp/forge-sessions') / f'{session_id}.json').read_text())
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+    else:
+        response = table.get_item(Key={"session_id": session_id})
+        item = response.get("Item", {})
     if int(item.get("expires_at", 0)) <= int(time.time()):
-        if item:
+        if item and table:
             table.delete_item(Key={"session_id": session_id})
         return []
     messages = item.get("messages", [])
@@ -217,6 +225,13 @@ def _save_messages(session_id: str, messages: list[dict[str, str]]) -> None:
             "updated_at": int(time.time()),
             "expires_at": _expires_at(),
         })
+    else:
+        directory = Path('/tmp/forge-sessions')
+        directory.mkdir(exist_ok=True)
+        target = directory / f'{session_id}.json'
+        temporary = target.with_suffix('.tmp')
+        temporary.write_text(json.dumps({'messages': messages[-20:], 'expires_at': _expires_at()}))
+        temporary.replace(target)
 
 
 def _agent_for_palette(
@@ -224,6 +239,8 @@ def _agent_for_palette(
     requests_remaining: int,
     session_id: str,
     profile_id: str = 'forge',
+    messages: list | None = None,
+    supplied_text: str = '',
 ) -> Agent:
     palette_text = ", ".join(palette) if palette else "(empty)"
     profile = get_profile(profile_id) or get_profile('forge')
@@ -238,9 +255,12 @@ def _agent_for_palette(
     profile_tools = [tool for tool in build_tools(palette, profile_id) if getattr(tool, "__name__", "") in profile_tool_names]
 
     return Agent(
+        model=configured_model(),
+        messages=messages if session_manager is None else None,
+        callback_handler=None,
         tools=profile_tools,
-        hooks=[RateLimiterHook(max_calls=max_tool_calls, on_event=lambda message: log.info("Hook: %s", message))],
-        plugins=[skills_plugin, PaletteReadyHandler(), ToneGuardrailHandler()],
+        hooks=[HarnessHook(profile_id, supplied_text), RateLimiterHook(max_calls=max_tool_calls, on_event=lambda message: log.info("Hook: %s", message))],
+        plugins=[skills_plugin, PaletteReadyHandler()],
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
         system_prompt=(
@@ -248,6 +268,9 @@ def _agent_for_palette(
             f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
             "Use the user's word palette as inspiration when relevant. "
             "Never invent palette entries or present guesses as facts. "
+            "Never invent operational records, volunteers, availability, or sources to call a tool. "
+            "Ask for missing records. Tools calculate proposed matches; they do not confirm real assignments. "
+            "Stay in your assigned role. Return only the final answer in at most 52 words, without thinking tags. "
             f"The current palette is: {palette_text}. "
             "When a request needs palette information, use the available tools. "
             "The agent loop is: understand the request, choose a tool when useful, "
@@ -267,9 +290,8 @@ def _profile_id_from(payload: dict[str, Any]) -> str:
         profile_id = os.getenv("FORGE_DEFAULT_PROFILE", "forge")
     profile_id = profile_id.strip().lower()
     # Validate that profile exists
-    if not get_profile(profile_id):
-        log.warning(f"Unknown profile {profile_id}; falling back to forge")
-        return 'forge'
+    if profile_id != 'word-specialist' and not get_profile(profile_id):
+        raise ValueError("Unknown agent profile")
     return profile_id
 
 
@@ -278,36 +300,38 @@ async def invoke(payload: dict[str, Any], context: Any):
     prompt = _prompt_from(payload)
     profile_id = _profile_id_from(payload)
     requests_remaining = max(0, min(8, int(payload.get("requests_remaining", 8))))
-    session_id = _session_id(context)
-    palette = _load_palette(session_id, _palette_from(payload))
-    messages = _load_messages(session_id)
-    native_sessions = _session_bucket() is not None
-    history = "\n".join(f"{item['role']}: {item['content']}" for item in messages)
-    agent_prompt = prompt if native_sessions else (
-        f"Conversation history:\n{history}\n\nCurrent request: {prompt}" if history else prompt
-    )
-    log.info("Invoking agent profile=%s with %d palette words and %d stored messages", profile_id, len(palette), len(messages))
-    agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id)
-
-    events = []
-    async for event in agent.stream_async(agent_prompt):
-        if isinstance(event, dict) and "event" in event:
-            events.append(event)
-
-    answer = ""
-    for event in events:
-        delta = event.get("event", {}).get("contentBlockDelta", {}).get("delta", {})
-        if isinstance(delta, dict) and isinstance(delta.get("text"), str):
-            answer += delta["text"]
-    answer = _limit_output_words(answer or "(empty response)")
-    events = _bounded_events(events)
-    if not native_sessions:
-        _save_messages(session_id, messages + [
-            {"role": "user", "content": prompt},
-            {"role": "assistant", "content": answer},
-        ])
-    for event in events:
-        yield event
+    raw_session_id = _session_id(context)
+    # A profile change must never expose another profile's conversation.
+    session_id = hashlib.sha256(f"{raw_session_id}:{profile_id}".encode()).hexdigest()
+    budget = RequestBudget()
+    token = request_budget.set(budget)
+    try:
+        async with asyncio.timeout(90):
+            if profile_id == "word-specialist":
+                answer = await consult_word_specialist(prompt, payload.get("aspect", "connotation"))
+            else:
+                palette = _load_palette(raw_session_id, _palette_from(payload))
+                messages = _load_messages(session_id)
+                native_sessions = _session_bucket() is not None
+                history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages]
+                supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
+                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text)
+                first_reply = not any(item.get('role') == 'assistant' for item in agent.messages)
+                result = await agent.invoke_async(prompt)
+                answer = clean_answer(result)
+                if profile_id == 'bob-dylan' and first_reply and not answer.startswith('hi y’all!'):
+                    answer = clean_answer('hi y’all! ' + answer)
+                if not native_sessions:
+                    _save_messages(session_id, messages + [
+                        {"role": "user", "content": prompt},
+                        {"role": "assistant", "content": answer},
+                    ])
+            log.info("Harness profile=%s model_calls=%d tool_calls=%d trace=%s",
+                     profile_id, budget.model_calls, budget.tool_calls, budget.trace)
+            # Match the existing Worker's AgentCore stream parser, after sanitizing.
+            yield {"event": {"contentBlockDelta": {"delta": {"text": answer}}}}
+    finally:
+        request_budget.reset(token)
 
 
 if __name__ == "__main__":

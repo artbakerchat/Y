@@ -55,7 +55,7 @@ const MIN_BODY_LENGTH = 20;
  *
  * Returns { fields: Record<string, string>, error: string|null }.
  */
-function parseFrontmatter(raw) {
+export function parseFrontmatter(raw) {
   const DELIMITER = '---';
   const lines = raw.split('\n');
 
@@ -93,7 +93,8 @@ function parseFrontmatter(raw) {
     }
 
     const key = line.slice(0, colonIdx).trim();
-    const value = line.slice(colonIdx + 1).trim();
+    const rawValue = line.slice(colonIdx + 1).trim();
+    const value = /^(["']).*\1$/.test(rawValue) ? rawValue.slice(1, -1) : rawValue;
 
     if (!key) {
       return { fields: null, error: `Frontmatter line ${i + 2}: key is empty` };
@@ -346,4 +347,4 @@ function main() {
   }
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -1,4 +1,4 @@
-import { Component, ErrorInfo, FormEvent, KeyboardEvent, PointerEvent, ReactNode, useEffect, useRef, useState } from 'react';
+import { Component, ErrorInfo, FormEvent, KeyboardEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -6,10 +6,8 @@ import { Component, ErrorInfo, FormEvent, KeyboardEvent, PointerEvent, ReactNode
 
 type Role = 'user' | 'assistant';
 type Message = { role: Role; content: string };
-type AgentMode = 'auto' | 'manual';
-type State = { palette?: string[]; messages?: Message[]; pendingPrompt?: string; agentId?: string; agentMode?: AgentMode };
+type State = { messages?: Message[]; pendingPrompt?: string; agentId?: string; agentMode?: 'auto' | 'manual' };
 type AgentRole = { id: string; name: string; focus: string; description: string };
-type ModelExample = { prompt: string; response: string; approach: string };
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -25,48 +23,6 @@ const AGENT_ROLES: AgentRole[] = [
   { id: 'santa-claus', name: 'Santa Claus', focus: 'Holiday cheer', description: 'Bring warmth, generosity, apples, presents, and a little ho-ho-ho.' },
   { id: 'orange-doctor-candidatus', name: 'Orange Doctor Candidatus', focus: 'Orange reframing', description: 'You can swipe your situation orange.' },
 ];
-const ORANGE_DOCTOR_AGENT_ID = 'orange-doctor-candidatus';
-const RECOMMENDED_AGENT_IDS = ['forge', 'bob-dylan', 'santa-claus'];
-const ORDERED_AGENT_ROLES = [
-  ...RECOMMENDED_AGENT_IDS.map((id) => AGENT_ROLES.find((role) => role.id === id)! ),
-  ...AGENT_ROLES.filter((role) => !RECOMMENDED_AGENT_IDS.includes(role.id)),
-];
-
-function getContextualAgentRoles(activeAgentId: string): AgentRole[] {
-  const activeRole = ORDERED_AGENT_ROLES.find((role) => role.id === activeAgentId);
-  if (!activeRole) return ORDERED_AGENT_ROLES;
-
-  return [
-    activeRole,
-    ...ORDERED_AGENT_ROLES.filter((role) => role.id !== activeAgentId),
-  ];
-}
-const MODEL_EXAMPLES: Record<string, ModelExample> = {
-  forge: { prompt: 'Our neighbourhood wants to start a monthly repair café. Where do we begin?', response: 'Start with a small pilot: choose a venue, invite two or three repair volunteers, list the tools you have, and set a simple intake process. I can turn that into a one-page launch checklist.', approach: 'Clarify the shared goal, reduce it to a manageable first step, and offer a concrete next action.' },
-  'food-bank': { prompt: 'We have a donation event next Saturday but only four volunteers.', response: 'Prioritize three roles: one person for intake, two for sorting, and one for the handoff table. Add a short shift schedule and ask a partner organization for one backup volunteer.', approach: 'Match limited capacity to essential tasks, then identify the smallest useful backup plan.' },
-  'nonprofit-helpdesk': { prompt: 'Can you help us make our board meeting more focused?', response: 'Use a consent agenda for routine approvals, reserve the first 30 minutes for decisions, and end each item with an owner and due date. I can draft the agenda template.', approach: 'Separate routine information from decisions and make accountability visible.' },
-  'mutual-aid': { prompt: 'A neighbour needs a ride to a medical appointment on Tuesday.', response: 'Share only the details a driver needs, confirm the pickup window privately, and arrange a backup contact. Afterward, check in with both people so the request is fully closed.', approach: 'Protect dignity and privacy while coordinating a safe handoff and follow-up.' },
-  'civic-knowledge': { prompt: 'I do not understand how to speak at a city council meeting.', response: 'Check the meeting page for the agenda and public-comment deadline, prepare a short statement tied to one agenda item, and arrive or sign in before the comment period begins.', approach: 'Translate a formal process into plain-language steps and point to the decision point that matters.' },
-  'bob-dylan': { prompt: 'How can I make a folk song feel more vivid?', response: 'Give the verse a place, a weather pattern, and one object the singer can touch. Let the image carry the emotion before you explain what the singer feels.', approach: 'Use concrete images, musical restraint, and implication to deepen the writing.' },
-  'santa-claus': { prompt: 'I want to make a kind surprise for my neighbour.', response: 'Leave a warm note with a small treat, shovel their walkway, or offer one specific errand. The best surprises are thoughtful, useful, and easy to receive.', approach: 'Lead with warmth, keep the gesture practical, and make generosity feel comfortable.' },
-  'orange-doctor-candidatus': { prompt: 'Can you swipe this situation orange?', response: 'Keep the facts, soften the doom, and find the warmest useful angle: name one thing you can influence today, then take the smallest step toward it.', approach: 'Reframe without denying reality, then turn a brighter perspective into one grounded action.' },
-};
-const MODEL_PALETTE_WORDS: Record<string, string[]> = {
-  forge: ['clarify', 'listen', 'organize', 'next-step'],
-  'food-bank': ['donation', 'inventory', 'shift', 'dignity'],
-  'nonprofit-helpdesk': ['agenda', 'policy', 'owner', 'deadline'],
-  'mutual-aid': ['request', 'privacy', 'match', 'follow-up'],
-  'civic-knowledge': ['agenda', 'public-comment', 'deadline', 'process'],
-  'bob-dylan': ['image', 'verse', 'weather', 'rhythm'],
-  'santa-claus': ['kindness', 'surprise', 'warmth', 'generosity'],
-  'orange-doctor-candidatus': ['orange', 'reframe', 'warmth', 'possibility'],
-};
-const STOP_WORDS = new Set(
-  'a an and are as at be by for from how i in is it me of on or that the this to was we what when where with you your can could do does help into our should today will would'.split(
-    ' ',
-  ),
-);
-
 function cleanAssistantResponse(value: unknown) {
   const text = typeof value === 'string' ? value : String(value ?? '');
   const cleaned = text
@@ -77,14 +33,17 @@ function cleanAssistantResponse(value: unknown) {
   return cleaned || 'I’m here with you. What would you like to work through?';
 }
 
-function extractWords(text: string): string[] {
-  return [
-    ...new Set(
-      (text.toLowerCase().match(/[a-z][a-z'-]{2,15}/g) || []).filter(
-        (word) => !STOP_WORDS.has(word),
-      ),
-    ),
-  ].slice(0, 52);
+function isPacificAvailabilityOpen(date = new Date()): boolean {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false,
+  }).formatToParts(date);
+  const hour = Number(parts.find((part) => part.type === 'hour')?.value || 0);
+  const minute = Number(parts.find((part) => part.type === 'minute')?.value || 0);
+  const currentMinutes = hour * 60 + minute;
+  return currentMinutes >= 9 * 60 && currentMinutes < 17 * 60;
 }
 
 // ---------------------------------------------------------------------------
@@ -126,20 +85,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
     if (this.state.error) {
       return (
         <div className="shell" role="alert" aria-live="assertive">
-          <header>
-            <a className="brand" href="/">
-              <span className="mark">✦</span>
-              <span>
-                Larboard<small>agent workspace</small>
-              </span>
-            </a>
-          </header>
           <main style={{ padding: '56px 0' }}>
             <p className="kicker">Something went wrong</p>
             <h1>Forge ran into a problem.</h1>
             <p className="lead">
-              An unexpected error occurred in the interface. Your palette and conversation history
-              are stored server-side and will be restored when you reload.
+              An unexpected error occurred in the interface. Your conversation history is stored
+              server-side and will be restored when you reload.
             </p>
             <p style={{ color: '#607386', fontSize: '12px', marginTop: '16px' }}>
               {this.state.error.message}
@@ -174,9 +125,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 interface ChatPanelProps {
   messages: Message[];
   agentName: string;
-  activeAgentId: string;
-  agentMode: AgentMode;
-  onSelectAgent: (id: string) => void;
   busy: boolean;
   draft: string;
   onDraftChange: (value: string) => void;
@@ -186,8 +134,15 @@ interface ChatPanelProps {
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, agentName, activeAgentId, agentMode, onSelectAgent, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
   const composerTarget = agentName || 'Larboard';
+  const [isAvailable, setIsAvailable] = useState(() => isPacificAvailabilityOpen());
+
+  useEffect(() => {
+    const updateAvailability = () => setIsAvailable(isPacificAvailabilityOpen());
+    const interval = window.setInterval(updateAvailability, 60_000);
+    return () => window.clearInterval(interval);
+  }, []);
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -203,8 +158,10 @@ function ChatPanel({ messages, agentName, activeAgentId, agentMode, onSelectAgen
         <span className="badge">{agentName}</span>
       </div>
 
-      <div className="conversation-start" aria-label="Conversation setup">
-        <AgentRoles activeAgentId={activeAgentId} agentMode={agentMode} onSelect={onSelectAgent} />
+      <div className="availability" role="status" aria-live="polite">
+        <span className={`availability-dot${isAvailable ? ' is-open' : ''}`} aria-hidden="true" />
+        <span>Available 9:00 AM–5:00 PM Pacific</span>
+        <strong className={isAvailable ? 'is-open' : ''}>{isAvailable ? 'OPEN' : 'CLOSED'}</strong>
       </div>
 
       <div className={`chat${messages.length ? '' : ' is-empty'}`}>
@@ -234,224 +191,31 @@ function ChatPanel({ messages, agentName, activeAgentId, agentMode, onSelectAgen
   );
 }
 
-function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: string; agentMode: AgentMode; onSelect: (id: string) => void }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef({ active: false, startX: 0, scrollLeft: 0, moved: false });
-  const suppressClickRef = useRef(false);
-  const contextualAgentRoles = getContextualAgentRoles(activeAgentId);
-
-  // The selected role is promoted to the first card. Return the carousel to
-  // that edge after selection so the newly selected agent is visible at once.
-  useEffect(() => {
-    const track = trackRef.current;
-    if (!track) return;
-    requestAnimationFrame(() => track.scrollTo({ left: 0, behavior: 'smooth' }));
-  }, [activeAgentId]);
-
-  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
-    if (event.pointerType === 'touch' || event.pointerType === 'mouse') {
-      const track = trackRef.current;
-      if (!track) return;
-      dragRef.current = { active: true, startX: event.clientX, scrollLeft: track.scrollLeft, moved: false };
-    }
-  }
-
-  function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
-    const track = trackRef.current;
-    if (!track || !dragRef.current.active) return;
-    const distance = event.clientX - dragRef.current.startX;
-    if (Math.abs(distance) > 5 && !dragRef.current.moved) {
-      dragRef.current.moved = true;
-      track.setPointerCapture(event.pointerId);
-      track.classList.add('is-dragging');
-    }
-    track.scrollLeft = dragRef.current.scrollLeft - distance;
-  }
-
-  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
-    const track = trackRef.current;
-    if (!track || !dragRef.current.active) return;
-    if (track.hasPointerCapture(event.pointerId)) track.releasePointerCapture(event.pointerId);
-    suppressClickRef.current = dragRef.current.moved;
-    dragRef.current.active = false;
-    track.classList.remove('is-dragging');
-  }
-
-  return (
-    <section className="roles conversation-message" aria-labelledby="roles-title">
-      <div className="roles-heading">
-        <div>
-          <p className="eyebrow">BEFORE WE BEGIN</p>
-          <h2 id="roles-title">Choose how we route your conversation</h2>
-        </div>
-          <p>Larboard can choose the best specialist for each message, or you can pin one of the available agents below.</p>
-      </div>
-      <button className={`routing-mode${agentMode === 'auto' ? ' is-active' : ''}`} type="button" onClick={() => onSelect('auto')} aria-pressed={agentMode === 'auto'}>
-        <span className="routing-icon">✦</span>
-        <span><strong>Automatic routing</strong><small>{agentMode === 'auto' ? `Currently with ${AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}` : 'Let Larboard choose the best fit'}</small></span>
-        {agentMode === 'auto' ? <b>Active</b> : null}
-      </button>
-      <p className="available-label">AVAILABLE AGENTS</p>
-      <div
-        className="role-grid"
-        ref={trackRef}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        aria-label="Available agents. Swipe or drag horizontally to browse."
-      >
-        {contextualAgentRoles.map((role, index) => (
-          <button className={`role-card role-card-${(index % 5) + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
-            <span className="role-index">{String(index + 1).padStart(2, '0')}</span>
-            <h3>{role.name}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
-            <p className="role-focus">{role.focus}</p>
-            <p>{role.description}</p>
-          </button>
-        ))}
-      </div>
-      <p className="roles-hint">Grab and drag to browse all agents <span aria-hidden="true">↔</span></p>
-    </section>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// PalettePanel
-// ---------------------------------------------------------------------------
-
-interface PalettePanelProps {
-  palette: string[];
-  region: string;
-  activeAgentId: string;
-  wordDraft: string;
-  onWordDraftChange: (value: string) => void;
-  onAddWords: (event: FormEvent) => void;
-  onRemoveWord: (word: string) => void;
-}
-
-/**
- * Renders the word palette sidebar: the add-words form, chips, and metrics.
- */
-function PalettePanel({
-  palette,
-  region,
-  activeAgentId,
-  wordDraft,
-  onWordDraftChange,
-  onAddWords,
-  onRemoveWord,
-}: PalettePanelProps) {
-  return (
-    <aside className="card side">
-      <p className="eyebrow">WORD PALETTE</p>
-      <h2>Your word garden</h2>
-
-      <form className="palette-form" onSubmit={onAddWords}>
-        <input
-          value={wordDraft}
-          onChange={(event) => onWordDraftChange(event.target.value)}
-          placeholder="Type words separated by |"
-          aria-label="Add palette words"
-        />
-        <button type="submit">↵</button>
-      </form>
-
-      <div className="chips">
-        {palette.map((word) => (
-          <button type="button" key={word} onClick={() => onRemoveWord(word)}>
-            {word} ×
-          </button>
-        ))}
-      </div>
-
-      <section className="model-examples" aria-labelledby="model-examples-title">
-        <div className="model-examples-heading">
-          <p className="eyebrow">MODEL PREVIEWS</p>
-          <h2 id="model-examples-title">See how each model thinks</h2>
-          <p>Short examples show the model’s style and decision approach.</p>
-          <a
-            className="preview-palette"
-            href="/prompt"
-            aria-label={`Open Prompt Lab with the ${AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'selected model'} example palette`}
-          >
-            <span>Example palette</span>
-            {MODEL_PALETTE_WORDS[activeAgentId].map((word) => <b key={word}>{word}</b>)}
-          </a>
-        </div>
-        {AGENT_ROLES.filter((role) => role.id === activeAgentId).map((role) => {
-          const example = MODEL_EXAMPLES[role.id];
-          return (
-            <details className="model-example is-selected" key={role.id} open>
-              <summary>
-                <span><strong>{role.name}</strong><small>{role.focus}</small></span>
-                <span className="example-toggle">View</span>
-              </summary>
-              <div className="example-body">
-                <div className="example-message"><span className="example-label user-label">USER</span><p>{example.prompt}</p></div>
-                <div className="example-message"><span className="example-label">{role.name.toUpperCase()}</span><p>{example.response}</p></div>
-                <div className="approach-summary"><span className="example-label">APPROACH SUMMARY</span><p>{example.approach}</p></div>
-              </div>
-            </details>
-          );
-        })}
-      </section>
-
-      <div className="metric">
-        <span>Region</span>
-        <b>{region}</b>
-      </div>
-      <div className="metric">
-        <span>Palette words</span>
-        <b>{palette.length} / 52</b>
-      </div>
-    </aside>
-  );
-}
-
 // ---------------------------------------------------------------------------
 // App
 // ---------------------------------------------------------------------------
 
 export default function App() {
-  const [palette, setPalette] = useState<string[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeAgentId, setActiveAgentId] = useState('forge');
-  const [agentMode, setAgentMode] = useState<AgentMode>('auto');
   const [draft, setDraft] = useState('');
-  const [wordDraft, setWordDraft] = useState('');
-  const [region, setRegion] = useState('checking…');
   const [busy, setBusy] = useState(false);
   const stateWrite = useRef(Promise.resolve());
 
   useEffect(() => {
-    const isOrange = activeAgentId === ORANGE_DOCTOR_AGENT_ID;
-    document.body.dataset.theme = isOrange ? 'orange' : '';
-    return () => {
-      delete document.body.dataset.theme;
-    };
-  }, [activeAgentId]);
-
-  useEffect(() => {
     Promise.all([
       fetch('/api/state').then((r) => r.json() as Promise<State>),
-      fetch('/api/health').then((r) => r.json() as Promise<{ region?: string }>),
     ])
-      .then(([saved, health]) => {
-        // The backend is authoritative. Do not replace an empty/changed backend
-        // palette with browser-side starter words during a refresh.
-        setPalette(saved.palette || []);
+      .then(([saved]) => {
         setMessages(saved.messages || []);
         const savedAgentId = AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge';
         setActiveAgentId(savedAgentId);
-        setAgentMode(saved.agentMode === 'manual' ? 'manual' : 'auto');
-        setRegion(health.region || 'env default');
       })
-      .catch(() => setRegion('local preview'));
+      .catch(() => undefined);
   }, []);
 
   function saveState(next: Partial<State>): Promise<State> {
-    // Serialize patches in the browser. Without this, quick palette edits can
-    // race and an older POST can become the value shown after a refresh.
+    // Serialize patches so quick conversation changes cannot race.
     const write = stateWrite.current.catch(() => undefined).then(async () => {
       const response = await fetch('/api/state', {
         method: 'POST',
@@ -494,29 +258,25 @@ export default function App() {
 
     setDraft('');
     setBusy(true);
-    const extractedWords = extractWords(message);
-    const nextPalette = [...new Set([...extractedWords, ...palette])].slice(0, 52);
     const nextMessages: Message[] = [
       ...messages,
       { role: 'user', content: message },
       { role: 'assistant', content: 'One moment…' },
     ];
     setMessages(nextMessages);
-    setPalette(nextPalette);
 
     try {
-      const saved = await saveState({ messages: nextMessages.slice(0, -1), palette: nextPalette });
-      setPalette(saved.palette || nextPalette);
+      await saveState({ messages: nextMessages.slice(0, -1) });
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, ...(agentMode === 'manual' ? { agent: activeAgentId } : {}) }),
+        body: JSON.stringify({ message }),
       });
       const data = (await response.json()) as { answer?: string; error?: string };
       if (!response.ok) {
         throw new Error(data.error || 'Request failed');
       }
-      if (agentMode === 'auto' && typeof (data as { agentId?: string }).agentId === 'string') {
+      if (typeof (data as { agentId?: string }).agentId === 'string') {
         setActiveAgentId((data as { agentId: string }).agentId);
       }
       setMessages([
@@ -536,95 +296,21 @@ export default function App() {
     }
   }
 
-  function selectAgent(agentId: string) {
-    if (agentId === 'auto') {
-      setAgentMode('auto');
-      void saveState({ agentMode: 'auto', messages: [], pendingPrompt: '' }).catch(() => undefined);
-      setMessages([]);
-      return;
-    }
-    if (agentMode === 'manual' && agentId === activeAgentId) return;
-    setAgentMode('manual');
-    setActiveAgentId(agentId);
-    setMessages([]);
-    void saveState({ agentId, agentMode: 'manual', messages: [], pendingPrompt: '' }).catch(() => undefined);
-  }
-
-  async function addWords(event: FormEvent) {
-    event.preventDefault();
-    const additions = wordDraft
-      .split('|')
-      .map((word) => word.trim())
-      .filter((word) => word && word.length <= 16);
-    const next = [...new Set([...additions, ...palette])].slice(0, 52);
-    setPalette(next);
-    setWordDraft('');
-    try {
-      const saved = await saveState({ palette: next });
-      setPalette(saved.palette || next);
-    } catch {
-      setPalette(palette);
-    }
-  }
-
-  async function removeWord(word: string) {
-    const next = palette.filter((item) => item !== word);
-    setPalette(next);
-    try {
-      const saved = await saveState({ palette: next });
-      setPalette(saved.palette || next);
-    } catch {
-      setPalette(palette);
-    }
-  }
-
   return (
     <ErrorBoundary>
-      <div className={`shell${activeAgentId === ORANGE_DOCTOR_AGENT_ID ? ' theme-orange' : ''}`}>
-        <header>
-          <a className="brand" href="/">
-            <span className="mark">✦</span>
-            <span>
-              Larboard<small>agent workspace</small>
-            </span>
-          </a>
-          <nav>
-            <a href="/">Workspace</a>
-            <a href="/prompt">Prompt lab</a>
-            <a href="/pinball">Pinball</a>
-            <a href="/pricing">Pricing</a>
-            <span className="status">
-              <i /> ready to chat
-            </span>
-          </nav>
-        </header>
-
+      <div className="shell">
         <main>
           <section className="workspace">
             <ChatPanel
               messages={messages}
               agentName={AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}
-              activeAgentId={activeAgentId}
-              agentMode={agentMode}
-              onSelectAgent={selectAgent}
               busy={busy}
               draft={draft}
               onDraftChange={setDraft}
               onSubmit={submitMessage}
             />
-            <PalettePanel
-              palette={palette}
-              region={region}
-              activeAgentId={activeAgentId}
-              wordDraft={wordDraft}
-              onWordDraftChange={setWordDraft}
-              onAddWords={addWords}
-              onRemoveWord={removeWord}
-            />
           </section>
         </main>
-
-        <footer>Larboard / a quiet place for useful work</footer>
       </div>
     </ErrorBoundary>
   );

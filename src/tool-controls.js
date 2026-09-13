@@ -1,4 +1,4 @@
-// Adapted from modules/02-hooks and centre/03-skills/steering_handlers.py.
+// Deterministic tool-call controls for the Worker agent loop.
 // Create one controller per invocation; only successful calls unlock workflows.
 export function createToolController({ tools, maxCallsPerTool = 3 }) {
   if (!Number.isInteger(maxCallsPerTool) || maxCallsPerTool < 1) {

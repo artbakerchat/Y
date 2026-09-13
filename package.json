@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "eval:agents": "node scripts/evaluate-agents.js",
+    "test:harness": "node --test tests/agent-harness.test.js",
     "start": "node server.mjs",
     "build": "npm --prefix site run build",
     "test": "node --test tests/*.test.js",

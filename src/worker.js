@@ -4,6 +4,8 @@ import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
 import { CONVERSATION_GUIDANCE } from './conversation-guidance.js';
+import { readAgentCoreResponse } from './agentcore-response.js';
+export { GlobalTimer } from './legacy-global-timer.js';
 
 const CONTENT_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -14,29 +16,14 @@ const CONTENT_TYPES = {
 
 const HTML_ROUTES = {
   '/': 'index.html',
-  '/pinball': 'pinball.html',
-  '/prompt': 'prompt.html',
-  '/pricing': 'pricing.html',
-  '/printer': 'printer.html',
-  '/presentation': 'presentation.html',
 };
 
 const LEGACY_HTML_ASSETS = {
   '/index.html': 'index.html',
-  '/pinball.html': 'pinball.html',
-  '/prompt.html': 'prompt.html',
-  '/pricing.html': 'pricing.html',
-  '/printer.html': 'printer.html',
-  '/presentation.html': 'presentation.html',
 };
 
 const CANONICAL_HTML_ROUTES = {
   '/index.html': '/',
-  '/pinball.html': '/pinball',
-  '/prompt.html': '/prompt',
-  '/pricing.html': '/pricing',
-  '/printer.html': '/printer',
-  '/presentation.html': '/presentation',
 };
 
 const encoder = new TextEncoder();
@@ -45,34 +32,6 @@ const DAILY_REQUEST_LIMIT = 8;
 const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
-const GLOBAL_TIMER_DURATION_MS = 15 * 60 * 1000;
-
-export class GlobalTimer {
-  constructor(ctx, env) {
-    this.ctx = ctx;
-    this.env = env;
-    this.ctx.blockConcurrencyWhile(async () => {
-      this.ctx.storage.sql.exec(`
-        CREATE TABLE IF NOT EXISTS timer_state (
-          id INTEGER PRIMARY KEY CHECK (id = 1),
-          ends_at INTEGER NOT NULL
-        )
-      `);
-    });
-  }
-
-  getTimer() {
-    const now = Date.now();
-    const current = this.ctx.storage.sql.exec('SELECT ends_at FROM timer_state WHERE id = 1').toArray()[0];
-    let endsAt = Number(current?.ends_at);
-    if (!Number.isFinite(endsAt) || endsAt <= now) {
-      endsAt = now + GLOBAL_TIMER_DURATION_MS;
-      this.ctx.storage.sql.exec('INSERT OR REPLACE INTO timer_state (id, ends_at) VALUES (1, ?)', endsAt);
-    }
-    return { endsAt, serverNow: now, durationMs: GLOBAL_TIMER_DURATION_MS };
-  }
-}
-
 // Entry points and legacy assets keep stable URLs, so browsers must check for
 // a new deployment on every visit. Vite-generated files include a content hash
 // and can remain cached for a long time without serving an old app shell.
@@ -182,7 +141,7 @@ async function signingKey(secret, date, region, service) {
   return hmac(serviceKey, 'aws4_request');
 }
 
-async function invokeAgentCore(message, palette, history, env, request, requestsRemaining, agentId = 'forge') {
+async function invokeAgentCore(message, palette, history, env, browserSessionId, requestsRemaining, agentId = 'forge') {
   const region = env.AWS_REGION || 'ca-central-1';
   const runtimeArn = env.AGENTCORE_RUNTIME_ARN;
   const host = env.AGENTCORE_RUNTIME_HOST || `bedrock-agentcore.${region}.amazonaws.com`;
@@ -193,11 +152,12 @@ async function invokeAgentCore(message, palette, history, env, request, requests
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
-  const sessionId = request.headers.get('X-Amzn-Bedrock-AgentCore-Runtime-Session-Id') || crypto.randomUUID();
+  const sessionId = await sha256Hex(`${browserSessionId}:${agentId}`);
   const sessionToken = env.AWS_SESSION_TOKEN?.trim();
   const canonicalHeaderLines = [`content-type:application/json`, `host:${host}`, `x-amz-content-sha256:${payloadHash}`, `x-amz-date:${amzDate}`, `x-amzn-bedrock-agentcore-runtime-session-id:${sessionId}`];
   if (sessionToken) canonicalHeaderLines.push(`x-amz-security-token:${sessionToken}`);
-  const signedHeaders = sessionToken ? 'content-type;host;x-amz-content-sha256;x-amz-date;x-amzn-bedrock-agentcore-runtime-session-id;x-amz-security-token' : 'content-type;host;x-amz-content-sha256;x-amz-date;x-amzn-bedrock-agentcore-runtime-session-id';
+  canonicalHeaderLines.sort();
+  const signedHeaders = canonicalHeaderLines.map((line) => line.slice(0, line.indexOf(':'))).join(';');
   const canonicalRequest = ['POST', path.replaceAll('%', '%25'), query, `${canonicalHeaderLines.join('\n')}\n`, signedHeaders, payloadHash].join('\n');
   const credentialScope = `${date}/${region}/bedrock-agentcore/aws4_request`;
   const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256Hex(canonicalRequest)].join('\n');
@@ -206,6 +166,7 @@ async function invokeAgentCore(message, palette, history, env, request, requests
   const authorization = `AWS4-HMAC-SHA256 Credential=${env.AWS_ACCESS_KEY_ID}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
   const response = await fetch(`https://${host}${path}?${query}`, {
     method: 'POST',
+    signal: AbortSignal.timeout(100000),
     headers: {
       authorization,
       'content-type': 'application/json',
@@ -217,9 +178,7 @@ async function invokeAgentCore(message, palette, history, env, request, requests
     },
     body,
   });
-  if (!response.ok) throw new Error(`AgentCore request failed (${response.status}): ${(await response.text()).slice(0, 240)}`);
-  const result = await response.json();
-  const answer = result.output?.message?.content?.map((part) => part.text || '').join('') || result.output || result.response || result.text || 'AgentCore returned an empty response.';
+  const answer = await readAgentCoreResponse(response);
   return { answer: cleanAssistantResponse(typeof answer === 'string' ? answer : JSON.stringify(answer)), agent: true, runtime: 'agentcore' };
 }
 
@@ -412,7 +371,8 @@ function parseSkillDocument(key, source) {
       const separator = line.indexOf(':');
       if (separator < 1) continue;
       const name = line.slice(0, separator).trim();
-      const value = line.slice(separator + 1).trim();
+      const rawValue = line.slice(separator + 1).trim();
+      const value = /^(["']).*\1$/.test(rawValue) ? rawValue.slice(1, -1) : rawValue;
       if (value.startsWith('[') && value.endsWith(']')) metadata[name] = value.slice(1, -1).split(',').map((item) => item.trim()).filter(Boolean);
       else if (value) metadata[name] = value.split(',').map((item) => item.trim()).filter(Boolean);
     }
@@ -738,10 +698,6 @@ export default {
       if (url.pathname === '/api/health' && request.method === 'GET') {
         return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
-      if (url.pathname === '/api/timer' && request.method === 'GET') {
-        if (!env.GLOBAL_TIMER) return json({ error: 'Global timer is not configured.' }, 503);
-        return json(await env.GLOBAL_TIMER.getByName('site-wide-15-minute-counter').getTimer());
-      }
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
         const configuredToken = env.PYTHON_AGENT_GATEWAY_TOKEN?.trim();
@@ -789,7 +745,7 @@ export default {
 
         // Route to AgentCore if configured, otherwise run the local agent loop.
         const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, request, profile.dailyRequestLimit - state.rate.count - 1, profile.id)
+          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id)
           : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile);
         answer.answer = limitOutputWords(answer.answer);
         answer.agentId = profile.id;

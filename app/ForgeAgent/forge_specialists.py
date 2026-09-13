@@ -1,6 +1,8 @@
 """Specialist agents exposed through the Forge orchestrator."""
 
 from strands import Agent, tool
+from forge_harness import HarnessHook, configured_model, clean_answer
+from forge_hooks import RateLimiterHook
 
 
 WORD_DETAILS = {
@@ -76,19 +78,25 @@ def find_related_words_deep(theme: str) -> str:
 
 
 @tool
-def consult_word_specialist(word: str, aspect: str = "connotation") -> str:
+async def consult_word_specialist(word: str, aspect: str = "connotation") -> str:
     """Delegate etymology, connotation, or poetic-use analysis to a word specialist.
 
     Args:
         word: The word to analyse.
         aspect: One of etymology, connotation, or poetic_use.
     """
+    if not isinstance(word, str) or not word.strip() or len(word) > 100:
+        raise ValueError("A word of 1–100 characters is required")
+    if aspect not in {"etymology", "connotation", "poetic_use"}:
+        raise ValueError("Unknown specialist aspect")
     focus = {
         "etymology": "Focus on the word's origin, historical evolution, and linguistic roots.",
         "connotation": "Focus on the emotional, cultural, and contextual connotations of the word.",
         "poetic_use": "Focus on how this word is used in poetry: its rhythm, imagery, and mood.",
     }.get(aspect, "Focus on the emotional, cultural, and contextual connotations of the word.")
     specialist = Agent(
+        model=configured_model(),
+        hooks=[HarnessHook("word-specialist"), RateLimiterHook(max_calls=3)],
         tools=[look_up_word_details, find_related_words_deep],
         system_prompt=(
             "You are a concise word-craft specialist. Use the available tools to look "
@@ -96,11 +104,13 @@ def consult_word_specialist(word: str, aspect: str = "connotation") -> str:
             "combinations, clear concrete wording, and a natural spoken flow. Do not "
             "over-focus on grammatical or syntactic correctness; prioritize language "
             "that feels easy to say and understand. Return only 3–6 sentences of "
-            "analysis, with no preamble."
+            "analysis, with no preamble. Return only the final answer in at most 52 words, "
+            "without internal thinking tags. Stored entries are limited notes, not verified sources. "
+            "If evidence is missing, acknowledge uncertainty and never invent a word origin."
         ),
         callback_handler=None,
     )
-    return str(specialist(f"Analyse the word: {word}")).strip()
+    return clean_answer(await specialist.invoke_async(f"Analyse the word: {word}"))
 
 
 @tool

@@ -2,11 +2,19 @@
 
 Forge is a small full-stack AI conversation workspace. The browser provides the interface; model requests are handled server-side so AWS credentials never reach the client.
 
-The application focuses on word exploration and palette building. [`modules/`](modules/) contains workshop guides, and [`centre/`](centre/) contains the customer-service reference notebooks and scripts. See [the workshop-to-Forge map](modules/README.md) for how their patterns apply to this application.
+The application provides eight focused agents plus language-specialist support through a single conversation workspace.
+
+## Agent harness and deployment
+
+The Node server now uses `src/agent-harness.js` for all eight profiles, with a separate nested language specialist. It passes conversation history and the configured model to Bedrock, restricts tools by profile, enforces tool/model budgets and timeouts, removes internal analysis from final responses, and caps answers at 52 words. Operational tool input values are checked against user-supplied text; this rejects unsupported facts but is not a complete semantic fact checker.
+
+Run `npm run test:harness` for deterministic harness checks and `npm run eval:agents` for nine live Bedrock smoke cases with JSON response/trace output. Live checks incur model usage and do not establish that the agents are perfect or that every answer is accurate.
+
+The selected deployment target is **Amazon Bedrock AgentCore**. See [AgentCore deployment instructions](deploy/agentcore/README.md) for the Python harness, direct-code packaging, deployment, and live evaluations. The Canadian default is `ca.amazon.nova-lite-v1:0`. The [EC2 files](deploy/ec2/README.md) remain an optional alternative. The Worker retains its separate implementation.
 
 ## Offline checks
 
-Run `npm test` for deterministic tests and `npm run check` for Worker and local-server syntax checks. Both use Node.js 22+ and require no dependencies or AWS credentials. GitHub Actions also runs the existing Python evaluations with `python -m unittest discover -s evals -p 'test_*.py'`.
+Run `npm test` for deterministic tests and `npm run check` for Worker and local-server syntax checks. Both use Node.js 22+ and require no AWS credentials.
 
 ### Test suite
 
@@ -69,11 +77,11 @@ The Worker implements the agent loop directly with the Amazon Bedrock Converse A
 - a word-craft specialist invoked as a second Bedrock call;
 - session state stored in Cloudflare R2.
 
-Basic local chat is also available through [`server.mjs`](server.mjs). That server prefers the Strands SDK when it is installed and otherwise uses a simpler Bedrock Converse fallback; it does not mirror every Worker-side tool and control.
+Local and EC2 chat use [`server.mjs`](server.mjs) with the shared Node agent harness, profile tools, nested language specialist, bounded model calls, and conversation history. Its controls are tested independently from the Worker.
 
 ### AgentCore path
 
-When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards requests to the Python runtime in [`app/ForgeAgent/main.py`](app/ForgeAgent/main.py). That runtime is intentionally simpler: it creates a Strands conversational agent, injects the current palette, restores message history, streams the response, and persists messages in DynamoDB. It does not currently reproduce the Worker's tools, hooks, skills, steering, or specialist implementation.
+When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards requests to the Python runtime in [`app/ForgeAgent/main.py`](app/ForgeAgent/main.py). It runs the eight profiles with shared parent/specialist budgets, configured Bedrock models, profile-specific tools, bundled skills, palette steering, isolated history, and sanitized responses. Optional S3 or DynamoDB settings enable external session storage; otherwise history is temporary within the runtime session.
 
 ## Requirements
 
@@ -81,39 +89,6 @@ When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards requests to the 
 - AWS credentials available through the normal AWS credential chain
 - Amazon Bedrock access in the selected region
 - Python 3.10+ only when building or deploying the AgentCore runtime
-
-### Python peer-agent harness
-
-The three Python peers share one launcher. From the repository root:
-
-```bash
-python -m ai.harness --list
-python -m ai.harness --validate
-AGENT_ID=kiro AWS_REGION=ca-central-1 python -m ai.harness kiro
-```
-
-The launcher keeps fleet selection and process startup in one place; the
-selected peer still owns its provider, tools, region, and session backend.
-Forge is included as an AgentCore-backed peer through the adapter in
-`ai/agents/forge/`; it uses the existing `AGENTCORE_RUNTIME_ARN` and does not
-require a second runtime or harness ARN.
-Use `--host` and `--port` for local development. Provider credentials and the
-peer invoke token remain environment/secret-manager configuration.
-
-To use Cloudflare as the model gateway, set the Worker URL and routing tokens:
-
-```bash
-export CLOUDFLARE_WORKER_URL=https://larboard.ca
-export CLOUDFLARE_GATEWAY_TOKEN='the-value-of-the-Worker-secret'
-export KIRO_INVOKE_TOKEN='local-peer-auth-token'
-python -m ai.harness kiro --port 8081
-```
-
-Set the matching `PYTHON_AGENT_GATEWAY_TOKEN` as a Worker secret. The Worker
-then uses its existing AWS credentials, `AWS_REGION`, `BEDROCK_MODEL_ID`, or
-`AGENTCORE_RUNTIME_ARN`; the Python host does not need provider or S3
-credentials. `CLOUDFLARE_GATEWAY_AGENT` selects the Worker profile and
-defaults to `forge`.
 
 ## Run locally
 
@@ -129,7 +104,7 @@ The `.env` file may define:
 
 ```env
 AWS_REGION=ca-central-1
-BEDROCK_MODEL_ID=amazon.nova-micro-v1:0
+BEDROCK_MODEL_ID=ca.amazon.nova-lite-v1:0
 PORT=3000
 ```
 
@@ -137,12 +112,7 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 
 ## API overview
 
-Full API documentation is in [`docs/API.md`](docs/API.md) with curl examples,
-and the machine-readable OpenAPI 3.0 spec is in [`docs/openapi.yaml`](docs/openapi.yaml).
-
 The runtime architecture is represented by the Worker, AgentCore, Python runtime, storage, and Good Neighbour components described throughout this document.
-
-The Good Neighbour launch post is drafted in [`docs/good-neighbour-agents.md`](docs/good-neighbour-agents.md).
 
 - `GET /api/health` — reports runtime region and model configuration.
 - `GET /api/state` — loads the browser session state.
@@ -154,7 +124,7 @@ Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. 
 
 ## Context-aware palette loading
 
-Forge detects the user's context on first visit and loads a relevant palette template. This aligns with the community-focused vision in [`builder-story.md`](builder-story.md).
+Forge detects the user's context on first visit and loads a relevant palette template for the agents and language tools.
 
 ### How it works
 
@@ -306,23 +276,6 @@ FORGE_SESSION_PREFIX=forge-sessions/
 
 The runtime's IAM role must allow `s3:HeadBucket`, `s3:ListBucket`, `s3:GetObject`, `s3:PutObject`, and `s3:DeleteObject` for the bucket and its `forge-sessions/` objects.
 
-## Workshop modules
-
-The Markdown files in [`modules/`](modules/) are educational material. They describe a Python/Strands customer-service agent built progressively through tools, hooks, skills, steering, session managers, AgentCore deployment, optional multi-agent delegation, and evaluations.
-
-They are reference material, not the exact implementation of Forge. The repository includes the shared mock customer-service tools, but it does not include the workshop's referenced notebooks, full steering handlers, skill directories, or evaluation suite.
-
-| Workshop concept | Forge implementation |
-| --- | --- |
-| Agent loop | Manual Bedrock Converse loop in `src/worker.js` |
-| Tools | Palette and word tools rather than customer/order tools |
-| Hooks | JavaScript per-request tool-call limiter |
-| Skills | Keyword-selected Markdown procedures |
-| Steering | Palette prerequisite check and best-effort response review |
-| Sessions | R2 in the Worker; S3/DynamoDB in the Python runtime |
-| Multi-agent | Word specialist as a second Bedrock call |
-| Evals | Not implemented yet |
-
 ## Repository layout
 
 ```text
@@ -331,5 +284,6 @@ server.mjs             Local Node server
 app/ForgeAgent/        Python AgentCore runtime
 agentcore/             AgentCore configuration
 site/                  React/Vite frontend source
-modules/               Workshop guides and shared examples
+skills/                Language and agent support skills
+tools/                 Language-specialist and community tools
 ```

@@ -23,20 +23,6 @@
       "bucket_name": "larboard-assets"
     }
   ],
-  "durable_objects": {
-    "bindings": [
-      {
-        "name": "GLOBAL_TIMER",
-        "class_name": "GlobalTimer"
-      }
-    ]
-  },
-  "migrations": [
-    {
-      "tag": "v1-global-timer",
-      "new_sqlite_classes": ["GlobalTimer"]
-    }
-  ],
   "ratelimits": [
     {
       "name": "REDIRECT_RATE_LIMITER",

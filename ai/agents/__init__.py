@@ -1,1 +1,0 @@
-"""Registered Larboard peer agents."""

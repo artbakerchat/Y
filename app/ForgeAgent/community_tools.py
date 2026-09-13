@@ -46,8 +46,12 @@ def build_community_tools(profile_id: str) -> list[Callable[..., str]]:
     if profile_id == "nonprofit-helpdesk":
         @tool
         def generate_nonprofit_template(template_type: str, organization: str = "", details: str = "") -> str:
-            """Generate an incident report, board memo, or grant tracker template."""
+            """Generate a volunteer welcome note, incident report, board memo, or grant tracker."""
             kind = template_type.lower()
+            if "welcome" in kind:
+                return f"Welcome to {organization or '[organization]'}! Thank you for volunteering. Your help matters. We will share your role, schedule, and contact person before you begin. Please tell us about any access needs or questions. {details}".strip()
+            if not any(name in kind for name in ["incident", "board", "grant"]):
+                return "Unsupported template. Draft the requested text directly; do not retry this tool."
             headings = (["Incident Report", "Date and time", "People involved", "What happened", "Immediate actions", "Follow-up owner"] if "incident" in kind else ["Board Memo", "Decision requested", "Context", "Options considered", "Recommendation", "Next steps"] if "board" in kind else ["Grant Tracker", "Funder and grant", "Deadline", "Deliverables", "Owner", "Status and next action"])
             lines = [f"# {headings[0]}", f"Organization: {organization or '[add]'}"]
             lines.extend(f"## {heading}\n{details if heading == 'Status and next action' and details else '[add]'}" for heading in headings[1:])
