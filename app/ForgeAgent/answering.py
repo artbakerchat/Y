@@ -1,10 +1,25 @@
 """Bounded recovery when a model returns internal analysis but no public answer."""
 from forge_harness import clean_answer
+from strands.types.exceptions import MaxTokensReachedException
 import re
 
 
+def requested_word_limit(prompt):
+    number = r'(one|two|three|four|five|six|seven|eight|nine|ten|\d+)'
+    match = re.search(r'(?:at most|no more than|just|only|exactly)\s+' + number + r'\s+words?\b', prompt, re.I)
+    if not match:
+        match = re.search(r'\b' + number + r'\s+words?\s+or\s+(?:fewer|less)\b', prompt, re.I)
+    if not match:
+        return None
+    value = match[1].lower()
+    return int(value) if value.isdigit() else ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten'].index(value) + 1
+
+
 def needs_repair(prompt, answer):
-    if re.fullmatch(r'No tools?(?: use)?(?: is| are)? (?:needed|required)[.!]?', answer, re.I):
+    limit = requested_word_limit(prompt)
+    if limit and len(answer.split()) > limit:
+        return True
+    if re.search(r'^\s*(?:No tools?(?: use)?(?: is| are)? (?:needed|required)\b|Action:\s*\w+\(|<calculate\b)', answer, re.I):
         return True
     if answer == '/dev/null' or re.fullmatch(r'\S*/SKILL\.md', answer):
         return True
@@ -23,13 +38,25 @@ def needs_repair(prompt, answer):
 
 
 async def answer_request(agent, prompt):
-    result = await agent.invoke_async(prompt)
+    try:
+        result = await agent.invoke_async(prompt)
+    except MaxTokensReachedException:
+        # Strands retains the partial message; continue once inside the same budget.
+        result = ''
     try:
         answer = clean_answer(result)
     except ValueError:
         answer = ''
     if answer and not needs_repair(prompt, answer):
         return answer
+    limit = requested_word_limit(prompt)
+    if answer and limit and len(answer.split()) > limit:
+        # Preserve context and meaning; never cut a requested draft mid-sentence.
+        result = await agent.invoke_async(
+            f"Rewrite your last answer in at most {limit} words. Keep the same facts "
+            "and answer the current request. Give only the answer, with no greeting or explanation."
+        )
+        return clean_answer(result)
     # Reuse the agent and its shared request budget; never retry indefinitely.
     result = await agent.invoke_async(
         "Provide a complete final answer to the original request now, in at most 52 "

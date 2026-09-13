@@ -4,6 +4,7 @@ import { buildTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
 import { createToolController } from './tool-controls.js';
 import { cleanAnswer } from './clean-answer.js';
+import { exceedsRequestedWordLimit, requestedWordLimit } from './answer-format.js';
 
 // Inject the transport so offline evaluations exercise the production loop.
 export function createAgentHarness({ converse, modelId, timeoutMs = 60000 }) {
@@ -30,6 +31,7 @@ export function createAgentHarness({ converse, modelId, timeoutMs = 60000 }) {
     async function loop(id, system, tools, messages, limit) {
       const controller = createToolController({ tools, maxCallsPerTool: limit });
       let calls = 0;
+      let formatRepaired = false;
       for (let turn = 0; turn <= limit; turn += 1) {
         signal.throwIfAborted();
         if (++budget.model > 10) throw new Error('Model call budget exhausted');
@@ -50,6 +52,11 @@ export function createAgentHarness({ converse, modelId, timeoutMs = 60000 }) {
             continue;
           }
           if (!text) throw new Error('Model returned no text');
+          if (!formatRepaired && turn < limit && exceedsRequestedWordLimit(prompt, text)) {
+            formatRepaired = true;
+            messages.push({ role: 'user', content: [{ text: `Rewrite your last answer in at most ${requestedWordLimit(prompt)} words. Keep the same facts and answer the current request. Give only the answer, with no greeting or explanation.` }] });
+            continue;
+          }
           return cleanAnswer(text);
         }
         const results = [];

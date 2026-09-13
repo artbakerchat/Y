@@ -124,7 +124,35 @@ interface ChatPanelProps {
  */
 function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange, onSubmit }: ChatPanelProps) {
   const composerTarget = agentName || 'Larboard';
-  const [isAvailable, setIsAvailable] = useState(false);
+  const [serviceStatus, setServiceStatus] = useState('CHECKING');
+  const isAvailable = serviceStatus === 'OPEN';
+
+  useEffect(() => {
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    let controller: AbortController;
+    async function refreshStatus() {
+      controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+      try {
+        const response = await fetch('/api/health', { cache: 'no-store', signal: controller.signal });
+        if (!response.ok) throw new Error('Health check failed');
+        const health = await response.json() as { available?: boolean };
+        if (!stopped) setServiceStatus(health.available === true ? 'OPEN' : health.available === false ? 'CLOSED' : 'UNKNOWN');
+      } catch {
+        if (!stopped) setServiceStatus('UNKNOWN');
+      } finally {
+        clearTimeout(timeout);
+        if (!stopped) timer = setTimeout(refreshStatus, 30000);
+      }
+    }
+    void refreshStatus();
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      controller?.abort();
+    };
+  }, []);
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -143,7 +171,7 @@ function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange
       <div className="availability" role="status" aria-live="polite">
         <span className={`availability-dot${isAvailable ? ' is-open' : ''}`} aria-hidden="true" />
         <span>Agent service status</span>
-        <strong className={isAvailable ? 'is-open' : ''}>{isAvailable ? 'OPEN' : 'CLOSED'}</strong>
+        <strong className={isAvailable ? 'is-open' : ''}>{serviceStatus}</strong>
       </div>
 
       <div className={`chat${messages.length ? '' : ' is-empty'}`}>
@@ -187,17 +215,13 @@ export default function App() {
   const stateWrite = useRef(Promise.resolve());
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/state').then((r) => r.json() as Promise<State>),
-      fetch('/api/health').then((r) => r.json() as Promise<{ available?: boolean }>),
-    ])
-      .then(([saved, health]) => {
+    fetch('/api/state').then((r) => r.json() as Promise<State>)
+      .then((saved) => {
         setMessages(saved.messages || []);
         const savedAgentId = AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge';
         setActiveAgentId(savedAgentId);
-        setIsAvailable(health.available === true);
       })
-      .catch(() => setIsAvailable(false));
+      .catch(() => setInputError('Could not restore your conversation. Please reload to try again.'));
   }, []);
 
   function saveState(next: Partial<State>): Promise<State> {

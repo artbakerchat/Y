@@ -39,7 +39,7 @@ Critical paths covered:
 
 - **Palette fetch → word suggestion flow** — the agent calls `get_palette`, then `suggest_related_words`, then produces a final text reply; the answer and saved session state are verified.
 - **Empty palette** — `get_palette` returns the "palette is empty" message and the cycle completes without error.
-- **Daily rate-limit enforcement** — an agent pre-loaded at `count=90` receives a `429` response and Bedrock is never called.
+- **Daily rate-limit enforcement** — an agent pre-loaded at `count=100` receives a `429` response and Bedrock is never called.
 - **Session state persistence** — two consecutive requests to the same session accumulate history and increment the rate counter correctly.
 - **Agent profile isolation** — continuing with the same `forge` profile preserves conversation history.
 - **Input validation** — oversized word counts, oversized individual words, and empty messages are all rejected before reaching Bedrock.
@@ -126,7 +126,7 @@ The runtime architecture is represented by the Worker, AgentCore, Python runtime
 - `POST /api/ask` — sends a prompt to the configured agent path.
 - `GET /api/agents` — lists available agent profiles (Cloudflare Worker only).
 
-Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each agent has a daily limit of 90 model requests per session.
+Requests are bounded to 52 words, 16 characters per word, and 4,000 characters. Each agent has a daily limit of 100 model requests per session.
 
 ## Context-aware palette loading
 
@@ -293,3 +293,12 @@ site/                  React/Vite frontend source
 skills/                Language and agent support skills
 tools/                 Language-specialist and community tools
 ```
+
+
+### Simple conversation evaluation
+
+The [simple-question report](evaluations/2026-09-12-simple/REPORT.md) tests all eight public profiles plus the internal Word Specialist with 15 everyday questions. Each scenario keeps its own session across four user turns; reviewed weak live answers receive a targeted fifth turn. It includes typo correction, whole apples, short drafts, basic rhymes, pretend play, and remembering a name.
+
+Run `npm run eval:simple -- live path/to/new-run.json` for the website plus the local Node specialist, or replace `live` with `python` or `node` for the local runtime using real Bedrock inference. Use a new output file after changing code. `--turns=1` runs the initial questions only; `--suite=holdout` runs new cup/pear scenarios. `--followups=evaluations/2026-09-12-simple/live-followup-prompts.json` adds the reviewed fifth turns to an existing run with its original sessions. Requests use synthetic data and incur inference charges; these commands do not deploy anything.
+
+`node scripts/score-simple.js path/to/run.json path/to/screen.json` checks selected count, length, and output symptoms. These flags do not measure full answer quality. The report separates assistant-reviewed answers, execution failures, deployment surfaces, and remaining weaknesses.

@@ -27,7 +27,8 @@ export function createToolController({ tools, maxCallsPerTool = 3 }) {
         result = 'You must call get_palette or search_palette first to understand the existing palette before suggesting new words.';
       } else {
         try {
-          result = String(await registry.get(name)(input || {}));
+          const value = await registry.get(name)(input || {});
+          result = typeof value === 'string' ? value : JSON.stringify(value) ?? String(value);
           status = 'success';
         } catch (error) {
           status = 'error';

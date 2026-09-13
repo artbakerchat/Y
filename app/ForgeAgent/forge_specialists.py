@@ -102,13 +102,13 @@ async def consult_word_specialist(word: str, aspect: str = "connotation") -> str
     return await run_word_specialist(f"Analyse the word: {word}", aspect=aspect)
 
 
-async def run_word_specialist(prompt: str, history=None, aspect: str = "connotation") -> str:
+async def run_word_specialist(prompt: str, history=None, aspect: str | None = None) -> str:
     """Accept a complete direct question and retained conversation context."""
     focus = {
         "etymology": "Focus on the word's origin, historical evolution, and linguistic roots.",
         "connotation": "Focus on the emotional, cultural, and contextual connotations of the word.",
         "poetic_use": "Focus on how this word is used in poetry: its rhythm, imagery, and mood.",
-    }.get(aspect, "Focus on the emotional, cultural, and contextual connotations of the word.")
+    }.get(aspect, "Answer the direct question in simple words.")
     specialist = Agent(
         model=configured_model(),
         messages=history,
@@ -120,8 +120,8 @@ async def run_word_specialist(prompt: str, history=None, aspect: str = "connotat
             f"up concrete data before responding. {focus} Favor simple noun-verb "
             "combinations, clear concrete wording, and a natural spoken flow. Do not "
             "over-focus on grammatical or syntactic correctness; prioritize language "
-            "that feels easy to say and understand. Return only 3–6 sentences of "
-            "analysis, with no preamble. Return only the final answer in at most 52 words, "
+            "that feels easy to say and understand. Use only as much detail as requested. "
+            "Return only the final answer in at most 52 words, "
             "without internal thinking tags. Stored entries are limited notes, not verified sources. "
             "If evidence is missing, acknowledge uncertainty and never invent a word origin. "
             f"{ANSWER_QUALITY_GUIDANCE}"

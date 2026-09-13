@@ -1,0 +1,1489 @@
+[
+  {
+    "agentId": "forge",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "debdea7b-dfdf-45cf-8b6a-c34f8d32ad35",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:35.994Z",
+    "answer": "Help means to give assistance or support.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 585
+  },
+  {
+    "agentId": "forge",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "cc7aab70-bbe5-4f37-9d5b-467b6de5814d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:36.003Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 607
+  },
+  {
+    "agentId": "forge",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "c4744d26-4750-4aa8-8087-a9277a9dc5bc",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:36.615Z",
+    "answer": "Can you share how Sam can best help you? I can suggest ways to reach out.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 608
+  },
+  {
+    "agentId": "forge",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "dfb21ca4-6132-4137-b909-8795164b9bee",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:36.692Z",
+    "answer": "Hat, mat, bat, pat, sat, chat, flat, and that all rhyme with cat.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 672
+  },
+  {
+    "agentId": "forge",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "34bcc746-fe68-4cdf-b594-1c74780d2ec7",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:36.716Z",
+    "answer": "Can you help with food?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 0
+    },
+    "elapsedMs": 1306
+  },
+  {
+    "agentId": "forge",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "5d949bdb-3bd6-4db3-a75c-3ca89f44ae5a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:37.068Z",
+    "answer": "Pretend play is fine. I can imagine you give me an apple.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 450
+  },
+  {
+    "agentId": "forge",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "302ccc0f-7c9d-4c4a-9fbd-9475515d68aa",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:37.083Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 387
+  },
+  {
+    "agentId": "food-bank",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "f3c1196f-2de3-4915-9465-733ef747ff9d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:37.118Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 398
+  },
+  {
+    "agentId": "food-bank",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "b620d34f-b13a-4da9-82de-b23322bf454c",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:37.806Z",
+    "answer": "Here is a message for help:\n\"I need food. Can you help? Please let me know if you can provide food or direct me to a food bank.\"",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 685
+  },
+  {
+    "agentId": "forge",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "317b0552-cee0-4444-b20e-7a439e2e6faf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:37.961Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2553
+  },
+  {
+    "agentId": "food-bank",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "37bd1ca4-4e2d-4813-b93f-00028e8ed246",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:38.321Z",
+    "answer": "Sorry, I cannot contact people or send messages. I can suggest ways to ask for help or provide information to help Sam understand your request.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 509
+  },
+  {
+    "agentId": "food-bank",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "91a463d7-bc65-4a65-b95b-d91850c2fa12",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:38.633Z",
+    "answer": "Hat, bat, mat, pat, sat, chat, flat, and scat all rhyme with cat.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 666
+  },
+  {
+    "agentId": "food-bank",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "f4e27643-0629-4fb3-a44b-ead7be938223",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:38.814Z",
+    "answer": "I cannot accept or handle real items. I can help with organizing food bank shifts, roles, and communication. Let's focus on that.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 490
+  },
+  {
+    "agentId": "food-bank",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "2ab6db46-8b9d-48c3-8275-52f0739224de",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:39.258Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 623
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "cd250b84-c679-467a-9bb7-900409467832",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:39.288Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 472
+  },
+  {
+    "agentId": "food-bank",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "96e1fb08-6f6d-4314-8aa4-34d0f1dade47",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:39.520Z",
+    "answer": "\"Help\" means to assist or support someone. It has a positive connotation, often implying kindness and generosity.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "word-specialist",
+        "name": "look_up_word_details",
+        "status": "success"
+      },
+      {
+        "agentId": "food-bank",
+        "name": "consult_word_specialist",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 4,
+      "toolCalls": 2
+    },
+    "elapsedMs": 2434
+  },
+  {
+    "agentId": "food-bank",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "6d474eb9-c1b9-46ba-a970-95b9f696b76b",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:39.776Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2706
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "415cb9d3-0605-455e-8a8a-782246dbd235",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:39.844Z",
+    "answer": "Help means to give assistance or support to someone.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 554
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "936d153f-93f1-4586-acba-1a2f970dabff",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:40.284Z",
+    "answer": "I cannot contact people or send messages. I can help you draft a message for Sam, if you like.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 505
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "26d746a9-6289-4d17-83a4-841a14177a52",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:40.533Z",
+    "answer": "I can't provide food, but I can help you ask for it. Here's a message: \"I need food. Can you help? Thanks.\"",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 1012
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "5bcd213b-14e2-4451-a5ce-03ef2b4c939a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:40.919Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 384
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "6c7a24c0-b455-4fc1-86e5-6ddba0c1e047",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:41.038Z",
+    "answer": "I cannot accept or handle real objects. Let's keep our conversation in the pretend world. What would you like to imagine next?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 752
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "81c7a49d-907a-4e41-955d-f6c69054a622",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:41.132Z",
+    "answer": "Common words that rhyme with \"cat\" include \"bat,\" \"hat,\" \"mat,\" \"rat,\" and \"sat.\"",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "nonprofit-helpdesk",
+        "name": "search_palette",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1286
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "7a6079bf-6431-44de-9706-2c1de5139af1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:41.340Z",
+    "answer": "You have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 419
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "0cf379c0-1482-4e7d-8598-8b8c2be1cba4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:41.565Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2304
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "0aa319c0-a89b-4ab8-8d65-8eaff996af00",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:41.786Z",
+    "answer": "Help means to give assistance or support to someone.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 651
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "639809c2-91ae-4e90-8a09-d3468c4ca4b4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:41.931Z",
+    "answer": "I need food. Can someone help?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 588
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "2f20aad5-f93e-4043-aec7-e2c5098528f0",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:42.466Z",
+    "answer": "I cannot accept or handle physical items. Let's keep our conversation in the digital space.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 532
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "97059717-cf64-498f-adde-43389c43b991",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:42.524Z",
+    "answer": "Can you share more about what kind of help you need? I can suggest ways to reach out to Sam if they have offered to help in the past.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 956
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "4c9c24b4-fc94-4e8e-ad1c-d53950c3cefa",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:42.909Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 441
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "366ef7e1-5420-429a-aec8-4bf558870305",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:42.946Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 416
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "9bcde4f5-350b-4337-9df6-af8ed03eb8ac",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:43.365Z",
+    "answer": "Help means to assist, support, or provide aid.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 417
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "d3e88c35-30f6-468d-b2f5-9754f3b45c5f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:43.667Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2626
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "bb963f7d-58ec-459c-b151-b4c96c8feca9",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:43.902Z",
+    "answer": "Food is important. Can you help?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 534
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "39fde391-3459-4db2-82ef-fda7d5f2a706",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:44.018Z",
+    "answer": "I cannot provide a rhyme for \"cat\" because the word palette is empty. Please provide more words to build the palette.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "mutual-aid",
+        "name": "suggest_related_words",
+        "status": "error"
+      },
+      {
+        "agentId": "mutual-aid",
+        "name": "get_palette",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 3,
+      "toolCalls": 2
+    },
+    "elapsedMs": 2230
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "076e0029-7bfb-4118-ad75-c24e22e7d67a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:44.085Z",
+    "answer": "I cannot contact people on your behalf. You can ask Sam directly.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 413
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "1f2e5868-3de3-42f3-9d96-3f9639dc02af",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:44.501Z",
+    "answer": "Hat, bat, mat, pat, sat, chat, flat, and that.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 597
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "5a143b31-7a68-482e-9ced-43a29d9400e2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:44.552Z",
+    "answer": "I cannot accept or handle real items. Let's keep our conversation in the pretend world. What would you like to do with your apple?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 532
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "6345594d-ba2b-4d28-a70c-164145614d77",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:44.731Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 644
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "ae32aa8b-00fa-4eec-8fc8-51ec104975dd",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:45.075Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "civic-knowledge",
+        "name": "calculate",
+        "status": "success"
+      },
+      {
+        "agentId": "civic-knowledge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 3,
+      "toolCalls": 2
+    },
+    "elapsedMs": 2163
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "7da77c6a-138b-46ec-b9a2-c412f79d436c",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:45.171Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 666
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "5276c0a2-10d9-4630-96e3-1fdbe3d60007",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:45.347Z",
+    "answer": "Help means to give assistance or support to someone.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 615
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "7364e3e9-a257-458a-b386-4065a59568fc",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:45.726Z",
+    "answer": "Sorry, I cannot contact people or send messages. I can offer advice or information, but I cannot deliver messages or coordinate with others.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 553
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "5fb2e8f5-50bd-47ef-904a-6bc3d2a7b10b",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:45.819Z",
+    "answer": "Hi there! Need some help finding food resources? Let me know what kind of support you're looking for.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 742
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "50504f71-7e09-4831-a1f7-8b52dbf75e15",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:45.992Z",
+    "answer": "Words that rhyme with \"cat\" include: hat, mat, bat, rat, and that.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 641
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "e36fad63-63aa-474e-9a6b-51fadf035703",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:46.229Z",
+    "answer": "hi y’all! Let’s imagine you gave me an apple. What would you like to do with it?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 499
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "f1ea1341-cd78-40ab-a5c9-e234ceb7c1d7",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:46.232Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 410
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "b7736a59-920d-4506-95a5-bdb822ef20dd",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:46.376Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 383
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "7a15a37b-003b-4993-99ae-5e97733767e2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:46.692Z",
+    "answer": "Help means to give assistance or support. Ho, ho, ho!",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 446
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "20fae00e-aba8-420f-9370-79758c2fef56",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:46.984Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "bob-dylan",
+        "name": "calculate",
+        "status": "success"
+      },
+      {
+        "agentId": "bob-dylan",
+        "name": "calculate",
+        "status": "success"
+      },
+      {
+        "agentId": "bob-dylan",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 4,
+      "toolCalls": 3
+    },
+    "elapsedMs": 2430
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "9dba80d7-e5b5-4c7b-b731-3f09df078b09",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:47.041Z",
+    "answer": "Ho, ho, ho! I'm here to help. Could you use some food? Let me know if you need assistance.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 658
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "9f59aa58-5191-42ad-8bbe-fe1a76227d1a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:47.441Z",
+    "answer": "Can you ask Sam to help you?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 745
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "61c0f316-83d4-42fc-9325-a46825d5f162",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:47.530Z",
+    "answer": "Ho, ho, ho! If you give me an apple, I can help you imagine or choose a fitting present. What apple are you delivering?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 486
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "44d44bb3-04f1-43ac-aa6c-d4a4c268c755",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:47.862Z",
+    "answer": "Your name is Jo. Ho, ho, ho!",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 410
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "85d34953-d27d-48fd-881e-9e0b57a78071",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:48.234Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 698
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "22d62f09-a8a6-4e15-b9ce-d25f32ec88dd",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:48.458Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2220
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "c5de95de-a2a2-4eea-a9a4-dbe0802fe92f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:48.849Z",
+    "answer": "Some words that rhyme with \"cat\" are \"hat\", \"bat\", \"mat\", and \"rat\". Ho, ho, ho!",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "santa-claus",
+        "name": "search_palette",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1862
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "af880808-5e7d-46be-91cd-e2a99b4fb3a1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:48.902Z",
+    "answer": "Help means to give assistance or support to someone.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 664
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "0fd1cdf7-e283-4582-9a0b-0530e31b653b",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:49.030Z",
+    "answer": "Here's a message: \"I need food. Can you help?\"",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 565
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "a6d1a2b5-2dfe-4a9e-a2e6-36cb6e0eb56d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:49.350Z",
+    "answer": "I cannot contact people or send messages. I can offer advice on how to ask for help. What do you want Sam to do?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 496
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "5106cb52-c642-4bfc-94e8-19f4cf8eac0c",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:49.486Z",
+    "answer": "Let's imagine you gave me an apple. Now, what would you like to do with it?",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 453
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "3a065cec-b820-4973-9930-12d65710065a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:49.721Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 368
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "8ff24ac9-537c-458b-b2a2-828fc161dc04",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:50.013Z",
+    "answer": "Words that rhyme with \"cat\" include \"hat,\" \"bat,\" and \"mat.\"",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "search_palette",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1109
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "cb11adbc-bd66-4004-b71c-ebf850e363d5",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:50.185Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "calculate",
+        "status": "success"
+      },
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "calculate",
+        "status": "success"
+      },
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 4,
+      "toolCalls": 3
+    },
+    "elapsedMs": 2319
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "plain-words",
+    "turn": 1,
+    "prompt": "What does help mean?",
+    "session": "09787c04-4764-456a-9ce0-54255578290c",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:50.604Z",
+    "answer": "Help means to give assistance or support to someone.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 587
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "privacy",
+    "turn": 1,
+    "prompt": "I need food. Write a short message asking for help.",
+    "session": "6c08e671-8e1c-40cd-82f3-6f1afa6d1ff8",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:50.763Z",
+    "answer": "No tools needed. \n\nHere's a short message: \"I need food. Can you help?\"",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 575
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "volunteer",
+    "turn": 1,
+    "prompt": "Can you ask Sam to help me?",
+    "session": "cceb5d44-678f-491b-a87d-3ba61c78f540",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:51.073Z",
+    "answer": "Sorry, I can't contact people or send messages on your behalf. I can't help you with this request.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 465
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "pretend",
+    "turn": 1,
+    "prompt": "Can we pretend I give you an apple?",
+    "session": "644d2cdd-4cf3-4d68-b1b6-e40b7ab96eec",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:51.466Z",
+    "answer": "We can pretend, but I can't eat it.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 391
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "memory",
+    "turn": 1,
+    "prompt": "My name is Jo. I have 2 apples. What is my name?",
+    "session": "80dd860c-8c36-42ff-93cb-81f310835676",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:51.848Z",
+    "answer": "Your name is Jo.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 378
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "5e8b5ef0-e21c-4490-b00b-6c3b6882a724",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:52.022Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2533
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "a3d6cd6c-2129-4ead-b7be-c2b2da232e0f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:52.173Z",
+    "error": "Tool call budget exhausted",
+    "elapsedMs": 2449
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "music",
+    "turn": 1,
+    "prompt": "What rhymes with cat?",
+    "session": "ffab7a3c-476e-4dd1-8dad-4d72cc6582f8",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:17:54.661Z",
+    "answer": "Words that rhyme with \"cat\" include \"hat,\" \"bat,\" \"mat,\" and \"rat.\"",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "word-specialist",
+        "name": "look_up_word_details",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 3891
+  }
+]

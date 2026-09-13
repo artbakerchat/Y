@@ -1,0 +1,182 @@
+[
+  {
+    "agentId": "forge",
+    "id": "invite",
+    "prompt": "Keep Saturday, noon, and the place blank. Write only one sentence."
+  },
+  {
+    "agentId": "forge",
+    "id": "privacy",
+    "prompt": "Ask for food in one short sentence. Keep my address private."
+  },
+  {
+    "agentId": "forge",
+    "id": "local-facts",
+    "prompt": "Give me just one way to check the hours."
+  },
+  {
+    "agentId": "forge",
+    "id": "pretend",
+    "prompt": "Was the boat real or pretend? Answer in five words or fewer."
+  },
+  {
+    "agentId": "food-bank",
+    "id": "thanks",
+    "prompt": "Thank them for the two apples in ten words or fewer."
+  },
+  {
+    "agentId": "food-bank",
+    "id": "privacy",
+    "prompt": "Use plain words to ask for food. No poems or metaphors."
+  },
+  {
+    "agentId": "food-bank",
+    "id": "volunteer",
+    "prompt": "I only want a draft. Write a short message asking Sam to help at noon."
+  },
+  {
+    "agentId": "food-bank",
+    "id": "local-facts",
+    "prompt": "Give just one way to check the hours."
+  },
+  {
+    "agentId": "food-bank",
+    "id": "pretend",
+    "prompt": "The gift is pretend. Can we imagine a toy boat?"
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "invite",
+    "prompt": "Keep Saturday, noon, and the place blank. Use just one sentence."
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "privacy",
+    "prompt": "Ask for food in one short sentence. Do not add an intro."
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "music",
+    "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line."
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "local-facts",
+    "prompt": "I only need one way to check library hours myself."
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "pretend",
+    "prompt": "No policy is needed. Was our toy boat real or pretend?"
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "whole-items",
+    "prompt": "There were 5 whole apples for 2 people. We saved 1. How many did each get?"
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "one-step",
+    "prompt": "There is no fossil in my room. Give me one easy tidy-up step."
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "privacy",
+    "prompt": "Ask for food in one short sentence. Keep my address private."
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "local-facts",
+    "prompt": "I only need one way to check library hours myself."
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "music",
+    "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line."
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "invite",
+    "prompt": "Keep Saturday, noon, and the place blank. Use one sentence."
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "privacy",
+    "prompt": "Ask for food in just one short sentence."
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "music",
+    "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line."
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "pretend",
+    "prompt": "We were pretending. Can we imagine the toy boat?"
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "correction",
+    "prompt": "We had 3 apples and gave 1 away. How many are left?"
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "invite",
+    "prompt": "The place is not set. Leave a blank. Keep Saturday at noon in one sentence."
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "thanks",
+    "prompt": "Thank them for two apples in ten words or fewer. No intro."
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "privacy",
+    "prompt": "I need a short message asking for food, not a question for me."
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "apples",
+    "prompt": "We had 2 apples, ate 1, then got 2 more. How many now?"
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "music",
+    "prompt": "Horizon does not rhyme with cat. Give me one word that does."
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "volunteer",
+    "prompt": "Write a short message asking Sam to help at noon. Keep the time."
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "music",
+    "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line."
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "invite",
+    "prompt": "Use plain words. Keep Saturday, noon, and the place blank."
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "privacy",
+    "prompt": "Ask for food in one short sentence. No intro."
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "thanks",
+    "prompt": "Thank them for two apples in ten words or fewer. No greeting."
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "privacy",
+    "prompt": "Ask for food in one short sentence. No greeting."
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "local-facts",
+    "prompt": "Give just one way to check the library hours. No greeting."
+  }
+]

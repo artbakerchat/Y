@@ -1,0 +1,257 @@
+{
+  "rubric": "0 = target not met; 1 = partly corrected but still weak; 2 = targeted request met. Assistant review, not independent assessment.",
+  "results": [
+    {
+      "agentId": "forge",
+      "id": "invite",
+      "prompt": "Keep Saturday, noon, and the place blank. Write only one sentence.",
+      "answer": "Join us for an apple share at noon on Saturday at _____. Bring your favorite apples to share!",
+      "score": 0
+    },
+    {
+      "agentId": "forge",
+      "id": "privacy",
+      "prompt": "Ask for food in one short sentence. Keep my address private.",
+      "answer": "\"I need food assistance in [general location]. Can someone help with groceries or a meal? I appreciate any support.\"",
+      "score": 0
+    },
+    {
+      "agentId": "forge",
+      "id": "local-facts",
+      "prompt": "Give me just one way to check the hours.",
+      "answer": "You can check the library's website for their hours of operation.",
+      "score": 2
+    },
+    {
+      "agentId": "forge",
+      "id": "pretend",
+      "prompt": "Was the boat real or pretend? Answer in five words or fewer.",
+      "answer": "The boat is pretend.",
+      "score": 2
+    },
+    {
+      "agentId": "food-bank",
+      "id": "thanks",
+      "prompt": "Thank them for the two apples in ten words or fewer.",
+      "answer": "Thank you for the 2 apples. Your thoughtfulness has warmed my heart.",
+      "score": 0
+    },
+    {
+      "agentId": "food-bank",
+      "id": "privacy",
+      "prompt": "Use plain words to ask for food. No poems or metaphors.",
+      "answer": "Here's a plain message: \"I need food. Can someone help me?\"",
+      "score": 2
+    },
+    {
+      "agentId": "food-bank",
+      "id": "volunteer",
+      "prompt": "I only want a draft. Write a short message asking Sam to help at noon.",
+      "answer": "Here is a draft message for Sam: \"Hi Sam, we need help at noon. Can you assist?\"",
+      "score": 2
+    },
+    {
+      "agentId": "food-bank",
+      "id": "local-facts",
+      "prompt": "Give just one way to check the hours.",
+      "answer": "Check the library's website for their hours of operation.",
+      "score": 2
+    },
+    {
+      "agentId": "food-bank",
+      "id": "pretend",
+      "prompt": "The gift is pretend. Can we imagine a toy boat?",
+      "answer": "I can't send or receive physical items, but I can certainly help you imagine a toy boat. Picture a small, colorful boat with a sail, ready to sail on a pretend ocean. If you need help with anything else, feel free to ask.",
+      "score": 1
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "invite",
+      "prompt": "Keep Saturday, noon, and the place blank. Use just one sentence.",
+      "answer": "Join us for an apple gathering on Saturday at noon. Location: _____.",
+      "score": 0
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "privacy",
+      "prompt": "Ask for food in one short sentence. Do not add an intro.",
+      "answer": "\"I need food assistance and prefer to keep my details private, but I can provide more information if needed. Can anyone help?\"",
+      "score": 0
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "music",
+      "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line.",
+      "answer": "Cat and hat, a happy pair.",
+      "score": 2
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "local-facts",
+      "prompt": "I only need one way to check library hours myself.",
+      "answer": "One way to check library hours is to visit the library's website or call their phone number to inquire about their hours of operation.",
+      "score": 1
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "pretend",
+      "prompt": "No policy is needed. Was our toy boat real or pretend?",
+      "answer": "I can't send or receive real items. The toy boat is pretend. Let's discuss how to handle toy boat donations in your organization instead.",
+      "score": 1
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "whole-items",
+      "prompt": "There were 5 whole apples for 2 people. We saved 1. How many did each get?",
+      "answer": "Each person got 2 apples.",
+      "score": 2
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "one-step",
+      "prompt": "There is no fossil in my room. Give me one easy tidy-up step.",
+      "answer": "Pick up one small item, like a lantern.",
+      "score": 1
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "privacy",
+      "prompt": "Ask for food in one short sentence. Keep my address private.",
+      "answer": "\"Hello, I'm in need of food assistance in [your general location]. Please reach out if you can help. I prefer to keep my exact location private. Thank you.\"",
+      "score": 0
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "local-facts",
+      "prompt": "I only need one way to check library hours myself.",
+      "answer": "Check the library's website or call their number for the most recent hours.",
+      "score": 1
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "music",
+      "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line.",
+      "answer": "Cat and hat, a playful pair.",
+      "score": 2
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "invite",
+      "prompt": "Keep Saturday, noon, and the place blank. Use one sentence.",
+      "answer": "Join us for an apple share on Saturday at noon. Location: [ ].",
+      "score": 0
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "privacy",
+      "prompt": "Ask for food in just one short sentence.",
+      "answer": "\"Hello, I'm in need of food assistance in [Your Location]. Any help is appreciated. Thank you.\"",
+      "score": 0
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "music",
+      "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line.",
+      "answer": "Cat and hat dance in the rain, having fun.",
+      "score": 2
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "pretend",
+      "prompt": "We were pretending. Can we imagine the toy boat?",
+      "answer": "I can imagine a toy boat with you. But I cannot hold or interact with physical objects. Let's explore the idea of toy boats and related civic services.",
+      "score": 1
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "correction",
+      "prompt": "We had 3 apples and gave 1 away. How many are left?",
+      "answer": "You have 2 apples left.",
+      "score": 2
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "invite",
+      "prompt": "The place is not set. Leave a blank. Keep Saturday at noon in one sentence.",
+      "answer": "hi y\u2019all! How about we gather for some apple sharing on Saturday at noon? Hohoho! Where shall we meet?",
+      "score": 0
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "thanks",
+      "prompt": "Thank them for two apples in ten words or fewer. No intro.",
+      "answer": "hi y\u2019all! Here\u2019s a ten-word thank-you note for your neighbor, mentioning the two apples:\n\n\"Thank you for the two apples. They brightened my day!\"",
+      "score": 0
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "privacy",
+      "prompt": "I need a short message asking for food, not a question for me.",
+      "answer": "Here's a short message asking for food assistance: \"I need food assistance. Can someone help me in a public place or general location? Thank you.\"",
+      "score": 1
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "apples",
+      "prompt": "We had 2 apples, ate 1, then got 2 more. How many now?",
+      "answer": "Ho, ho, ho! We had two apples, ate one, and got two more, so we now have three apples. If you deliver the apple, you can choose a present. What apple are you delivering?",
+      "score": 1
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "music",
+      "prompt": "Horizon does not rhyme with cat. Give me one word that does.",
+      "answer": "Ho, ho, ho! Here's a word from your palette that rhymes with \"cat\": echo.",
+      "score": 0
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "volunteer",
+      "prompt": "Write a short message asking Sam to help at noon. Keep the time.",
+      "answer": "Ho, ho, ho! Here's your message: \"Hi Sam, I hope you're doing well. I need some help and I'm not sure how to reach you. Can we coordinate through [preferred method] at noon? I'm in [location] and need assistance with [brief description of need].\"",
+      "score": 1
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "music",
+      "prompt": "Horizon does not rhyme with cat. Use cat and hat in a happy line.",
+      "answer": "Cat and hat, a playful pair.",
+      "score": 2
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "invite",
+      "prompt": "Use plain words. Keep Saturday, noon, and the place blank.",
+      "answer": "Join us on Saturday at noon at _____ for a simple apple-sharing event.",
+      "score": 2
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "privacy",
+      "prompt": "Ask for food in one short sentence. No intro.",
+      "answer": "\"I need food in [location]. Can anyone help?\"",
+      "score": 0
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "thanks",
+      "prompt": "Thank them for two apples in ten words or fewer. No greeting.",
+      "answer": "Thank you for two apples. Your kindness warms my heart.",
+      "score": 2
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "privacy",
+      "prompt": "Ask for food in one short sentence. No greeting.",
+      "answer": "Ho, ho, ho! Here is a one-sentence message: \"I need food assistance. I live in [location]. I can meet at [time]. Please let me know if you can help. I will provide any needed personal details privately.\"",
+      "score": 0
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "local-facts",
+      "prompt": "Give just one way to check the library hours. No greeting.",
+      "answer": "You can search online for the library's hours of operation.",
+      "score": 2
+    }
+  ]
+}

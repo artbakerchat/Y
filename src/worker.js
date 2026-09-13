@@ -3,7 +3,7 @@ import { buildTools as buildEditableTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
-import { CONVERSATION_GUIDANCE } from './conversation-guidance.js';
+import { CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE } from './conversation-guidance.js';
 import { readAgentCoreResponse } from './agentcore-response.js';
 export { GlobalTimer } from './legacy-global-timer.js';
 
@@ -28,7 +28,6 @@ const CANONICAL_HTML_ROUTES = {
 
 const encoder = new TextEncoder();
 const STATE_TTL_MS = 48 * 60 * 60 * 1000;
-const DAILY_REQUEST_LIMIT = 20;
 const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
@@ -463,14 +462,14 @@ async function resolveSkill(message, env, profile) {
   return null;
 }
 
-async function steerPostResponse(answer, env) {
+async function steerPostResponse(answer, env, prompt) {
   // Skip when credentials are absent (local dev / preview mode).
   if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return answer;
   try {
     // First call: quality review.
     const reviewResult = await bedrockConverse(env, {
       system: [{ text: 'You are a quality reviewer for a conversational AI. Evaluate the reply for clarity, usefulness, natural spoken flow, and unnecessary complexity. Prefer simple noun-verb combinations, concrete words, short sentences, and the smallest complete answer. If it is clear, helpful, natural, and on-topic reply with only: APPROVED. If it needs improvement reply with: REVISE: <one sentence of guidance>.' }],
-      messages: [{ role: 'user', content: [{ text: `Reply to review:\n${answer}` }] }],
+      messages: [{ role: 'user', content: [{ text: `User request:\n${prompt}\n\nReply to review:\n${answer}` }] }],
       maxTokens: 80,
       temperature: 0.0,
     });
@@ -485,7 +484,7 @@ async function steerPostResponse(answer, env) {
         system: [{ text: 'You are a helpful conversational AI. Rewrite the reply below, applying the improvement guidance. Keep the same subject matter and do not add new facts. Prefer simple noun-verb combinations, concrete words, short sentences, and natural spoken flow. Remove unnecessary explanation and complexity. Return only the improved reply, no preamble.' }],
         messages: [{
           role: 'user',
-          content: [{ text: `Original reply:\n${answer}\n\nImprovement guidance: ${guidance}` }],
+          content: [{ text: `User request:\n${prompt}\n\nOriginal reply:\n${answer}\n\nImprovement guidance: ${guidance}` }],
         }],
         maxTokens: 700,
         temperature: 0.4,
@@ -523,7 +522,7 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
   };
 
   const specialistSystem = [
-    { text: `You are a word-craft specialist with access to etymology and vocabulary tools. ${focus} Use your tools to look up concrete data before responding. Favor simple noun-verb combinations, clear concrete wording, and a natural spoken flow. Do not over-focus on grammatical or syntactic correctness; prioritize language that feels easy to say and understand. Be concise (3–6 sentences). Return only the analysis, no preamble.` },
+    { text: `You are a word-craft specialist with access to etymology and vocabulary tools. ${focus} Use your tools to look up concrete data before responding. Favor simple noun-verb combinations, clear concrete wording, and a natural spoken flow. Do not over-focus on grammatical or syntactic correctness; prioritize language that feels easy to say and understand. Give a short explanation only as detailed as requested. ${ANSWER_QUALITY_GUIDANCE}` },
   ];
 
   const runningMessages = [
@@ -613,7 +612,8 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     `You are ${profile.name}. ${profile.systemPrompt}`,
     `This session has a daily limit of ${profile.dailyRequestLimit} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
     `The user's word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
-    skill ? `\n\nActive skill - follow these steps:\n${skill}` : '',
+    skill ? `\n\nRelevant skill guidance, apply only to the requested task:\n${skill}` : '',
+    ANSWER_QUALITY_GUIDANCE,
   ].filter(Boolean).join(' ');
 
   // Step 2: Session history - pass stored messages back to Bedrock.
@@ -661,7 +661,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     if (stopReason === 'end_turn' || stopReason === 'max_tokens') {
       const answer = assistantMessage.content?.map((b) => b.text || '').join('') || 'The model returned an empty response.';
       // Step 5: Post-response steering check.
-      const finalAnswer = await steerPostResponse(answer, env);
+      const finalAnswer = await steerPostResponse(answer, env, message);
       return { answer: cleanAssistantResponse(finalAnswer), agent: true, toolCallCounts: controller.getCounts() };
     }
 

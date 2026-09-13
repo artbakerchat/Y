@@ -1,0 +1,1544 @@
+[
+  {
+    "agentId": "food-bank",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "96590067-596a-4b84-b27b-6e4868a10077",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:11.285Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "food-bank",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1074
+  },
+  {
+    "agentId": "food-bank",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "84dfb5bf-1a4e-4508-be4a-dd475d062cb8",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:11.591Z",
+    "answer": "Each person gets 2 pears. 1 pear remains.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "food-bank",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1378
+  },
+  {
+    "agentId": "forge",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "956ca60e-848a-4cbd-97ca-0809a32e0dce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:11.648Z",
+    "answer": "Each person gets 2 pears. One pear remains.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "forge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1440
+  },
+  {
+    "agentId": "forge",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "61100edd-3e59-40f7-bd0e-e33e566edfce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:11.685Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "forge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1487
+  },
+  {
+    "agentId": "food-bank",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "96590067-596a-4b84-b27b-6e4868a10077",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:11.734Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 443
+  },
+  {
+    "agentId": "food-bank",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "84dfb5bf-1a4e-4508-be4a-dd475d062cb8",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:11.984Z",
+    "answer": "1 pear remains.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "forge",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "956ca60e-848a-4cbd-97ca-0809a32e0dce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.034Z",
+    "answer": "One pear remains.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 384
+  },
+  {
+    "agentId": "food-bank",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "96590067-596a-4b84-b27b-6e4868a10077",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.126Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "forge",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "61100edd-3e59-40f7-bd0e-e33e566edfce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.322Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 634
+  },
+  {
+    "agentId": "forge",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "956ca60e-848a-4cbd-97ca-0809a32e0dce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.430Z",
+    "answer": "Each person got 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 392
+  },
+  {
+    "agentId": "food-bank",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "96590067-596a-4b84-b27b-6e4868a10077",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.590Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 461
+  },
+  {
+    "agentId": "food-bank",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "84dfb5bf-1a4e-4508-be4a-dd475d062cb8",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.659Z",
+    "answer": "Each person gets 2 pears. 1 pear remains.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 672
+  },
+  {
+    "agentId": "forge",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "61100edd-3e59-40f7-bd0e-e33e566edfce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.712Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 387
+  },
+  {
+    "agentId": "forge",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "956ca60e-848a-4cbd-97ca-0809a32e0dce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:12.829Z",
+    "answer": "Each person got 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 397
+  },
+  {
+    "agentId": "food-bank",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "84dfb5bf-1a4e-4508-be4a-dd475d062cb8",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:13.153Z",
+    "answer": "Each person gets 2 pears. 1 pear remains.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 486
+  },
+  {
+    "agentId": "forge",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "61100edd-3e59-40f7-bd0e-e33e566edfce",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:13.174Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 459
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "dee26719-f03a-4779-90e6-e3c0c06ebeb1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:13.674Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "nonprofit-helpdesk",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1079
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "ca28cd46-b9f1-4d65-83a4-12995bcce805",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.102Z",
+    "answer": "Each person gets 2 pears. 1 pear remains.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "nonprofit-helpdesk",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1270
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "dee26719-f03a-4779-90e6-e3c0c06ebeb1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.131Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 455
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "3d8b2eae-6603-4eb6-a9f2-0fea93f2ea55",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.168Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "mutual-aid",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1012
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "e1ad5e43-dfed-4d55-9b3b-482518963cae",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.366Z",
+    "answer": "Each person gets 2 pears. 1 pear is left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "mutual-aid",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1190
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "ca28cd46-b9f1-4d65-83a4-12995bcce805",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.494Z",
+    "answer": "1 pear remains.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "dee26719-f03a-4779-90e6-e3c0c06ebeb1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.523Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "3d8b2eae-6603-4eb6-a9f2-0fea93f2ea55",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.559Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 388
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "e1ad5e43-dfed-4d55-9b3b-482518963cae",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.745Z",
+    "answer": "1 pear is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 377
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "ca28cd46-b9f1-4d65-83a4-12995bcce805",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.978Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 481
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "dee26719-f03a-4779-90e6-e3c0c06ebeb1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:14.980Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 454
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "3d8b2eae-6603-4eb6-a9f2-0fea93f2ea55",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:15.039Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 478
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "e1ad5e43-dfed-4d55-9b3b-482518963cae",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:15.159Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 397
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "ca28cd46-b9f1-4d65-83a4-12995bcce805",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:15.381Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 399
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "3d8b2eae-6603-4eb6-a9f2-0fea93f2ea55",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:15.495Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 454
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "e1ad5e43-dfed-4d55-9b3b-482518963cae",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:15.555Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 392
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "e2389f0c-07fb-4ac5-a69c-24ab231ad377",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:16.387Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "bob-dylan",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 889
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "b4ab8261-b952-40cf-8a6b-2c44aae3fc5a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:16.719Z",
+    "answer": "Each person gets 2 pears. 1 pear is left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "civic-knowledge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1335
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "e2389f0c-07fb-4ac5-a69c-24ab231ad377",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:16.786Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 392
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "44d5e33d-ac81-44fe-be11-b26fb50b592f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:16.931Z",
+    "answer": "Each person gets 2 pears. 1 pear will be left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "bob-dylan",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1374
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "e2389f0c-07fb-4ac5-a69c-24ab231ad377",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:17.189Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 400
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "b4ab8261-b952-40cf-8a6b-2c44aae3fc5a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:17.353Z",
+    "answer": "1 pear is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 632
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "44d5e33d-ac81-44fe-be11-b26fb50b592f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:17.356Z",
+    "answer": "1 pear is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 398
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "e2389f0c-07fb-4ac5-a69c-24ab231ad377",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:17.663Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 467
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "b4ab8261-b952-40cf-8a6b-2c44aae3fc5a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:17.746Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 387
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "44d5e33d-ac81-44fe-be11-b26fb50b592f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:17.759Z",
+    "answer": "Each person still gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 391
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "44d5e33d-ac81-44fe-be11-b26fb50b592f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:18.144Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 382
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "b4ab8261-b952-40cf-8a6b-2c44aae3fc5a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:18.199Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 450
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "36e3923a-7816-4896-82cd-14a750a2dda4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:18.883Z",
+    "answer": "You have 2 cups left. Ho, ho, ho!",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "santa-claus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1217
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "9a398350-f874-45fd-ba99-9e27458ec477",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.125Z",
+    "answer": "Each person gets 2 pears. 1 pear will be left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "santa-claus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 978
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "36e3923a-7816-4896-82cd-14a750a2dda4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.291Z",
+    "answer": "You have 4 cups now. Ho, ho, ho!",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 406
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "7eea6935-6ca5-4e39-b2ab-629ff27480a3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.477Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1276
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "9a398350-f874-45fd-ba99-9e27458ec477",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.506Z",
+    "answer": "1 pear is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 380
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "36e3923a-7816-4896-82cd-14a750a2dda4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.707Z",
+    "answer": "You have 3 cups now. Ho, ho, ho!",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 414
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "f70db8cb-9284-42a0-bc6e-55207a0b6fdf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.797Z",
+    "answer": "You have 2 cups left.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "civic-knowledge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 4806
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "7eea6935-6ca5-4e39-b2ab-629ff27480a3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.864Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 385
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "9a398350-f874-45fd-ba99-9e27458ec477",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:19.941Z",
+    "answer": "Each person still gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 433
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "36e3923a-7816-4896-82cd-14a750a2dda4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.102Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 392
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "f70db8cb-9284-42a0-bc6e-55207a0b6fdf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.186Z",
+    "answer": "You have 4 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 385
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "7eea6935-6ca5-4e39-b2ab-629ff27480a3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.263Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 396
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "9a398350-f874-45fd-ba99-9e27458ec477",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.343Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 391
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "f70db8cb-9284-42a0-bc6e-55207a0b6fdf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.575Z",
+    "answer": "You have 3 cups now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 385
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "7eea6935-6ca5-4e39-b2ab-629ff27480a3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.654Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 386
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "cups",
+    "turn": 1,
+    "prompt": "We have 3 cups. I give 1 away. How many are left?",
+    "session": "b90401a8-7dbf-4b28-b307-049d6f2a8afe",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.854Z",
+    "answer": "2 cups are left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 503
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "f70db8cb-9284-42a0-bc6e-55207a0b6fdf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:20.968Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "cups",
+    "turn": 2,
+    "prompt": "I get 2 more cups. How many now?",
+    "session": "b90401a8-7dbf-4b28-b307-049d6f2a8afe",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:21.243Z",
+    "answer": "4 cups are now available.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 386
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "cups",
+    "turn": 3,
+    "prompt": "Sorry, I got 1 more, not 2. How many now?",
+    "session": "b90401a8-7dbf-4b28-b307-049d6f2a8afe",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:21.662Z",
+    "answer": "3 cups are now available.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 416
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "0c665390-fbce-4019-8184-0cc3e27fb31a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:21.907Z",
+    "answer": "Each person gets 2 pears, with 1 pear left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "word-specialist",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1249
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "pears",
+    "turn": 1,
+    "prompt": "We have 7 pears for 3 people. Keep them whole. How many each?",
+    "session": "22ab72ac-d4a9-49f6-b9f7-bddc16d366ed",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:21.937Z",
+    "answer": "Each person gets 2 pears. One pear is left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1832
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "cups",
+    "turn": 4,
+    "prompt": "Say just the count and the item.",
+    "session": "b90401a8-7dbf-4b28-b307-049d6f2a8afe",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:22.049Z",
+    "answer": "3 cups.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 385
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "0c665390-fbce-4019-8184-0cc3e27fb31a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:22.294Z",
+    "answer": "There is 1 pear left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 383
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "0c665390-fbce-4019-8184-0cc3e27fb31a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:22.693Z",
+    "answer": "Each person still gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 395
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "pears",
+    "turn": 2,
+    "prompt": "How many pears are left over?",
+    "session": "22ab72ac-d4a9-49f6-b9f7-bddc16d366ed",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:22.839Z",
+    "answer": "One pear is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 899
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "0c665390-fbce-4019-8184-0cc3e27fb31a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:23.086Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "pears",
+    "turn": 3,
+    "prompt": "We save that pear. How many did each person get?",
+    "session": "22ab72ac-d4a9-49f6-b9f7-bddc16d366ed",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:23.240Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 388
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "pears",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "22ab72ac-d4a9-49f6-b9f7-bddc16d366ed",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "b349de00037258056ca1fcd577626aeb2e4a3b5933b95257d7b97f8041695b5b",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:19:23.626Z",
+    "answer": "Each person gets 2 pears.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 383
+  }
+]

@@ -70,3 +70,10 @@ test('invalid limits fail immediately', () => {
     assert.throws(() => createToolController({ tools: [], maxCallsPerTool }), RangeError);
   }
 });
+
+test('structured tool results remain readable to the model', async () => {
+  const controller = createToolController({ tools: [{ spec: { name: 'calculate' }, fn: async () => ({ operation: 'subtract', left: 4, right: 2, result: 2 }) }] });
+  const result = await controller.execute({toolUseId:'calc-1',name:'calculate',input:{}});
+  assert.deepEqual(JSON.parse(result.toolResult.content[0].text), {operation:'subtract',left:4,right:2,result:2});
+  assert.equal(result.toolResult.status,'success');
+});

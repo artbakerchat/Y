@@ -14,7 +14,6 @@ const region = process.env.AWS_REGION || 'ca-central-1';
 const modelId = process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
 const stateDir = join(root, '.data', 'sessions');
 const stateTtlMs = 48 * 60 * 60 * 1000;
-const dailyRequestLimit = 90;
 const maxRequestWords = 52;
 const maxWordCharacters = 16;
 const redirectRateLimit = 20;
@@ -87,7 +86,13 @@ function cleanAssistantResponse(value) {
 
 const server = http.createServer(async (req, res) => {
   try {
-    if (req.method === 'GET' && req.url === '/api/health') return send(res, 200, { ok: true, region, model: modelId, agents: listAgentProfiles() });
+    if (req.method === 'GET' && req.url === '/api/health') {
+      const available = await client.config.credentials().then(
+        (credentials) => Boolean(credentials.accessKeyId && credentials.secretAccessKey),
+        () => false,
+      );
+      return send(res, 200, { ok: true, available, region, model: modelId, agents: listAgentProfiles() });
+    }
     if (req.method === 'GET' && req.url === '/api/agents') return send(res, 200, listAgentProfiles());
     const sessionId = sessionIdFrom(req);
     const urlParams = new URL(req.url, `http://${req.headers.host}`).searchParams;

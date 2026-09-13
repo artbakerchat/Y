@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "eval:agents": "node scripts/evaluate-agents.js",
+    "eval:simple": "node scripts/evaluate-simple.js",
     "eval:quality": "node scripts/evaluate-quality.js",
     "test:harness": "node --test tests/agent-harness.test.js",
     "start": "node server.mjs",

@@ -1,0 +1,87 @@
+{
+  "summary": {
+    "total": 108,
+    "errors": 1,
+    "flagged": 4,
+    "agents": {
+      "forge": {
+        "total": 12,
+        "flagged": 0
+      },
+      "food-bank": {
+        "total": 12,
+        "flagged": 1
+      },
+      "nonprofit-helpdesk": {
+        "total": 12,
+        "flagged": 1
+      },
+      "mutual-aid": {
+        "total": 12,
+        "flagged": 1
+      },
+      "civic-knowledge": {
+        "total": 12,
+        "flagged": 0
+      },
+      "bob-dylan": {
+        "total": 12,
+        "flagged": 1
+      },
+      "santa-claus": {
+        "total": 12,
+        "flagged": 0
+      },
+      "orange-doctor-candidatus": {
+        "total": 12,
+        "flagged": 0
+      },
+      "word-specialist": {
+        "total": 12,
+        "flagged": 0
+      }
+    }
+  },
+  "flagged": [
+    {
+      "agentId": "food-bank",
+      "id": "music",
+      "turn": 1,
+      "prompt": "What rhymes with cat?",
+      "error": "  async for event in events:\n  File \"/home/john/Downloads/project/Y/.venv/lib/python3.12/site-packages/strands/agent/agent.py\", line 1578, in _run_loop\n    async for event in self._middleware_registry.invoke(\n  File \"/home/john/Downloads/project/Y/.venv/lib/python3.12/site-packages/strands/_middleware/registry.py\", line 167, in invoke\n    async for event in gen:\n  File \"/home/john/Downloads/project/Y/.venv/lib/python3.12/site-packages/strands/agent/agent.py\", line 1733, in terminal\n    async for event in events:\n  File \"/home/john/Downloads/project/Y/.venv/lib/python3.12/site-packages/strands/agent/agent.py\", line 1788, in _execute_event_loop_cycle\n    async for event in events:\n  File \"/home/john/Downloads/project/Y/.venv/lib/python3.12/site-packages/strands/event_loop/event_loop.py\", line 314, in event_loop_cycle\n    raise MaxTokensReachedException(\nstrands.types.exceptions.MaxTokensReachedException: Model stopped generating due to maximum token limit. The partial message has been added to the conversation history. You can continue by calling the agent again. For more information see: https://strandsagents.com/docs/user-guide/concepts/agents/agent-loop/#maxtokensreachedexception\n",
+      "flags": [
+        "execution-failure"
+      ]
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "thanks",
+      "turn": 4,
+      "prompt": "Make it ten words or fewer.",
+      "answer": "Dear [Neighbor's Name], thank you for your kindness and 2 apples.",
+      "flags": [
+        "ten-word-limit"
+      ]
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "thanks",
+      "turn": 4,
+      "prompt": "Make it ten words or fewer.",
+      "answer": "Thank you for your help and the 2 apples. It means a lot.",
+      "flags": [
+        "ten-word-limit"
+      ]
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "thanks",
+      "turn": 3,
+      "prompt": "Make it warmer.",
+      "answer": "Thank you for being such a wonderful neighbor. Your kindness and support mean a lot, especially with the 2 apples you gave me. It's like a little sunshine from a friend.",
+      "flags": [
+        "long-for-simple-request"
+      ]
+    }
+  ]
+}
