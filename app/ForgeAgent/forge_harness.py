@@ -38,14 +38,7 @@ def clean_answer(value):
     text = re.sub(r"</?(answer|final|response)\b[^>]*>", "", text, flags=re.I).strip()
     if not text:
         raise ValueError("Model returned no user-facing answer")
-    words = text.split()
-    if len(words) <= 52:
-        return text
-    bounded = " ".join(words[:52])
-    endings = list(re.finditer(r"[.!?](?:\s|$)", bounded))
-    if endings and len(bounded[:endings[-1].end()].split()) >= 8:
-        return bounded[:endings[-1].end()].strip()
-    return bounded + "…"
+    return text
 
 
 class HarnessHook(HookProvider):

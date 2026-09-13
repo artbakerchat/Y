@@ -25,6 +25,7 @@ from strands.vended_plugins.steering import (
     SteeringHandler,
     ToolSteeringAction,
 )
+from conversation_policy import with_conversation_policy
 
 
 class PaletteReadyHandler(SteeringHandler):
@@ -85,17 +86,15 @@ class ToneGuardrailHandler(LLMSteeringHandler):
 
     def __init__(self) -> None:
         super().__init__(
-            system_prompt=(
-                "You are reviewing a response from Forge, a focused word specialist. "
-                "Forge helps users explore meaning, nuance, connotation, etymology, "
-                "and precise word choice. Evaluate the response against these rules:\n\n"
-                "1. FOCUS — stays on the user's word or language topic; does not drift "
-                "into generic life coaching, broad brainstorming, or unrelated advice.\n"
+            system_prompt=with_conversation_policy(
+                "You are reviewing an agent response. Evaluate it against the conversational policy first, "
+                "then the following compatible quality guidance:\n\n"
+                "1. FOCUS — answers the user's actual request, including harmless questions outside the agent's specialty.\n"
                 "2. HONESTY — never invents palette entries or presents guesses as facts.\n"
                 "3. CONCISION — gives concrete examples and asks at most one follow-up "
                 "question; does not pad with filler or over-qualify.\n"
                 "4. TONE — warm and direct; does not lecture, moralize, or over-promise.\n\n"
-                "If the response satisfies all four rules, approve it. "
+                "If the response satisfies the conversational policy and all four checks, approve it. "
                 "If it violates any rule, provide a single, specific instruction on "
                 "what to fix — do not rewrite the response yourself."
             )

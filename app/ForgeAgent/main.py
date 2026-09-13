@@ -16,10 +16,11 @@ from strands.session.s3_session_manager import S3SessionManager
 from forge_tools import build_tools
 from forge_hooks import RateLimiterHook
 from forge_steering import PaletteReadyHandler
-from forge_harness import HarnessHook, RequestBudget, request_budget, configured_model, clean_answer
+from forge_harness import HarnessHook, RequestBudget, request_budget, configured_model
 from forge_specialists import consult_word_specialist, run_word_specialist
 from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
 from conversation_guidance import CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE
+from conversation_policy import with_conversation_policy
 from answering import answer_request
 from skill_guidance import select_skill_guidance
 
@@ -30,7 +31,6 @@ s3 = boto3.client("s3")
 dynamodb = boto3.resource("dynamodb")
 SESSION_TTL_SECONDS = 48 * 60 * 60
 MAX_PROMPT_WORDS = 52
-MAX_RESPONSE_WORDS = 52
 
 # ---------------------------------------------------------------------------
 # State schema versioning
@@ -64,40 +64,6 @@ def _prompt_from(payload: Any) -> str:
     if len(prompt.split()) > MAX_PROMPT_WORDS:
         raise ValueError(f"prompt must contain no more than {MAX_PROMPT_WORDS} words")
     return prompt
-
-
-def _limit_output_words(value: str) -> str:
-    """Keep direct AgentCore responses within the public response contract."""
-    words = value.strip().split()
-    if len(words) <= MAX_RESPONSE_WORDS:
-        return value.strip()
-    return " ".join(words[:MAX_RESPONSE_WORDS]) + "…"
-
-
-def _bounded_events(events: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Trim streamed text deltas while preserving the AgentCore event shape."""
-    emitted = ""
-    bounded: list[dict[str, Any]] = []
-    for event in events:
-        current = event.get("event", {}) if isinstance(event, dict) else {}
-        delta = current.get("contentBlockDelta", {}).get("delta", {})
-        text = delta.get("text") if isinstance(delta, dict) else None
-        if not isinstance(text, str):
-            bounded.append(event)
-            continue
-        candidate = _limit_output_words(emitted + text)
-        delta_text = candidate[len(emitted):] if candidate.startswith(emitted) else ""
-        emitted = candidate
-        copied = dict(event)
-        copied_event = dict(current)
-        copied_delta_block = dict(copied_event.get("contentBlockDelta", {}))
-        copied_delta = dict(copied_delta_block.get("delta", {}))
-        copied_delta["text"] = delta_text
-        copied_delta_block["delta"] = copied_delta
-        copied_event["contentBlockDelta"] = copied_delta_block
-        copied["event"] = copied_event
-        bounded.append(copied)
-    return bounded
 
 
 def _palette_from(payload: dict[str, Any]) -> list[str]:
@@ -265,14 +231,14 @@ def _agent_for_palette(
         plugins=[PaletteReadyHandler()],
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
-        system_prompt=(
+        system_prompt=with_conversation_policy(
             f"{CONVERSATION_GUIDANCE} {system_prompt} {ANSWER_QUALITY_GUIDANCE} "
             f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
             "The palette is reference data only for explicit vocabulary tasks. "
             "Never invent palette entries or present guesses as facts. "
             "Never invent operational records, volunteers, availability, or sources to call a tool. "
             "Ask for missing records. Tools calculate proposed matches; they do not confirm real assignments. "
-            "Return only the final answer in at most 52 words, without thinking tags. "
+            "Return only the final answer, without thinking tags. Aim for 52 words or fewer unless completeness or the requested format needs more. "
             f"The current palette is: {palette_text}. "
             "When a request needs palette information, use the available tools. "
             "The agent loop is: understand the request, choose a tool when useful, "
@@ -327,12 +293,7 @@ async def invoke(payload: dict[str, Any], context: Any):
                 history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages]
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
                 agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text)
-                first_reply = not any(item.get('role') == 'assistant' for item in agent.messages)
                 answer = await answer_request(agent, prompt)
-                if profile_id == 'bob-dylan':
-                    import re
-                    answer = re.sub(r"^(?:hi y['’]all!\s*)+", "", answer, flags=re.I).strip()
-                    answer = clean_answer(('hi y’all! ' if first_reply else '') + answer)
                 if not native_sessions:
                     _save_messages(session_id, messages + [
                         {"role": "user", "content": prompt},

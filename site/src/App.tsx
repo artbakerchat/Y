@@ -214,6 +214,33 @@ function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange
           ))}
       </div>
 
+      <section className="community-gift" aria-labelledby="community-gift-title">
+        <div className="gift-intro">
+          <p className="gift-kicker">A gift from our community</p>
+          <h3 id="community-gift-title">A place to remember</h3>
+          <p>
+            With care and gratitude, our community is offering a memorial brick and a bench
+            where people can pause, remember, and feel connected.
+          </p>
+        </div>
+        <div className="gift-items">
+          <article className="gift-item">
+            <div className="gift-icon brick-icon" aria-hidden="true"><span /></div>
+            <div>
+              <h4>Memorial brick</h4>
+              <p>A lasting place for a name, a memory, and the love that remains.</p>
+            </div>
+          </article>
+          <article className="gift-item">
+            <div className="gift-icon bench-icon" aria-hidden="true"><span /></div>
+            <div>
+              <h4>Memorial bench</h4>
+              <p>A welcoming seat for quiet reflection and shared remembrance.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
       <form className="composer" onSubmit={onSubmit}>
         <textarea
           value={draft}

@@ -4,14 +4,16 @@ This is the selected deployment target. Eight profiles run in the Python Strands
 
 Verified deployment (2026-09-13): `larboard_forge_agents-5C4THCBvpZ`, version 3, is READY in `ca-central-1`, using the repository artifact `052b8922…`. Live website checks passed for AgentCore routing, conversation recall, and profile isolation. Offline checks passed: the repository JavaScript and Python harness suites (including all eight profile configurations).
 
-The runtime has a shared per-request ceiling of 10 model calls and 6 tool calls, a 90-second deadline, per-tool limits, profile-specific tools and prompts, palette prerequisites, and response cleanup with a 52-word cap. Operational input values must appear in user-supplied context; this is a conservative input check, not a complete fact verifier. Logs contain profile/tool names and call counts, not prompt text.
+The runtime has a shared per-request ceiling of 10 model calls and 6 tool calls, a 90-second deadline, per-tool limits, profile-specific tools and prompts, palette prerequisites, and response cleanup that preserves complete answers, with a default target of 52 words or fewer. Operational input values must appear in user-supplied context; this is a conservative input check, not a complete fact verifier. Logs contain profile/tool names and call counts, not prompt text.
 
 Prepare and test:
+
+The shared conversational policy is bundled in `app/ForgeAgent/conversation_policy.json`. Packaging requires Node.js 22+ to check it against `agentcore/conversation-policy.js` before creating or uploading an artifact. Policy changes take effect in production after redeploying the relevant runtime and Worker artifacts.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/python -m unittest discover -s tests -p test_agentcore_harness.py
+.venv/bin/python -m unittest discover -s tests -p 'test_*.py'
 npm test
 npm run check
 .venv/bin/python scripts/evaluate_agentcore.py

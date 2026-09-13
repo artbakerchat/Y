@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "ForgeAgent
 import main
 from forge_harness import HarnessHook, RequestBudget, request_budget, clean_answer
 from forge_profiles import get_profile
+from conversation_policy import CONVERSATION_POLICY
 
 
 PROFILES = ["forge", "food-bank", "nonprofit-helpdesk", "mutual-aid", "civic-knowledge", "bob-dylan", "santa-claus", "orange-doctor-candidatus"]
@@ -20,6 +21,7 @@ class HarnessTests(unittest.TestCase):
             with self.subTest(profile=profile_id):
                 agent = main._agent_for_palette([], 8, "test-session", profile_id)
                 self.assertIn(get_profile(profile_id)["systemPrompt"], agent.system_prompt)
+                self.assertTrue(agent.system_prompt.startswith(CONVERSATION_POLICY))
                 self.assertEqual(set(agent.tool_names) - {"skills"}, set(get_profile(profile_id)["toolNames"]))
                 self.assertEqual(agent.model.config["model_id"], "ca.amazon.nova-lite-v1:0")
 
@@ -46,8 +48,9 @@ class HarnessTests(unittest.TestCase):
 
     def test_clean_answer(self):
         self.assertEqual(clean_answer("<thinking>hidden</thinking>Hello."), "Hello.")
-        self.assertEqual(len(clean_answer("word " * 70).split()), 52)
-        self.assertEqual(clean_answer("This complete opening sentence has enough useful words. " + "word " * 70), "This complete opening sentence has enough useful words.")
+        self.assertEqual(len(clean_answer("word " * 70).split()), 70)
+        answer = "word " * 70 + "\nNobody has been contacted."
+        self.assertEqual(clean_answer(answer), answer)
         with self.assertRaises(ValueError):
             clean_answer("<thinking>hidden</thinking>")
 

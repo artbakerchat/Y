@@ -59,8 +59,8 @@ async def answer_request(agent, prompt):
         return clean_answer(result)
     # Reuse the agent and its shared request budget; never retry indefinitely.
     result = await agent.invoke_async(
-        "Provide a complete final answer to the original request now, in at most 52 "
-        "words. Follow its requested number of items and put each on a separate line. "
+        "Provide a complete final answer to the original request now. Aim for 52 "
+        "words or fewer unless completeness or the requested format needs more. Follow its requested number of items and put each on a separate line. "
         "If it asks for a draft with unknown or conflicting facts, draft it now using "
         "clear placeholders for those fields. Conflicting dates are alternative dates, "
         "not a multi-day event: use [date to be confirmed]. Do not invent facts or ask for them again. "

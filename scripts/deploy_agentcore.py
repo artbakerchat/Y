@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 import zipfile
 
@@ -22,6 +23,8 @@ def main():
     parser.add_argument('--package-only', action='store_true')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]
+    # Reject policy drift before creating or uploading a deployment artifact.
+    subprocess.run(['node', str(root / 'scripts/validate-conversation-policy.js')], check=True, cwd=root)
     dependencies = root / '.data/agentcore-package'
     if not (dependencies / 'strands').is_dir():
         raise SystemExit('Build the ARM64 dependencies first; see deploy/agentcore/README.md')

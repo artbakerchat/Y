@@ -6,7 +6,7 @@ The application provides eight focused agents plus language-specialist support t
 
 ## Agent harness and deployment
 
-The Node server now uses `src/agent-harness.js` for all eight profiles, with a separate nested language specialist. It passes conversation history and the configured model to Bedrock, restricts tools by profile, enforces tool/model budgets and timeouts, removes internal analysis from final responses, and caps answers at 52 words. Operational tool input values are checked against user-supplied text; this rejects unsupported facts but is not a complete semantic fact checker.
+The Node server now uses `src/agent-harness.js` for all eight profiles, with a separate nested language specialist. It passes conversation history and the configured model to Bedrock, restricts tools by profile, enforces tool/model budgets and timeouts, removes internal analysis from final responses, and preserves complete answers with a default target of 52 words or fewer. Operational tool input values are checked against user-supplied text; this rejects unsupported facts but is not a complete semantic fact checker.
 
 Run `npm run test:harness` for deterministic harness checks and `npm run eval:agents` for nine live Bedrock smoke cases with JSON response/trace output. Live checks incur model usage and do not establish that the agents are perfect or that every answer is accurate.
 
@@ -262,6 +262,14 @@ When `AGENTCORE_RUNTIME_ARN` is configured, the Worker forwards `agent_id` to th
 Agent tools follow the same source-controlled workflow. Executable tools live as JavaScript modules in [`tools/`](tools/); edit an existing module or add one and register it in [`tools/index.js`](tools/index.js). Pushing to `main` bundles the updated tool code into the Worker deployment. Tool descriptions and input schemas are exposed to Bedrock, while implementations execute inside the Worker, so review new tools carefully before deployment.
 
 ## Feedback and improvement pipeline
+
+All agents follow the ten-rule [conversational policy](agentcore/conversation-policy.js): answer the request, never invent evidence, describe actions honestly, preserve context, ask only necessary questions, give the shortest complete answer, avoid flattery and pressure, protect privacy and user control, subordinate persona to usefulness, and correct mistakes plainly.
+
+The policy takes precedence over application personas, procedures, training examples, learned preferences, and developer or user feedback. These inputs can refine behavior only within the policy; a policy amendment requires an explicit, reviewed change. [AGENTS.md](AGENTS.md) carries this requirement into repository maintenance. The policy does not override model-provider restrictions.
+
+Node and Worker attach the policy at their model-call boundaries, including specialists, reviewers, and rewriters. Python attaches the same policy to every agent and steering reviewer; repair calls retain the same agent. AgentCore packages its own `conversation_policy.json` beside its Python loader. `npm run check` rejects a bundle that differs from the canonical JavaScript policy, and packaging performs the same check before creating or uploading an artifact.
+
+Responses target 52 words or fewer by default, but preserve complete answers and requested formats. Sanitizers remove internal analysis without cutting off answer content or forcing persona greetings. Model/token budgets, tool allow-lists, and authorization controls still apply. Offline tests verify policy delivery and deterministic boundaries; they do not prove that a model always obeys. Review live conflict cases when changing models or training guidance.
 
 The chat UI provides a helpful/not-helpful control below each completed answer. A submitted rating is linked to the exact user request and assistant response, then stored under `feedback/` in the Worker R2 bucket. The correction field is optional and limited to 2,000 characters. Feedback is not inserted into prompts automatically and cannot deploy code.
 

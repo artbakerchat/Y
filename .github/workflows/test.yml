@@ -22,7 +22,7 @@ jobs:
       - name: Install AgentCore test dependencies
         run: pip install -r requirements.txt
       - name: Test Python runtime harness without model calls
-        run: python -m unittest discover -s tests -p test_agentcore_harness.py
+        run: python -m unittest discover -s tests -p 'test_*.py'
   test:
     runs-on: ubuntu-latest
     steps:

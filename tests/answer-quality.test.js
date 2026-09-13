@@ -7,9 +7,10 @@ test('three requested lines survive sanitization', () => {
   assert.equal(cleanAnswer('<thinking>private</thinking><answer>1. A note.\n2. An email.\n3. A call.</answer>'), '1. A note.\n2. An email.\n3. A call.');
 });
 
-test('long answers stop at a complete sentence when possible', () => {
+test('cleanup preserves necessary content after the brevity target', () => {
   const opening = 'This is a complete sentence with enough useful words.';
-  assert.equal(cleanAnswer(opening + ' word'.repeat(60)), opening);
+  const answer = opening + ' word'.repeat(60) + '\nThese shifts are proposed; nobody has been contacted.';
+  assert.equal(cleanAnswer(answer), answer);
   assert.throws(() => cleanAnswer('<analysis>private</analysis>'), /no text/);
 });
 

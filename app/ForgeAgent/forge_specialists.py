@@ -4,6 +4,7 @@ from strands import Agent, tool
 from forge_harness import HarnessHook, configured_model, clean_answer
 from forge_hooks import RateLimiterHook
 from conversation_guidance import ANSWER_QUALITY_GUIDANCE
+from conversation_policy import with_conversation_policy
 from answering import answer_request
 from calculator import calculate
 
@@ -114,14 +115,14 @@ async def run_word_specialist(prompt: str, history=None, aspect: str | None = No
         messages=history,
         hooks=[HarnessHook("word-specialist"), RateLimiterHook(max_calls=3)],
         tools=[look_up_word_details, find_related_words_deep, calculate],
-        system_prompt=(
+        system_prompt=with_conversation_policy(
             "You are a concise word-craft specialist. Answer the actual question; do not "
             "treat a complete request as a single word to define. Use tools when needed to look "
             f"up concrete data before responding. {focus} Favor simple noun-verb "
             "combinations, clear concrete wording, and a natural spoken flow. Do not "
             "over-focus on grammatical or syntactic correctness; prioritize language "
             "that feels easy to say and understand. Use only as much detail as requested. "
-            "Return only the final answer in at most 52 words, "
+            "Return only the final answer. Aim for 52 words or fewer unless completeness or the requested format needs more, "
             "without internal thinking tags. Stored entries are limited notes, not verified sources. "
             "If evidence is missing, acknowledge uncertainty and never invent a word origin. "
             f"{ANSWER_QUALITY_GUIDANCE}"
@@ -133,7 +134,7 @@ async def run_word_specialist(prompt: str, history=None, aspect: str | None = No
 
 @tool
 def check_device_compatibility(device: str, issue: str) -> str:
-    """Check a device for known compatibility issues.
+    """Suggest general troubleshooting checks without inspecting a device.
 
     Args:
         device: The device name or model.
@@ -143,33 +144,30 @@ def check_device_compatibility(device: str, issue: str) -> str:
         A human-readable fix or fallback recommendation.
     """
     known_issues: dict[str, str] = {
-        "wireless headphones": "Reset the headphones by holding power for 10 seconds, then pair again.",
+        "wireless headphones": "Check the manufacturer's pairing and reset instructions for the exact model.",
         "usb-c hub": "Confirm the laptop supports USB-C alternate mode for the requested display output.",
-        "mechanical keyboard": "Update firmware from v2.1 to v2.3 to address key ghosting.",
+        "mechanical keyboard": "Check the exact model's support page for troubleshooting and firmware information.",
     }
     normalized_device = device.lower()
     for name, fix in known_issues.items():
         if name in normalized_device:
-            return f"Known issue for {name.title()}: {fix} Issue reported: {issue}"
-    return f"No known issue for '{device}'. Recommend checking connections, power, and firmware."
+            return f"General suggestion for {name}: {fix} No device or support page was checked. Issue reported: {issue}"
+    return f"No stored guidance for '{device}'. Check connections, power, and the manufacturer's instructions. No device was inspected."
 
 
 @tool
 def run_device_diagnostic(device: str) -> str:
-    """Run a diagnostic summary for a device.
+    """Explain that this tool cannot inspect or diagnose a physical device.
 
     Args:
         device: The device name or model to diagnose.
 
     Returns:
-        A formatted diagnostic report with firmware, connection, and battery status.
+        An explicit capability limitation, without invented device readings.
     """
     return (
-        f"Diagnostic results for {device}:\n"
-        "- Firmware: v2.1 (update available: v2.3)\n"
-        "- Connection: stable\n"
-        "- Battery: 85%\n"
-        "Recommendation: update firmware and retry the connection."
+        f"No diagnostic was performed on {device}. This tool cannot access the device. "
+        "Firmware, connection, and battery status are unknown. Use the device's own diagnostics or manufacturer instructions."
     )
 
 
@@ -188,7 +186,7 @@ def tech_support_specialist(issue_description: str) -> str:
     """
     specialist = Agent(
         tools=[check_device_compatibility, run_device_diagnostic],
-        system_prompt=(
+        system_prompt=with_conversation_policy(
             "You are Forge's technical support specialist. Diagnose device issues, "
             "check compatibility, and give clear, actionable next steps. Be technical "
             "but explain the solution in language a general customer can follow."
