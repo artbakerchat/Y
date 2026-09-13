@@ -12,9 +12,9 @@
 .routing-mode.is-active{border-color:#7fffe5;background:linear-gradient(100deg,rgb(23 67 76 / 80%),rgb(10 29 46 / 94%));box-shadow:0 0 0 2px rgb(127 255 229 / 10%)}
 .routing-icon{display:grid;place-items:center;width:28px;height:28px;border-radius:9px;color:#061522;background:#7fffe5;font-weight:900}.routing-mode strong,.routing-mode small{display:block}.routing-mode strong{font-size:13px}.routing-mode small{margin-top:3px;color:#8ea1b4;font-size:11px}.routing-mode>b{margin-left:auto;color:#7fffe5;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
 .available-label{margin:0 0 9px;color:#607386;font-size:10px;font-weight:800;letter-spacing:.16em}
-.role-grid{display:flex;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#326d7d transparent;cursor:grab;touch-action:pan-x}
+.role-grid{display:flex;width:100%;max-width:100%;min-width:0;gap:10px;overflow-x:auto;overscroll-behavior-inline:contain;padding:2px 2px 10px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:#326d7d transparent;cursor:grab;touch-action:pan-x}
 .role-grid.is-dragging{cursor:grabbing;scroll-snap-type:none;scrollbar-color:#7fffe5 transparent}
-.role-card{flex:0 0 calc((100% - 20px) / 3);min-height:174px;padding:18px;border:1px solid #24506a;border-radius:14px;background:linear-gradient(150deg,rgb(17 48 67 / 92%),rgb(10 27 44 / 94%));transition:transform .2s ease,border-color .2s ease;color:inherit;font:inherit;text-align:left;cursor:pointer;scroll-snap-align:start}
+.role-card{flex:0 0 calc((100% - 20px) / 3);min-width:0;min-height:174px;padding:18px;border:1px solid #24506a;border-radius:14px;background:linear-gradient(150deg,rgb(17 48 67 / 92%),rgb(10 27 44 / 94%));transition:transform .2s ease,border-color .2s ease;color:inherit;font:inherit;text-align:left;cursor:pointer;scroll-snap-align:start;overflow-wrap:anywhere}
 .role-card.is-active{border-color:#7fffe5;box-shadow:0 0 0 2px rgb(127 255 229 / 18%)}
 .role-card:hover{transform:translateY(-3px);border-color:#57f3d2}
 .role-index{color:#7fffe5;font-size:11px;font-weight:800;letter-spacing:.12em}

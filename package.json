@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
+    "build": "npm --prefix site run build",
     "test": "node --test tests/*.test.js",
     "check": "node --check src/worker.js && node --check server.mjs && node scripts/validate-skills.js && node scripts/validate-profiles.js",
     "validate-skills": "node scripts/validate-skills.js",
