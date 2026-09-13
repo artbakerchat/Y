@@ -33,19 +33,6 @@ function cleanAssistantResponse(value: unknown) {
   return cleaned || 'I’m here with you. What would you like to work through?';
 }
 
-function isPacificAvailabilityOpen(date = new Date()): boolean {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Los_Angeles',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: false,
-  }).formatToParts(date);
-  const hour = Number(parts.find((part) => part.type === 'hour')?.value || 0);
-  const minute = Number(parts.find((part) => part.type === 'minute')?.value || 0);
-  const currentMinutes = hour * 60 + minute;
-  return currentMinutes >= 9 * 60 && currentMinutes < 17 * 60;
-}
-
 // ---------------------------------------------------------------------------
 // ErrorBoundary
 // ---------------------------------------------------------------------------
@@ -127,6 +114,7 @@ interface ChatPanelProps {
   agentName: string;
   busy: boolean;
   draft: string;
+  inputError: string;
   onDraftChange: (value: string) => void;
   onSubmit: (event: FormEvent) => void;
 }
@@ -134,15 +122,9 @@ interface ChatPanelProps {
 /**
  * Renders the conversation history and the message composer.
  */
-function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }: ChatPanelProps) {
+function ChatPanel({ messages, agentName, busy, draft, inputError, onDraftChange, onSubmit }: ChatPanelProps) {
   const composerTarget = agentName || 'Larboard';
-  const [isAvailable, setIsAvailable] = useState(() => isPacificAvailabilityOpen());
-
-  useEffect(() => {
-    const updateAvailability = () => setIsAvailable(isPacificAvailabilityOpen());
-    const interval = window.setInterval(updateAvailability, 60_000);
-    return () => window.clearInterval(interval);
-  }, []);
+  const [isAvailable, setIsAvailable] = useState(false);
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -160,7 +142,7 @@ function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }
 
       <div className="availability" role="status" aria-live="polite">
         <span className={`availability-dot${isAvailable ? ' is-open' : ''}`} aria-hidden="true" />
-        <span>Available 9:00 AM–5:00 PM Pacific</span>
+        <span>Agent service status</span>
         <strong className={isAvailable ? 'is-open' : ''}>{isAvailable ? 'OPEN' : 'CLOSED'}</strong>
       </div>
 
@@ -187,6 +169,7 @@ function ChatPanel({ messages, agentName, busy, draft, onDraftChange, onSubmit }
         </button>
       </form>
       <p className="hint">Enter to send · Shift + Enter for a new line</p>
+      {inputError && <p className="hint" role="alert" style={{ color: '#b3261e' }}>{inputError}</p>}
     </article>
   );
 }
@@ -200,18 +183,21 @@ export default function App() {
   const [activeAgentId, setActiveAgentId] = useState('forge');
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState(false);
+  const [inputError, setInputError] = useState('');
   const stateWrite = useRef(Promise.resolve());
 
   useEffect(() => {
     Promise.all([
       fetch('/api/state').then((r) => r.json() as Promise<State>),
+      fetch('/api/health').then((r) => r.json() as Promise<{ available?: boolean }>),
     ])
-      .then(([saved]) => {
+      .then(([saved, health]) => {
         setMessages(saved.messages || []);
         const savedAgentId = AGENT_ROLES.some((role) => role.id === saved.agentId) ? saved.agentId! : 'forge';
         setActiveAgentId(savedAgentId);
+        setIsAvailable(health.available === true);
       })
-      .catch(() => undefined);
+      .catch(() => setIsAvailable(false));
   }, []);
 
   function saveState(next: Partial<State>): Promise<State> {
@@ -236,11 +222,14 @@ export default function App() {
       return;
     }
     if (message.split(/\s+/).length > 52) {
+      setInputError('Please keep a request to 52 words or fewer.');
       return;
     }
     if (message.split(/\s+/).some((word) => word.length > 16)) {
+      setInputError('Please shorten words longer than 16 characters.');
       return;
     }
+    setInputError('');
 
     if (message.toLowerCase() === 'clear') {
       setDraft('');
@@ -270,7 +259,7 @@ export default function App() {
       const response = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, agent: activeAgentId }),
       });
       const data = (await response.json()) as { answer?: string; error?: string };
       if (!response.ok) {
@@ -306,6 +295,7 @@ export default function App() {
               agentName={AGENT_ROLES.find((role) => role.id === activeAgentId)?.name || 'Forge'}
               busy={busy}
               draft={draft}
+              inputError={inputError}
               onDraftChange={setDraft}
               onSubmit={submitMessage}
             />

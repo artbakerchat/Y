@@ -726,7 +726,10 @@ export default {
     const url = new URL(request.url);
     try {
       if (url.pathname === '/api/health' && request.method === 'GET') {
-        return json({ ok: true, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
+        const runtimeConfigured = Boolean(env.AGENTCORE_RUNTIME_ARN);
+        const credentialsConfigured = Boolean(env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY);
+        const requestsEnabled = env.MODEL_REQUESTS_ENABLED === 'true' || runtimeConfigured;
+        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
