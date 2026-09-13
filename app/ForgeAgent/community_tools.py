@@ -94,14 +94,13 @@ def build_community_tools(profile_id: str) -> list[Callable[..., str]]:
     if profile_id == "civic-knowledge":
         @tool
         def verify_civic_sources(sources: list[dict]) -> str:
-            """Verify supplied official HTTPS sources before grounding civic answers."""
+            """Review supplied records only; no URL is fetched and no official status is verified."""
             checked = []
             for source in sources or []:
                 url = str(source.get("url", ""))
-                official = bool(re.search(r"\.(gov|gc\.ca|edu|org)(/|$)", url, re.IGNORECASE))
-                checked.append({"title": source.get("title", "Untitled"), "url": url, "verified": source.get("verified") is True and url.startswith("https://") and official})
-            grounded = bool(checked) and all(source["verified"] for source in checked)
-            return json.dumps({"grounded": grounded, "sources": checked, "instruction": "If grounded is false, state uncertainty and provide an official contact point."})
+                checked.append({"title": source.get("title", "Untitled"), "url": url, "claimedVerified": source.get("verified") is True, "verified": False})
+            grounded = False
+            return json.dumps({"grounded": grounded, "sources": checked, "instruction": "These are supplied records, not independent verification. A domain suffix or claimedVerified flag does not prove official status. No URL was fetched. State uncertainty and suggest checking the relevant official authority."})
 
         return [verify_civic_sources]
 

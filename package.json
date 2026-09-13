@@ -17,9 +17,14 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "eval:specialized": "node scripts/evaluate-specialized.js"
   },
-  "dependencies": { "@aws-sdk/client-bedrock-runtime": "^3.900.0", "@strands-agents/sdk": "^1.1.0", "dotenv": "^16.4.7" },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.900.0",
+    "@strands-agents/sdk": "^1.1.0",
+    "dotenv": "^16.4.7"
+  },
   "devDependencies": {
     "@eslint/js": "^9.15.0",
     "eslint": "^9.15.0",

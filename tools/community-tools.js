@@ -59,6 +59,7 @@ function nonprofitTools() {
       spec: { name: 'generate_nonprofit_template', description: 'Generate a reusable small-nonprofit template for an incident report, board memo, or grant tracker.', inputSchema: { json: { type: 'object', properties: { templateType: { type: 'string' }, organization: { type: 'string' }, details: { type: 'string' } }, required: ['templateType'] } } },
       fn: async ({ templateType, organization = '', details = '' } = {}) => {
         const type = asText(templateType).toLowerCase();
+        if (!['incident', 'board', 'grant'].some(kind => type.includes(kind))) return 'Unsupported template. Draft the requested text directly; do not retry this tool.';
         const headings = type.includes('incident') ? ['Incident Report', 'Date and time', 'People involved', 'What happened', 'Immediate actions', 'Follow-up owner']
           : type.includes('board') ? ['Board Memo', 'Decision requested', 'Context', 'Options considered', 'Recommendation', 'Next steps']
             : ['Grant Tracker', 'Funder and grant', 'Deadline', 'Deliverables', 'Owner', 'Status and next action'];
@@ -104,14 +105,13 @@ function mutualAidTools() {
 
 function civicTools() {
   return [{
-    spec: { name: 'verify_civic_sources', description: 'Check supplied civic sources for explicit verification and official institutional URLs before grounding an answer.', inputSchema: { json: { type: 'object', properties: { sources: { type: 'array' } }, required: ['sources'] } } },
+    spec: { name: 'verify_civic_sources', description: 'Review supplied civic source records. This tool cannot fetch URLs or establish authenticity, official status, or currentness; user-supplied verification is only a claim.', inputSchema: { json: { type: 'object', properties: { sources: { type: 'array' } }, required: ['sources'] } } },
     fn: async ({ sources = [] } = {}) => {
       const checked = asArray(sources).map((source) => {
         const url = asText(source?.url);
-        const officialUrl = /^https:\/\//i.test(url) && /\.(gov|gc\.ca|edu|org)(\/|$)/i.test(url);
-        return { title: asText(source?.title) || 'Untitled source', url, verified: source?.verified === true && officialUrl };
+        return { title: asText(source?.title) || 'Untitled source', url, claimedVerified: source?.verified === true, verified: false };
       });
-      return JSON.stringify({ grounded: checked.length > 0 && checked.every((source) => source.verified), sources: checked, instruction: 'If grounded is false, state the uncertainty and provide an official contact point instead of asserting the answer.' });
+      return JSON.stringify({ grounded: false, sources: checked, instruction: 'These are supplied records, not independent verification. A domain suffix or claimedVerified flag does not prove official status. No URL was fetched. State uncertainty and suggest checking the relevant official authority.' });
     },
   }];
 }

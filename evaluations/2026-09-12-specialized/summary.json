@@ -1,0 +1,166 @@
+{
+  "before": {
+    "total": 135,
+    "pass": 95,
+    "partial": 21,
+    "fail": 19
+  },
+  "after": {
+    "total": 135,
+    "pass": 111,
+    "partial": 15,
+    "fail": 9
+  },
+  "holdout": {
+    "total": 15,
+    "pass": 12,
+    "partial": 2,
+    "fail": 1
+  },
+  "agents": [
+    {
+      "id": "forge",
+      "name": "Good Neighbour Coordinator",
+      "before": {
+        "total": 15,
+        "pass": 8,
+        "partial": 2,
+        "fail": 5
+      },
+      "after": {
+        "total": 15,
+        "pass": 11,
+        "partial": 2,
+        "fail": 2
+      }
+    },
+    {
+      "id": "food-bank",
+      "name": "Food Bank Coordinator",
+      "before": {
+        "total": 15,
+        "pass": 11,
+        "partial": 2,
+        "fail": 2
+      },
+      "after": {
+        "total": 15,
+        "pass": 12,
+        "partial": 1,
+        "fail": 2
+      }
+    },
+    {
+      "id": "nonprofit-helpdesk",
+      "name": "Nonprofit Helpdesk",
+      "before": {
+        "total": 15,
+        "pass": 9,
+        "partial": 5,
+        "fail": 1
+      },
+      "after": {
+        "total": 15,
+        "pass": 11,
+        "partial": 3,
+        "fail": 1
+      }
+    },
+    {
+      "id": "mutual-aid",
+      "name": "Mutual Aid Hub",
+      "before": {
+        "total": 15,
+        "pass": 9,
+        "partial": 3,
+        "fail": 3
+      },
+      "after": {
+        "total": 15,
+        "pass": 11,
+        "partial": 2,
+        "fail": 2
+      }
+    },
+    {
+      "id": "civic-knowledge",
+      "name": "Civic Knowledge Assistant",
+      "before": {
+        "total": 15,
+        "pass": 10,
+        "partial": 2,
+        "fail": 3
+      },
+      "after": {
+        "total": 15,
+        "pass": 13,
+        "partial": 1,
+        "fail": 1
+      }
+    },
+    {
+      "id": "bob-dylan",
+      "name": "Bob Dylan",
+      "before": {
+        "total": 15,
+        "pass": 12,
+        "partial": 1,
+        "fail": 2
+      },
+      "after": {
+        "total": 15,
+        "pass": 13,
+        "partial": 2,
+        "fail": 0
+      }
+    },
+    {
+      "id": "santa-claus",
+      "name": "Santa Claus",
+      "before": {
+        "total": 15,
+        "pass": 13,
+        "partial": 1,
+        "fail": 1
+      },
+      "after": {
+        "total": 15,
+        "pass": 13,
+        "partial": 2,
+        "fail": 0
+      }
+    },
+    {
+      "id": "orange-doctor-candidatus",
+      "name": "Orange Doctor Candidatus",
+      "before": {
+        "total": 15,
+        "pass": 13,
+        "partial": 1,
+        "fail": 1
+      },
+      "after": {
+        "total": 15,
+        "pass": 12,
+        "partial": 2,
+        "fail": 1
+      }
+    },
+    {
+      "id": "word-specialist",
+      "name": "Word Specialist (internal)",
+      "before": {
+        "total": 15,
+        "pass": 10,
+        "partial": 4,
+        "fail": 1
+      },
+      "after": {
+        "total": 15,
+        "pass": 15,
+        "partial": 0,
+        "fail": 0
+      }
+    }
+  ]
+}

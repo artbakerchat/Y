@@ -1,0 +1,815 @@
+{
+  "method": "Manual rubric review by Codex; 2=meets, 1=partial, 0=fails. Full-pass counts require 2. Not blinded; no statistical claim.",
+  "records": [
+    {
+      "agentId": "forge",
+      "id": "specialist-02",
+      "score": 0,
+      "reason": "Asks venue instead of drafting."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-01",
+      "score": 1,
+      "reason": "Invents park-office supplies; plan lacks explicit task timing."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-05",
+      "score": 0,
+      "reason": "Asks location instead of access-check action."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-07",
+      "score": 1,
+      "reason": "Suggests combining roles without checking workload or safety."
+    },
+    {
+      "agentId": "forge",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "shared-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-05",
+      "score": 0,
+      "reason": "Asks address instead of drafting."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-01",
+      "score": 0,
+      "reason": "Requests roster rather than using supplied facts to identify Bo."
+    },
+    {
+      "agentId": "forge",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-07",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-08",
+      "score": 1,
+      "reason": "Packing/sorting may require lifting; not a clearly adapted single role."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "shared-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "specialist-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-01",
+      "score": 0,
+      "reason": "Request failed: tool-call budget exhausted."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-07",
+      "score": 1,
+      "reason": "Correct tally but no discrepancy explanation."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-09",
+      "score": 1,
+      "reason": "Offers draft instructions but does not state inability to submit/confirm acceptance."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-08",
+      "score": 1,
+      "reason": "Draft invents a future update promise."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "specialist-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "shared-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-01",
+      "score": 1,
+      "reason": "Anonymous draft lacks useful private contact channel."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-07",
+      "score": 0,
+      "reason": "Asks time instead of drafting."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "specialist-09",
+      "score": 0,
+      "reason": "Asks consent records but does not address limited capacity."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "shared-02",
+      "score": 1,
+      "reason": "Facts and placeholders retained, but only one line."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-10",
+      "score": 1,
+      "reason": "Suggests official check but invents a blanket illegality claim."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "specialist-07",
+      "score": 0,
+      "reason": "Claims ability to check fee validity without a lookup capability."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "shared-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-07",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-05",
+      "score": 1,
+      "reason": "Original text but one line instead of two."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "specialist-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "shared-02",
+      "score": 1,
+      "reason": "Two lines but no venue placeholder."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-07",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-09",
+      "score": 1,
+      "reason": "Concrete gentle action but forced laughter."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "shared-02",
+      "score": 1,
+      "reason": "Two lines but asks venue instead of using placeholder."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-01",
+      "score": 1,
+      "reason": "Review goals is useful but asks user to identify the actual action."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-07",
+      "score": 0,
+      "reason": "Does not rewrite the supplied self-judgment."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "specialist-10",
+      "score": 1,
+      "reason": "Assumes a sunny alternative rather than a grounded reframe."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "shared-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-07",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "specialist-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "shared-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "shared-01",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "shared-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "shared-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "shared-05",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    }
+  ]
+}
