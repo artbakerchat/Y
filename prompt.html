@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/mobile.css">
   <title>Prompt Workspace</title>
   <style>
     :root { font-family: "Segoe UI", Arial, sans-serif; color: #1f2937; }
@@ -215,5 +216,6 @@
 
     fetch('/api/state').then((response) => response.json()).then((state) => { window.backendState = state; promptWords = Array.isArray(state.promptWords) ? state.promptWords : []; renderPalette(); renderPrompt(); }).catch(() => { renderPalette(); renderPrompt(); });
   </script>
+  <script src="/global-timer.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,45 @@
+/* Shared small-screen guardrails for every page. */
+html { overflow-x: hidden; }
+img, video, canvas, svg { max-width: 100%; }
+button, input, textarea, select { max-width: 100%; }
+
+@media (max-width: 700px) {
+  body { overflow-x: hidden; }
+
+  /* Workspace and pinball navigation stay readable without horizontal scrolling. */
+  .shell { width: min(calc(100% - 28px), 1180px) !important; }
+  header { gap: 12px !important; }
+  .nav { width: 100%; justify-content: flex-start !important; gap: 8px 16px !important; flex-wrap: wrap; }
+
+  /* Prompt lab */
+  .page-navigation { position: static !important; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem !important; margin-top: 1rem; }
+  .prompt-palette button { flex: 1 1 calc(33.333% - 0.35rem) !important; }
+
+  /* Pinball controls remain large enough for touch. */
+  .intro { display: block !important; }
+  .intro p:last-child { margin-top: 12px !important; }
+  .board { min-height: min(560px, calc(100svh - 220px)) !important; height: min(560px, calc(100svh - 220px)); }
+  .flipper { min-height: 44px; }
+
+  /* Pricing cards become a single comfortable reading column. */
+  body > main { width: min(640px, calc(100% - 24px)) !important; margin: 12px auto !important; }
+  section[aria-labelledby="billing-codes-title"] > div:last-child { grid-template-columns: 1fr !important; }
+  section[aria-labelledby="billing-codes-title"] > div:first-child { flex-wrap: wrap; }
+
+  /* Barcode editor: keep the image slots inside the viewport. */
+  .billing-barcode-container { grid-template-columns: 1fr !important; }
+  .billing-note-page { min-height: 900px !important; padding: 1rem !important; }
+  .billing-note-images { position: static !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; margin-bottom: 1rem; }
+  .billing-note-image { width: 100% !important; height: auto !important; aspect-ratio: 1; }
+  .billing-note-actions { position: static !important; align-items: stretch !important; margin-bottom: 1rem !important; }
+
+  /* Presentation content scrolls as a readable single column on phones. */
+  #deck-container { min-height: 100svh; }
+  .slide { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 420px) {
+  .prompt-palette button { flex-basis: calc(50% - 0.35rem) !important; }
+  .billing-note-images { gap: 0.35rem !important; }
+  .billing-note-page { padding: 0.75rem !important; }
+}
