@@ -28,7 +28,7 @@ const CANONICAL_HTML_ROUTES = {
 
 const encoder = new TextEncoder();
 const STATE_TTL_MS = 48 * 60 * 60 * 1000;
-const DAILY_REQUEST_LIMIT = 8;
+const DAILY_REQUEST_LIMIT = 20;
 const MAX_REQUEST_WORDS = 52;
 const MAX_WORD_CHARACTERS = 16;
 const REDIRECT_RATE_PERIOD_SECONDS = 60;
@@ -46,17 +46,19 @@ const FINGERPRINTED_ASSET = /-[a-z0-9_-]{8,}(?=\.[a-z0-9]+$)/i;
 //
 // Migration guide
 // ---------------
-// v1  (current)  Initial versioned schema.  Added schemaVersion field.
+// v1  Initial versioned schema. Added schemaVersion field.
 //               All sessions written before this version are treated as v0
 //               and normalised by cleanState() as usual — no data loss.
+// v2  Added agent-scoped daily request counters. Legacy `rate` is migrated
+//               to the active agent's entry in `rates`.
 //
-// When bumping to v2 in the future:
+// When bumping to v3 in the future:
 //   1. Increment STATE_SCHEMA_VERSION.
 //   2. Add a migration block inside cleanState() guarded by:
-//        if (!value.schemaVersion || value.schemaVersion < 2) { … }
+//        if (!value.schemaVersion || value.schemaVersion < 3) { … }
 //   3. Document the change above.
 // ---------------------------------------------------------------------------
-const STATE_SCHEMA_VERSION = 1;
+const STATE_SCHEMA_VERSION = 2;
 
 const DEFAULT_PALETTE = ['anchor','pinnacle','summit','twilight','static','ocean','wander','spark','gravity','money','book','Glimmer','compass','voyage','solitude','prism','nectar','blossom','fossil','zenith','vortex','mirage','starlight','ember','cyclone','glacier','radiance','labyrinth','aurora','thistle','apple','Nebula','crisp','whisper','avalanche','horizon','velvet','mosaic','thunder','marble','cascade','echo','lantern','silver','standard','puzzle','orbit','shadow','flicker','autumn','rhythm','canvas'];
 const emptyState = (paletteId = 'default', paletteStory = '') => {
@@ -73,10 +75,38 @@ const emptyState = (paletteId = 'default', paletteStory = '') => {
     pendingPrompt: '',
     printer: { note: '', images: [null, null, null] },
     rate: { day: new Date().toISOString().slice(0, 10), count: 0 },
+    rates: { forge: { day: new Date().toISOString().slice(0, 10), count: 0 } },
     expiresAt: Date.now() + STATE_TTL_MS,
   };
 };
-function cleanState(value) { return { schemaVersion: STATE_SCHEMA_VERSION, agentId: typeof value?.agentId === 'string' ? value.agentId : 'forge', agentMode: value?.agentMode === 'manual' ? 'manual' : 'auto', paletteId: typeof value?.paletteId === 'string' ? value.paletteId : 'default', paletteStory: typeof value?.paletteStory === 'string' ? value.paletteStory : getPaletteTemplate(value?.paletteId || 'default').story, palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter((word) => word && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : getPaletteTemplate(value?.paletteId || 'default').words.slice(0, 52), promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string' && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [], messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [], pendingPrompt: typeof value?.pendingPrompt === 'string' ? value.pendingPrompt.slice(0, 4000) : '', printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] }, rate: { day: typeof value?.rate?.day === 'string' ? value.rate.day : new Date().toISOString().slice(0, 10), count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0 }, expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS }; }
+function cleanState(value) {
+  const agentId = getAgentProfile(value?.agentId)?.id || 'forge';
+  const today = new Date().toISOString().slice(0, 10);
+  const legacyRate = {
+    day: typeof value?.rate?.day === 'string' ? value.rate.day : today,
+    count: Number.isFinite(Number(value?.rate?.count)) ? Math.max(0, Number(value.rate.count)) : 0,
+  };
+  const rates = Object.fromEntries(Object.entries(value?.rates || {}).filter(([id]) => getAgentProfile(id)).map(([id, rate]) => [id, {
+    day: typeof rate?.day === 'string' ? rate.day : today,
+    count: Number.isFinite(Number(rate?.count)) ? Math.max(0, Number(rate.count)) : 0,
+  }]));
+  if (!rates[agentId]) rates[agentId] = legacyRate;
+  return {
+    schemaVersion: STATE_SCHEMA_VERSION,
+    agentId,
+    agentMode: value?.agentMode === 'manual' ? 'manual' : 'auto',
+    paletteId: typeof value?.paletteId === 'string' ? value.paletteId : 'default',
+    paletteStory: typeof value?.paletteStory === 'string' ? value.paletteStory : getPaletteTemplate(value?.paletteId || 'default').story,
+    palette: Array.isArray(value?.palette) ? value.palette.filter((word) => typeof word === 'string').map((word) => word.trim()).filter((word) => word && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : getPaletteTemplate(value?.paletteId || 'default').words.slice(0, 52),
+    promptWords: Array.isArray(value?.promptWords) ? value.promptWords.filter((word) => typeof word === 'string' && word.length <= MAX_WORD_CHARACTERS).slice(0, 52) : [],
+    messages: Array.isArray(value?.messages) ? value.messages.filter((item) => item && (item.role === 'user' || item.role === 'assistant') && typeof item.content === 'string').slice(-100) : [],
+    pendingPrompt: typeof value?.pendingPrompt === 'string' ? value.pendingPrompt.slice(0, 4000) : '',
+    printer: { note: typeof value?.printer?.note === 'string' ? value.printer.note : '', images: Array.isArray(value?.printer?.images) ? value.printer.images.slice(0, 3).map((image) => image && typeof image.src === 'string' ? { src: image.src, uploadedAt: Number(image.uploadedAt) || Date.now() } : null) : [null, null, null] },
+    rate: rates[agentId],
+    rates,
+    expiresAt: Number(value?.expiresAt) || Date.now() + STATE_TTL_MS,
+  };
+}
 function sessionIdFrom(request) { const match = request.headers.get('cookie')?.match(/(?:^|;\s*)larboard_session=([^;]+)/); return match?.[1] || crypto.randomUUID(); }
 async function loadState(bucket, sessionId, detectionHints = {}) { const key = `sessions/${sessionId}.json`; const object = await bucket.get(key); if (!object) { const paletteId = detectPaletteContext(detectionHints.message || '', detectionHints.params || {}); const template = getPaletteTemplate(paletteId); return emptyState(paletteId, template.story); } try { const raw = await object.json(); if (!Number.isFinite(Number(raw.expiresAt)) || Number(raw.expiresAt) <= Date.now()) { await bucket.delete(key); const paletteId = detectPaletteContext(detectionHints.message || '', detectionHints.params || {}); const template = getPaletteTemplate(paletteId); return emptyState(paletteId, template.story); } return cleanState(raw); } catch { const paletteId = detectPaletteContext(detectionHints.message || '', detectionHints.params || {}); const template = getPaletteTemplate(paletteId); return emptyState(paletteId, template.story); } }
 async function saveState(bucket, sessionId, state) { const clean = cleanState(state); await bucket.put(`sessions/${sessionId}.json`, JSON.stringify({ ...clean, expiresAt: Number(state.expiresAt) || clean.expiresAt }), { httpMetadata: { contentType: 'application/json' } }); }
@@ -740,7 +770,8 @@ export default {
         if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
         if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
         const today = new Date().toISOString().slice(0, 10);
-        if (state.rate.day !== today) state.rate = { day: today, count: 0 };
+        if (!state.rates[profile.id] || state.rates[profile.id].day !== today) state.rates[profile.id] = { day: today, count: 0 };
+        state.rate = state.rates[profile.id];
         if (state.rate.count >= profile.dailyRequestLimit) return new Response(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: profile.dailyRequestLimit }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`, 'retry-after': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) } });
 
         // Route to AgentCore if configured, otherwise run the local agent loop.
@@ -750,7 +781,8 @@ export default {
         answer.answer = limitOutputWords(answer.answer);
         answer.agentId = profile.id;
 
-        state.rate.count += 1;
+        state.rates[profile.id].count += 1;
+        state.rate = state.rates[profile.id];
         state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: answer.answer, createdAt: new Date().toISOString() }];
         await saveState(env.ASSETS, sessionId, state);
         return stateResponse(answer, sessionId);

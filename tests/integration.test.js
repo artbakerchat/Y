@@ -256,7 +256,7 @@ test('empty palette: get_palette returns empty message, cycle completes', async 
 // ---------------------------------------------------------------------------
 // TEST 3 — Critical path: daily rate-limit enforcement
 //
-// Pre-load a session that has already hit its daily limit (count = 8).
+// Pre-load a session that has already hit its daily limit (count = 20).
 // The Worker must return 429 without calling Bedrock at all.
 // ---------------------------------------------------------------------------
 test('rate limit: 429 when daily limit already reached', async () => {
@@ -270,7 +270,7 @@ test('rate limit: 429 when daily limit already reached', async () => {
     messages: [],
     pendingPrompt: '',
     printer: { note: '', images: [null, null, null] },
-    rate: { day: today, count: 8 },  // already at the limit
+    rate: { day: today, count: 20 },  // already at the limit
     expiresAt: Date.now() + 48 * 60 * 60 * 1000,
   });
   const bucket = createMockBucket({
@@ -299,14 +299,14 @@ test('rate limit: 429 when daily limit already reached', async () => {
   const body = await response.json();
   assert.ok(body.error, 'Response must include an error field');
   assert.match(body.error, /daily request limit/i, 'Error must mention daily limit');
-  assert.equal(body.limit, 8, 'Response must include the numeric limit');
+  assert.equal(body.limit, 20, 'Response must include the numeric limit');
   assert.equal(fetchCalled, false, 'Bedrock must NOT be called when rate-limited');
 
   // Rate counter must NOT have been incremented.
   const savedRaw = bucket._store.get('sessions/maxed-session.json');
   if (savedRaw) {
     const saved = JSON.parse(savedRaw);
-    assert.equal(saved.rate.count, 8, 'Rate counter must not increment past limit');
+    assert.equal(saved.rate.count, 20, 'Rate counter must not increment past limit');
   }
 });
 
