@@ -304,7 +304,7 @@ function AgentRoles({ activeAgentId, agentMode, onSelect }: { activeAgentId: str
         {contextualAgentRoles.map((role, index) => (
           <button className={`role-card role-card-${(index % 5) + 1}${activeAgentId === role.id ? ' is-active' : ''}`} key={role.id} type="button" onClick={() => { if (suppressClickRef.current) { suppressClickRef.current = false; return; } onSelect(role.id); }} aria-label={`Select ${role.name}`} aria-pressed={agentMode === 'manual' && activeAgentId === role.id}>
             <span className="role-index">{String(index + 1).padStart(2, '0')}</span>
-            <h3>{role.name}{RECOMMENDED_AGENT_IDS.includes(role.id) ? <span className="role-recommended">Recommended</span> : null}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
+            <h3>{role.name}{agentMode === 'manual' && activeAgentId === role.id ? <span className="role-selected">Pinned</span> : null}</h3>
             <p className="role-focus">{role.focus}</p>
             <p>{role.description}</p>
           </button>
