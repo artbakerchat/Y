@@ -98,6 +98,23 @@ def deterministic_sports_answer(prompt):
     return local_answer
 
 
+def deterministic_live_nfl_answer(prompt, recent_prompts=()):
+    """Answer current NFL schedule questions directly from ESPN's scoreboard."""
+    conversation = "\n".join([*recent_prompts[-4:], prompt])
+    if not re.search(r"\bnfl\b", conversation, re.I) or not re.search(r"\b(today(?:'s|s)?|game|schedule|team)\b", conversation, re.I):
+        return None
+    if is_prediction_request(prompt):
+        return None
+    result = fetch_nfl_scoreboard(datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat())
+    if not result.startswith("ESPN NFL scoreboard API for"):
+        return None
+    lines = result.splitlines()[1:]
+    words = [word for word in re.findall(r"[a-z0-9]+", prompt.lower()) if len(word) > 3 and word not in {"today", "game", "which", "team", "playing"}]
+    if words:
+        lines = [line for line in lines if any(word in line.lower() for word in words)]
+    return "\n".join(lines) if lines else None
+
+
 def local_time_context():
     """Return an explicit clock reading so relative dates use the user's timezone."""
     timezone_name = os.getenv("USER_TIMEZONE", "America/Vancouver")
@@ -276,6 +293,11 @@ async def chat(agent):
             deterministic_answer = deterministic_sports_answer(prompt)
             if deterministic_answer:
                 print(f"\nclaude> {deterministic_answer}\n")
+                print(format_usage_report(agent.model.config.get("model_id", args.model if "args" in locals() else "unknown"), usage))
+                continue
+            live_deterministic_answer = deterministic_live_nfl_answer(prompt, recent_prompts[:-1])
+            if live_deterministic_answer:
+                print(f"\nclaude> {live_deterministic_answer}\n")
                 print(format_usage_report(agent.model.config.get("model_id", args.model if "args" in locals() else "unknown"), usage))
                 continue
             evidence = await live_context(prompt, recent_prompts[:-1])

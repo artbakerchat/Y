@@ -7,7 +7,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "ForgeAgent"))
-from terminal import deterministic_sports_answer, needs_live_search, worker_gateway_state
+from terminal import deterministic_live_nfl_answer, deterministic_sports_answer, needs_live_search, worker_gateway_state
 from terminal_tools import fetch_nfl_scoreboard, sync_nfl_schedule_json
 
 
@@ -32,6 +32,17 @@ class TerminalSearchTests(unittest.TestCase):
     def test_missing_local_nfl_record_falls_through_to_live_search(self):
         with patch("terminal.answer_sports", return_value="The requested date is 2026-09-14. No NFL game is listed for that date in the local dataset; this does not verify the real-world schedule."):
             self.assertIsNone(deterministic_sports_answer("today's NFL game"))
+
+    def test_current_nfl_question_lists_scoreboard_games(self):
+        with patch("terminal.fetch_nfl_scoreboard", return_value="ESPN NFL scoreboard API for 2026-09-14:\n- Denver Broncos at Kansas City Chiefs; status: Scheduled; score: ?-?; venue: Arrowhead Stadium."):
+            result = deterministic_live_nfl_answer("today's NFL game")
+        self.assertIn("Denver Broncos at Kansas City Chiefs", result)
+
+    def test_nfl_team_followup_filters_current_scoreboard(self):
+        with patch("terminal.fetch_nfl_scoreboard", return_value="ESPN NFL scoreboard API for 2026-09-14:\n- Denver Broncos at Kansas City Chiefs; status: Scheduled; score: ?-?; venue: Arrowhead Stadium.\n- Seattle Seahawks at New England Patriots; status: Scheduled; score: ?-?; venue: Gillette Stadium."):
+            result = deterministic_live_nfl_answer("Bronco", ["today's nfl game"])
+        self.assertIn("Denver Broncos at Kansas City Chiefs", result)
+        self.assertNotIn("Seattle Seahawks", result)
 
     def test_nfl_scoreboard_api_formats_current_games(self):
         payload = {

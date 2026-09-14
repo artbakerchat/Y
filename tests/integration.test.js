@@ -88,6 +88,19 @@ test('NFL date questions use Worker-owned live providers when local data is miss
   assert.ok(requestedBodies.some((request) => request.tools?.some((tool) => tool.type === 'google_search')));
 });
 
+test('NFL date questions use the public scoreboard when provider keys are absent', async () => {
+  const worker = await loadWorker();
+  const bucket = createMockBucket({
+    'sports/sports_data.json': JSON.stringify({ updated_at: '2026-09-14', games: [], standings: [] }),
+  });
+  const requests = [];
+  await withMockFetch([], () => worker.fetch(
+    makeAskRequest({ message: 'Which NFL team is playing today?' }),
+    makeEnv(bucket),
+  ), (request) => requests.push(request));
+  assert.ok(requests.some((request) => typeof request.url === 'string' && request.url.includes('site.api.espn.com')));
+});
+
 test('NFL follow-ups keep using Worker-owned providers with conversational context', async () => {
   const worker = await loadWorker();
   const bucket = createMockBucket({
@@ -177,8 +190,8 @@ function createMockBucket(initialObjects = {}) {
 function withMockFetch(responseQueue, fn, observe = () => {}) {
   const queue = [...responseQueue];
   const original = globalThis.fetch;
-  globalThis.fetch = async (_url, _opts) => {
-    observe(JSON.parse(_opts.body));
+  globalThis.fetch = async (url, _opts) => {
+    observe(_opts?.body ? JSON.parse(_opts.body) : { url: String(url) });
     const payload = queue.shift() ?? bedrockEndTurnResponse('Default mock response.');
     // Simulate a successful HTTP response wrapping the Converse JSON.
     return {

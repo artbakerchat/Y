@@ -434,12 +434,57 @@ async function searchGeminiSports(query, env) {
   }
 }
 
+async function fetchNflScoreboardEvidence(query) {
+  if (!/\bnfl\b/i.test(query)) return 'Not applicable.';
+  const target = localVancouverDate().replaceAll('-', '');
+  try {
+    const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${target}`, {
+      signal: AbortSignal.timeout(15000),
+      headers: { accept: 'application/json', 'user-agent': 'ForgeAgent/1.0 (+https://larboard.ca)' },
+    });
+    if (!response.ok) return `ESPN NFL scoreboard failed (${response.status}).`;
+    const body = await response.json();
+    const games = (body.events || []).flatMap((event) => {
+      const competition = event.competitions?.[0];
+      const competitors = competition?.competitors || [];
+      const away = competitors.find((item) => item.homeAway === 'away');
+      const home = competitors.find((item) => item.homeAway === 'home');
+      if (!away?.team?.displayName || !home?.team?.displayName) return [];
+      const status = competition.status?.type?.description || event.status?.type?.description || 'Scheduled';
+      const scores = away.score != null && home.score != null ? ` (${away.score}-${home.score})` : '';
+      return [`${away.team.displayName} at ${home.team.displayName}: ${status}${scores}.`];
+    });
+    return games.length
+      ? `ESPN NFL scoreboard for ${localVancouverDate()} (live schedule source):\n${games.join('\n')}`
+      : `ESPN NFL scoreboard returned no games for ${localVancouverDate()}.`;
+  } catch (error) {
+    return `ESPN NFL scoreboard failed: ${error instanceof Error ? error.message.slice(0, 120) : 'request error'}`;
+  }
+}
+
+async function simpleLiveNflAnswer(message, history = []) {
+  const conversation = [message, ...history.filter((item) => item?.role === 'user').map((item) => item.content)].join('\n');
+  if (!/\bnfl\b/i.test(conversation) || !/\b(today(?:'s|s)?|game|schedule|team)\b/i.test(conversation) || isSportsPredictionRequest(message)) return null;
+  const evidence = await fetchNflScoreboardEvidence(conversation);
+  if (!evidence.startsWith('ESPN NFL scoreboard for ')) return null;
+  const lines = evidence.split('\n').slice(1).filter(Boolean);
+  const words = String(message).toLowerCase().match(/[a-z0-9]+/g) || [];
+  const teamWords = words.filter((word) => word.length > 3 && !['today', 'game', 'which', 'team', 'playing'].includes(word));
+  const matching = teamWords.length ? lines.filter((line) => teamWords.some((word) => line.toLowerCase().includes(word))) : lines;
+  return matching.length ? matching.join('\n') : teamWords.length ? null : lines.join('\n');
+}
+
 async function liveSportsEvidence(query, env) {
-  const [openai, gemini] = await Promise.all([searchOpenAISports(query, env), searchGeminiSports(query, env)]);
+  // Keep a public scoreboard fallback so a missing provider key does not turn
+  // a straightforward current NFL schedule question into a refusal.
+  const scoreboard = fetchNflScoreboardEvidence(query);
+  const [openai, gemini, nflScoreboard] = await Promise.all([
+    searchOpenAISports(query, env), searchGeminiSports(query, env), scoreboard,
+  ]);
   const unavailable = (value) => /not configured|failed|returned no evidence/i.test(value);
   const openaiStatus = unavailable(openai) ? 'unavailable' : 'used';
   const geminiStatus = unavailable(gemini) ? 'unavailable' : 'used';
-  return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
+  return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[ESPN NFL scoreboard]\n${nflScoreboard}\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
 }
 
 async function sportsEvidenceFromRequest(request, env) {
@@ -990,12 +1035,16 @@ export default {
         // Route to AgentCore if configured, otherwise run the local agent loop.
         const sportsData = profile.toolNames.includes('local_sports_lookup') ? await loadSportsData(env) : null;
         const fastAnswer = profile.id === 'forge' ? simpleSportsDateAnswer(message, sportsData) : null;
-        if (fastAnswer) {
+        const liveFastAnswer = profile.id === 'forge' && !fastAnswer && isLiveSportsRequest(message, state.messages)
+          ? await simpleLiveNflAnswer(message, state.messages)
+          : null;
+        if (fastAnswer || liveFastAnswer) {
+          const resolvedAnswer = fastAnswer || liveFastAnswer;
           state.rates[profile.id].count += 1;
           state.rate = state.rates[profile.id];
-          state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: fastAnswer, createdAt: new Date().toISOString() }];
+          state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: resolvedAnswer, createdAt: new Date().toISOString() }];
           await saveState(env.ASSETS, sessionId, state);
-          return stateResponse({ answer: fastAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
+          return stateResponse({ answer: resolvedAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
         }
         // Only profiles explicitly authorized for sports may receive live
         // provider evidence. The keys remain Worker secrets and are never
