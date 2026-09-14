@@ -1,4 +1,4 @@
-"""Offline sports agent backed by a local, timestamped JSON dataset."""
+"""Sports agent backed by local data with live ESPN NFL date lookups."""
 
 import json
 import os
@@ -134,7 +134,7 @@ def _recap_team_matches(data, prompt):
 
 
 def _requested_date(prompt, data):
-    """Resolve simple relative or month/day dates against the dataset date."""
+    """Resolve relative dates against the current calendar, not stale data metadata."""
     updated = data.get("updated_at", "")
     try:
         reference = date.fromisoformat(updated)
@@ -142,9 +142,9 @@ def _requested_date(prompt, data):
         reference = date.today()
     text = prompt.lower()
     if re.search(r"\btomorrow(?:'s|s)?\b", text):
-        return reference + timedelta(days=1)
+        return date.today() + timedelta(days=1)
     if re.search(r"\btoday(?:'s|s)?\b", text):
-        return reference
+        return date.today()
     match = re.search(
         r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
         r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
