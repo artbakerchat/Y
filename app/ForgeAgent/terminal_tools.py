@@ -19,6 +19,7 @@ from conversation_policy import with_conversation_policy
 
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".data", "dist"}
 _SEARCH_TIMEOUT_SECONDS = float(os.getenv("LIVE_SEARCH_TIMEOUT_SECONDS", "30"))
+_NFL_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 _PLAY_BY_PLAY_REQUEST = ContextVar("play_by_play_request", default=False)
 _WORKER_HEADERS = {
     "accept": "application/json",
@@ -50,6 +51,118 @@ def search_live_web_via_worker(query: str) -> str | None:
         return str(payload.get("evidence", "Worker returned no live evidence."))
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
         return f"Cloudflare Worker sports search failed: {type(error).__name__}: {error}"
+
+
+def _fetch_nfl_scoreboard_payload(game_date: str):
+    """Fetch and validate one date from ESPN's public NFL scoreboard API."""
+    try:
+        target = date.fromisoformat(game_date)
+    except ValueError:
+        return None, None, "NFL scoreboard API unavailable: invalid date."
+    query_date = target.strftime("%Y%m%d")
+    request = urllib.request.Request(
+        f"{_NFL_SCOREBOARD_URL}?dates={query_date}",
+        headers={"accept": "application/json", "user-agent": "ForgeAgent/1.0 (+https://larboard.ca)"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return target, None, f"NFL scoreboard API failed: {type(error).__name__}: {error}"
+    if not isinstance(payload, dict):
+        return target, None, "NFL scoreboard API failed: response was not an object."
+    return target, payload, None
+
+
+def _nfl_api_games(target, payload):
+    """Convert ESPN scoreboard events to the repository's local game shape."""
+    games = []
+    for event in payload.get("events", []):
+        competitions = event.get("competitions") or []
+        competition = competitions[0] if competitions else {}
+        competitors = competition.get("competitors") or []
+        by_side = {item.get("homeAway"): item for item in competitors}
+        away = by_side.get("away", {})
+        home = by_side.get("home", {})
+        if not away.get("team", {}).get("displayName") or not home.get("team", {}).get("displayName"):
+            continue
+        status_type = (competition.get("status") or event.get("status") or {}).get("type", {})
+        status_name = str(status_type.get("name") or status_type.get("description", "scheduled")).lower()
+        status = "final" if status_name in {"status_final", "final"} else "in_progress" if "progress" in status_name or status_name in {"in", "live"} else "scheduled"
+        link_items = event.get("links") or []
+        source_url = link_items[0].get("href", "") if link_items else ""
+        game = {
+            "league": "NFL",
+            "date": target.isoformat(),
+            "away": away["team"]["displayName"],
+            "home": home["team"]["displayName"],
+            "status": status,
+            "venue": (competition.get("venue") or {}).get("fullName", "venue not listed"),
+            "source_urls": [source_url] if source_url.startswith(("https://", "http://")) else [],
+        }
+        if status in {"final", "in_progress"}:
+            try:
+                game["away_score"] = int(away.get("score", 0))
+                game["home_score"] = int(home.get("score", 0))
+            except (TypeError, ValueError):
+                pass
+        games.append(game)
+    return games
+
+
+def fetch_nfl_scoreboard(game_date: str) -> str:
+    """Fetch the NFL scoreboard from ESPN's public schedule API.
+
+    This is deliberately independent of the local JSON snapshot and provider
+    search credentials, so a stale local dataset cannot suppress a current
+    schedule lookup.
+    """
+    target, payload, error = _fetch_nfl_scoreboard_payload(game_date)
+    if error:
+        return error
+    games = _nfl_api_games(target, payload)
+    if not games:
+        return f"ESPN NFL scoreboard API: no games returned for {target.isoformat()}."
+    lines = [f"ESPN NFL scoreboard API for {target.isoformat()}:"]
+    for game in games:
+        status = game["status"].replace("_", " ").title()
+        scores = f"{game.get('away_score', '?')}-{game.get('home_score', '?')}"
+        lines.append(
+            f"- {game['away']} at {game['home']}; status: {status}; score: {scores}; venue: {game['venue']}."
+        )
+    return "\n".join(lines)
+
+
+def sync_nfl_schedule_json(game_date: str, repository: Path | None = None) -> str:
+    """Merge one API-backed NFL date into the local sports JSON.
+
+    Existing final records are preserved. Scheduled or in-progress records for
+    the same matchup are refreshed, and new API games are appended.
+    """
+    target, payload, error = _fetch_nfl_scoreboard_payload(game_date)
+    if error:
+        return error
+    api_games = _nfl_api_games(target, payload)
+    data_path = (repository or Path(__file__).resolve().parent) / "sports_data.json"
+    try:
+        data = json.loads(data_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as read_error:
+        return f"Local sports JSON update failed: {type(read_error).__name__}: {read_error}"
+    if not isinstance(data, dict) or not isinstance(data.get("games"), list):
+        return "Local sports JSON update failed: games array is missing."
+    changed = 0
+    added = 0
+    for api_game in api_games:
+        match = next((item for item in data["games"] if item.get("league") == "NFL" and item.get("date") == api_game["date"] and item.get("away") == api_game["away"] and item.get("home") == api_game["home"]), None)
+        if match is None:
+            data["games"].append(api_game)
+            added += 1
+        elif match.get("status") != "final":
+            match.update(api_game)
+            changed += 1
+    data["updated_at"] = target.isoformat()
+    data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return f"Updated {data_path.name}: {added} NFL game(s) added and {changed} non-final game(s) refreshed for {target.isoformat()}. Existing final records were preserved."
 
 
 def worker_agent_request(prompt: str, agent_id: str = "forge", session_id: str = "local-terminal") -> str:
@@ -236,12 +349,15 @@ def build_repository_tools(root: Path | None = None):
     def nfl_workflow(start_date: str = "") -> str:
         """Track the NFL schedule, live games, and completed results from a date onward.
 
-        This returns a current web-backed snapshot. It does not claim scheduled
-        games are final and does not create files by itself.
+        This fetches the public NFL scoreboard API plus OpenAI/Gemini web
+        evidence. It also merges the requested date's API schedule into the
+        local sports_data.json, preserving existing final records.
         Args:
             start_date: Optional ISO date; defaults to today's America/Vancouver date.
         """
-        return build_nfl_workflow_evidence(start_date)
+        evidence = build_nfl_workflow_evidence(start_date)
+        target = start_date or datetime.now(ZoneInfo("America/Vancouver")).date().isoformat()
+        return f"{evidence}\n\nLOCAL JSON ADJUSTMENT\n{sync_nfl_schedule_json(target)}"
 
     @tool
     def write_nfl_results_json(game_date: str, records_json: str) -> str:
@@ -528,6 +644,8 @@ def build_nfl_workflow_evidence(start_date: str = "") -> str:
     return (
         "NFL WORKFLOW SNAPSHOT — live evidence, not a final JSON record\n"
         f"Start date: {target.isoformat()}\n\n"
+        "[NFL scoreboard API]\n"
+        f"{fetch_nfl_scoreboard(target.isoformat())}\n\n"
         "[OpenAI live web search]\n"
         f"{search_live_web_openai(query)}\n\n"
         "[Gemini Google Search]\n"

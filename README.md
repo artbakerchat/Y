@@ -157,7 +157,7 @@ Detailed play-by-play is opt-in: when a user explicitly requests play-by-play or
 
 After games finish, use `nfl_results_evidence` followed by `write_nfl_results_json`. The writer creates an immutable `app/ForgeAgent/sports_data_YYYY-MM-DD.json` file and requires final scores, prediction-versus-actual fields, source URLs, and an uncertainty note for every NFL game.
 
-Saying `NFL workflow` requests a live snapshot of every NFL game from today onward in `America/Vancouver` time, separating scheduled, in-progress, and final games. It is request-based tracking; rerun it for updates or connect it to an external scheduler.
+Saying `NFL workflow` requests a live snapshot of every NFL game from today onward in `America/Vancouver` time, using the public ESPN NFL scoreboard API plus OpenAI and Gemini web evidence. It separates scheduled, in-progress, and final games, then merges that date's API schedule into `app/ForgeAgent/sports_data.json`; existing final records are preserved and new/non-final games are refreshed. Rerun it for updates or connect it to an external scheduler.
 
 ## API overview
 

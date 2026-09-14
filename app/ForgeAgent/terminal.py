@@ -28,6 +28,7 @@ from terminal_tools import (
     build_prediction_evidence,
     build_nfl_workflow_evidence,
     build_repository_tools,
+    fetch_nfl_scoreboard,
     search_live_web_gemini,
     search_live_web_openai,
     search_live_web_via_worker,
@@ -164,6 +165,12 @@ async def live_context(prompt, prior_prompts=()):
         return "\n\n" + await asyncio.to_thread(build_prediction_evidence, grounded_prompt)
     # Prefer provider keys loaded from the repository .env. The Worker remains
     # the fallback when no local OpenAI/Gemini key is configured.
+    nfl_api_result = None
+    if re.search(r"\bnfl\b", prompt, re.IGNORECASE):
+        nfl_api_result = await asyncio.to_thread(
+            fetch_nfl_scoreboard,
+            datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat(),
+        )
     worker_result = None
     if not local_live_search_configured():
         worker_result = await asyncio.to_thread(search_live_web_via_worker, grounded_prompt)
@@ -182,6 +189,7 @@ async def live_context(prompt, prior_prompts=()):
     return (
         "\n\nVERIFIED SPORTS AND LIVE WEB RESULTS (use as evidence; do not invent missing facts):\n"
         f"[Local JSON lookup — authoritative when matching]\n{local_result[:9000]}\n\n"
+        f"[NFL scoreboard API]\n{nfl_api_result[:9000] if nfl_api_result else 'Not applicable.'}\n\n"
         f"[OpenAI web search]\n{openai_result[:9000]}\n\n"
         f"[Gemini Google Search]\n{gemini_result[:9000]}\n"
     )
@@ -198,10 +206,11 @@ def build_agent(model_id, region, max_tokens):
         "the repository, or whether something exists locally, you MUST use the repository "
         "tools before answering. For a question about a local sports agent, search filenames for "
         "sports first, then report the matching path. Never claim that you cannot access the repository "
-        "when the repository tools are available. For sports questions, local_sports_lookup and its "
-        "local JSON dataset are the primary source of truth; use them first and never override their "
-        "records with model memory or web results. If the local tool reports no matching record, say "
-        "that plainly, but never infer from that absence that no real-world game occurred. For current "
+        "when the repository tools are available. For sports questions, use local_sports_lookup and its "
+        "local JSON dataset first; matching local records are authoritative and must not be overridden "
+        "by model memory or web results. If the local tool reports no matching record, treat that as a "
+        "stale-data signal and use the supplied scoreboard API and live-web results to answer the current "
+        "question. Mention the local-data gap only when useful. For current "
         "or time-sensitive questions, use the supplied verified live-web "
         "results and cite their sources; do not claim that web access failed unless both result blocks "
         "report a failure. If the live results do not establish a game or other fact, say it cannot "
@@ -224,7 +233,9 @@ def build_agent(model_id, region, max_tokens):
         "the current schedule has no game today.",
         "If the user says NFL workflow, interpret it as every NFL game from today's local "
         "America/Vancouver date onward, and use the nfl_workflow evidence. Track scheduled, live, "
-        "and final statuses separately; only final games may be written to dated JSON files.",
+        "and final statuses separately. The workflow also refreshes local sports_data.json from the "
+        "scoreboard API while preserving existing final records; only final games may be written to "
+        "dated result JSON files.",
         "For completed NFL games, use nfl_results_evidence before writing records. Extract only "
         "facts supported by its live sources, then use write_nfl_results_json to create one dated "
         "file per game date. Never record a scheduled or unverified game as final.",

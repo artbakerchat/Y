@@ -35,6 +35,8 @@ def _format_game(game):
     matchup = f'{game["away"]} at {game["home"]} on {game["date"]}'
     if game.get("status") == "final":
         return f'{matchup}: {game["away"]} {game["away_score"]}, {game["home"]} {game["home_score"]}.'
+    if game.get("status") == "in_progress":
+        return f'{matchup}: in progress at {game.get("venue", "venue not listed")} ({game.get("away_score", "?")}-{game.get("home_score", "?")}).'
     return f'{matchup}: scheduled at {game.get("venue", "venue not listed")}.'
 
 
