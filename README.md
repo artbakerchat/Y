@@ -134,7 +134,7 @@ npm run claude
 
 It uses shell exports (default model `ca.amazon.nova-lite-v1:0` in `ca-central-1`), keeps conversation history for the session, and accepts `/exit` or Ctrl-D. You can select another Nova model or inference profile with `npm run claude -- --model MODEL_ID --region AWS_REGION`. Bedrock model access and `bedrock:InvokeModel` permission must be enabled for the selected model/profile; availability varies by region.
 
-Configure the terminal without `.env`:
+Configure the terminal with shell exports or a repository `.env` file:
 
 ```bash
 export AWS_REGION=ca-central-1
@@ -143,7 +143,7 @@ export OPENAI_API_KEY='your-key'
 export GEMINI_API_KEY='your-key'
 ```
 
-For the standard local-agent path, do not put provider keys in `.env`. Set `FORGE_WORKER_URL` and `FORGE_WORKER_TOKEN` instead; the terminal sends complete turns to the Worker, which owns Bedrock, OpenAI, and Gemini credentials. `OPENAI_SEARCH_MODEL` and `GEMINI_SEARCH_MODEL` remain Worker configuration values. The sports evidence reports whether each provider was used or unavailable, and the agent tells the user when a provider could not contribute. The local sports JSON remains authoritative when it contains a matching record.
+For local sports searches, repository `.env` provider keys take priority over the Worker gateway. If a local `OPENAI_API_KEY` or `GEMINI_API_KEY` is present, the terminal calls the configured provider directly and reports any provider that is missing or unavailable. If neither local key is present, it falls back to `FORGE_WORKER_URL` and `FORGE_WORKER_TOKEN`; the Worker then owns Bedrock, OpenAI, and Gemini credentials. The local sports JSON remains authoritative when it contains a matching record.
 
 To keep provider keys only in Cloudflare, set `FORGE_WORKER_URL=https://larboard.ca` and a local `FORGE_WORKER_TOKEN` in `.env`, then store the same value as the Worker secret `FORGE_WORKER_TOKEN`. The local Python terminal calls `POST /api/agent-gateway` for all agent turns; sports evidence uses the Worker’s `POST /api/sports/evidence` path internally. Direct local Bedrock is available only with the explicit `--direct-bedrock` option.
 

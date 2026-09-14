@@ -325,10 +325,13 @@ async def invoke(payload: dict[str, Any], context: Any):
                 native_sessions = _session_bucket() is not None
                 history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages]
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
-                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, payload.get("sports_data"), payload.get("sports_live_evidence", ""))
+                profile_tools = set(get_tool_names(profile_id))
+                sports_data = payload.get("sports_data") if "local_sports_lookup" in profile_tools else None
+                sports_live_evidence = payload.get("sports_live_evidence", "") if "sports_prediction" in profile_tools else ""
+                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, sports_data, sports_live_evidence)
                 answer = await answer_request(
                     agent,
-                    _prompt_with_live_sports_evidence(prompt, payload.get("sports_live_evidence", "")),
+                    _prompt_with_live_sports_evidence(prompt, sports_live_evidence),
                 )
                 if not native_sessions:
                     _save_messages(session_id, messages + [

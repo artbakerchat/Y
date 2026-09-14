@@ -997,9 +997,11 @@ export default {
           await saveState(env.ASSETS, sessionId, state);
           return stateResponse({ answer: fastAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
         }
-        // Current sports lookups need the Worker-owned provider credentials too;
-        // otherwise a missing R2 row is incorrectly presented as a missing API key.
-        const sportsLiveEvidence = (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages))
+        // Only profiles explicitly authorized for sports may receive live
+        // provider evidence. The keys remain Worker secrets and are never
+        // exposed to the browser or unrelated agents.
+        const sportsAuthorized = profile.toolNames.includes('sports_prediction');
+        const sportsLiveEvidence = sportsAuthorized && (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages))
           ? await liveSportsEvidence(liveSportsQuery(message, state.messages), env)
           : '';
         const answer = env.AGENTCORE_RUNTIME_ARN

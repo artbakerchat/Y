@@ -27,6 +27,11 @@ _WORKER_HEADERS = {
 }
 
 
+def local_live_search_configured() -> bool:
+    """Return whether local .env/provider credentials are available."""
+    return bool(os.getenv("OPENAI_API_KEY", "").strip() or os.getenv("GEMINI_API_KEY", "").strip())
+
+
 def search_live_web_via_worker(query: str) -> str | None:
     """Ask the Cloudflare Worker to perform both provider searches server-side."""
     worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
@@ -304,10 +309,11 @@ def build_repository_tools(root: Path | None = None):
 
 def search_live_web_openai(query: str) -> str:
     """Perform an OpenAI web lookup outside the model's optional tool loop."""
-    worker_result = search_live_web_via_worker(query)
-    if worker_result is not None:
-        return worker_result
     if not os.getenv("OPENAI_API_KEY"):
+        if not local_live_search_configured():
+            worker_result = search_live_web_via_worker(query)
+            if worker_result is not None:
+                return worker_result
         return "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
     try:
         from openai import OpenAI
@@ -328,10 +334,11 @@ def search_live_web_openai(query: str) -> str:
 
 def search_live_web_gemini(query: str) -> str:
     """Perform a Gemini Google Search lookup outside the model's optional tool loop."""
-    worker_result = search_live_web_via_worker(query)
-    if worker_result is not None:
-        return worker_result
     if not os.getenv("GEMINI_API_KEY"):
+        if not local_live_search_configured():
+            worker_result = search_live_web_via_worker(query)
+            if worker_result is not None:
+                return worker_result
         return "Gemini web search is not configured (GEMINI_API_KEY is missing)."
     try:
         from google import genai
@@ -358,7 +365,7 @@ def search_live_web_gemini(query: str) -> str:
 def build_prediction_evidence(query: str) -> str:
     """Combine local prediction inputs with supplemental live provider evidence."""
     local = json.dumps(prediction_inputs(query), ensure_ascii=False, indent=2)
-    live = search_live_web_via_worker(query)
+    live = None if local_live_search_configured() else search_live_web_via_worker(query)
     if live is None:
         live = (
             f"[OpenAI live web search — supplemental]\n{search_live_web_openai(query)}\n\n"

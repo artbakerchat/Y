@@ -31,6 +31,7 @@ from terminal_tools import (
     search_live_web_gemini,
     search_live_web_openai,
     search_live_web_via_worker,
+    local_live_search_configured,
     worker_agent_request,
     set_play_by_play_request,
 )
@@ -161,7 +162,11 @@ async def live_context(prompt, prior_prompts=()):
         )
     if is_prediction_request(prompt):
         return "\n\n" + await asyncio.to_thread(build_prediction_evidence, grounded_prompt)
-    worker_result = await asyncio.to_thread(search_live_web_via_worker, grounded_prompt)
+    # Prefer provider keys loaded from the repository .env. The Worker remains
+    # the fallback when no local OpenAI/Gemini key is configured.
+    worker_result = None
+    if not local_live_search_configured():
+        worker_result = await asyncio.to_thread(search_live_web_via_worker, grounded_prompt)
     if worker_result is not None:
         local_result, openai_result, gemini_result = await asyncio.gather(
             asyncio.to_thread(answer_sports, grounded_prompt),
