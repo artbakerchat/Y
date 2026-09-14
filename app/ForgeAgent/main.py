@@ -66,6 +66,17 @@ def _prompt_from(payload: Any) -> str:
     return prompt
 
 
+def _prompt_with_live_sports_evidence(prompt: str, evidence: str) -> str:
+    """Attach Worker-fetched sports evidence as reference data for the answer turn."""
+    if not isinstance(evidence, str) or not evidence.strip():
+        return prompt
+    return (
+        f"{prompt}\n\n"
+        "VERIFIED LIVE SPORTS EVIDENCE (reference data; do not invent missing facts):\n"
+        f"{evidence[:12000]}"
+    )
+
+
 def _palette_from(payload: dict[str, Any]) -> list[str]:
     palette = payload.get("palette", [])
     if not isinstance(palette, list):
@@ -315,7 +326,10 @@ async def invoke(payload: dict[str, Any], context: Any):
                 history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages]
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
                 agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, payload.get("sports_data"), payload.get("sports_live_evidence", ""))
-                answer = await answer_request(agent, prompt)
+                answer = await answer_request(
+                    agent,
+                    _prompt_with_live_sports_evidence(prompt, payload.get("sports_live_evidence", "")),
+                )
                 if not native_sessions:
                     _save_messages(session_id, messages + [
                         {"role": "user", "content": prompt},

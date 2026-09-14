@@ -65,6 +65,12 @@ class HarnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             main._profile_id_from({"agent_id": "unknown"})
 
+    def test_live_sports_evidence_is_added_to_answer_request(self):
+        prompt = main._prompt_with_live_sports_evidence("Today's NFL game?", "PROVIDER USAGE: Gemini Google Search=used.")
+        self.assertIn("Today's NFL game?", prompt)
+        self.assertIn("PROVIDER USAGE: Gemini Google Search=used.", prompt)
+        self.assertEqual(main._prompt_with_live_sports_evidence("Hello", ""), "Hello")
+
     def test_stream_contract_and_profile_isolation(self):
         async def exercise():
             sessions = []

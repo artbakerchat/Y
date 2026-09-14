@@ -49,6 +49,10 @@ _CURRENT_INFORMATION_TERMS = re.compile(
     r"monday|tuesday|wednesday|thursday|friday|saturday|sunday|workflow)\b",
     re.IGNORECASE,
 )
+_EXPLICIT_LIVE_SEARCH_TERMS = re.compile(
+    r"\b(?:search|searched|searching|web|internet|online|google|gemini|openai)\b",
+    re.IGNORECASE,
+)
 _DATED_QUERY = re.compile(
     r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
     r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
@@ -59,7 +63,11 @@ _DATED_QUERY = re.compile(
 
 def needs_live_search(prompt):
     """Identify requests whose answer can change and should be grounded first."""
-    return bool(_CURRENT_INFORMATION_TERMS.search(prompt) or _DATED_QUERY.search(prompt))
+    return bool(
+        _CURRENT_INFORMATION_TERMS.search(prompt)
+        or _EXPLICIT_LIVE_SEARCH_TERMS.search(prompt)
+        or _DATED_QUERY.search(prompt)
+    )
 
 
 def is_prediction_request(prompt):
@@ -82,7 +90,10 @@ def deterministic_sports_answer(prompt):
         and not re.search(r"\b(score|result|standings|schedule|news|live|predict\w*|forecast|odds|gemini|google|web|online|internet|search)\b", prompt, re.I)
     ):
         return None
-    return answer_sports(prompt)
+    local_answer = answer_sports(prompt)
+    if local_answer.startswith(("No matching local game record", "The requested date is ")):
+        return None
+    return local_answer
 
 
 def local_time_context():
@@ -94,6 +105,17 @@ def local_time_context():
         timezone_name = "America/Vancouver"
         now = datetime.now(ZoneInfo(timezone_name))
     return f"Local reference time: {now:%A, %B %-d, %Y at %-I:%M %p} ({timezone_name})."
+
+
+def worker_gateway_state():
+    """Describe whether the local terminal can use the Worker gateway."""
+    has_url = bool(os.getenv("FORGE_WORKER_URL", "").strip())
+    has_token = bool(os.getenv("FORGE_WORKER_TOKEN", "").strip())
+    if has_url and has_token:
+        return "configured"
+    if has_url or has_token:
+        return "incomplete"
+    return "missing"
 
 
 def stored_play_by_play_answer(prompt):
@@ -125,11 +147,13 @@ def stored_play_by_play_answer(prompt):
     return None
 
 
-async def live_context(prompt):
+async def live_context(prompt, prior_prompts=()):
     """Fetch both providers before invoking a model that may skip optional tools."""
     if not needs_live_search(prompt):
         return ""
-    grounded_prompt = f"{prompt}\n{local_time_context()} Resolve relative dates in this timezone."
+    prior_context = "\n".join(str(item).strip() for item in prior_prompts[-4:] if str(item).strip())
+    context_suffix = f"\nRecent conversation context:\n{prior_context}" if prior_context else ""
+    grounded_prompt = f"{prompt}{context_suffix}\n{local_time_context()} Resolve relative dates in this timezone."
     if is_nfl_workflow_request(prompt):
         return "\n\n" + await asyncio.to_thread(
             build_nfl_workflow_evidence,
@@ -210,6 +234,7 @@ def build_agent(model_id, region, max_tokens):
 
 async def chat(agent):
     print("Claude via Strands/Bedrock. Type /exit to quit, or press Ctrl-D.\n")
+    recent_prompts = []
     while True:
         try:
             prompt = input("you> ").strip()
@@ -221,6 +246,8 @@ async def chat(agent):
         if prompt.lower() in {"/exit", "/quit"}:
             return
         try:
+            recent_prompts.append(prompt)
+            recent_prompts = recent_prompts[-4:]
             result = None
             usage = {"inputTokens": 0, "outputTokens": 0, "totalTokens": 0}
             set_play_by_play_request(prompt)
@@ -235,7 +262,7 @@ async def chat(agent):
                 print(f"\nclaude> {deterministic_answer}\n")
                 print(format_usage_report(agent.model.config.get("model_id", args.model if "args" in locals() else "unknown"), usage))
                 continue
-            evidence = await live_context(prompt)
+            evidence = await live_context(prompt, recent_prompts[:-1])
             for attempt in range(3):
                 try:
                     continuation = (
@@ -300,7 +327,8 @@ def main():
         help="Maximum output tokens per model call (default: %(default)s)",
     )
     args = parser.parse_args()
-    if not args.direct_bedrock and os.getenv("FORGE_WORKER_URL") and os.getenv("FORGE_WORKER_TOKEN"):
+    gateway_state = worker_gateway_state()
+    if not args.direct_bedrock and gateway_state == "configured":
         print(f"Using Cloudflare Worker gateway: {os.getenv('FORGE_WORKER_URL')} ({args.agent})")
         session_id = f"local-{uuid.uuid4()}"
         print("Type /exit to quit, or press Ctrl-D.\n")
@@ -320,6 +348,10 @@ def main():
             except Exception as error:
                 print(f"\nerror> {error}\n", file=sys.stderr)
         return
+    if not args.direct_bedrock and gateway_state == "incomplete":
+        print("Worker gateway disabled: set both FORGE_WORKER_URL and FORGE_WORKER_TOKEN in .env; using direct Bedrock.", file=sys.stderr)
+    elif not args.direct_bedrock and gateway_state == "missing":
+        print("Worker gateway disabled: FORGE_WORKER_URL and FORGE_WORKER_TOKEN are not set; using direct Bedrock.", file=sys.stderr)
     print(f"Using model: {args.model} ({args.region})")
     try:
         asyncio.run(chat(build_agent(args.model, args.region, args.max_tokens)))

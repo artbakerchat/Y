@@ -20,6 +20,11 @@ from conversation_policy import with_conversation_policy
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".data", "dist"}
 _SEARCH_TIMEOUT_SECONDS = float(os.getenv("LIVE_SEARCH_TIMEOUT_SECONDS", "30"))
 _PLAY_BY_PLAY_REQUEST = ContextVar("play_by_play_request", default=False)
+_WORKER_HEADERS = {
+    "accept": "application/json",
+    "content-type": "application/json",
+    "user-agent": "ForgeAgent/1.0 (+https://larboard.ca)",
+}
 
 
 def search_live_web_via_worker(query: str) -> str | None:
@@ -31,7 +36,7 @@ def search_live_web_via_worker(query: str) -> str | None:
     request = urllib.request.Request(
         f"{worker_url}/api/sports/evidence",
         data=json.dumps({"query": query.strip()[:4000]}).encode("utf-8"),
-        headers={"content-type": "application/json", "x-forge-worker-token": worker_token},
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
         method="POST",
     )
     try:
@@ -51,7 +56,7 @@ def worker_agent_request(prompt: str, agent_id: str = "forge", session_id: str =
     request = urllib.request.Request(
         f"{worker_url}/api/agent-gateway",
         data=json.dumps({"prompt": prompt.strip()[:4000], "agent": agent_id, "session_id": session_id}).encode("utf-8"),
-        headers={"content-type": "application/json", "x-forge-worker-token": worker_token},
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
         method="POST",
     )
     try:

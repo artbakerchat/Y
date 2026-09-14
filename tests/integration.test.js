@@ -88,6 +88,24 @@ test('NFL date questions use Worker-owned live providers when local data is miss
   assert.ok(requestedBodies.some((request) => request.tools?.some((tool) => tool.type === 'google_search')));
 });
 
+test('NFL follow-ups keep using Worker-owned providers with conversational context', async () => {
+  const worker = await loadWorker();
+  const bucket = createMockBucket({
+    'sports/sports_data.json': JSON.stringify({ updated_at: '2026-09-14', games: [], standings: [] }),
+  });
+  const requestedBodies = [];
+  await withMockFetch([], async () => {
+    await worker.fetch(makeAskRequest({ message: "What's today's NFL game?" }), makeEnv(bucket, { OPENAI_API_KEY: 'openai-test-key', GEMINI_API_KEY: 'gemini-test-key' }));
+    await worker.fetch(makeAskRequest({ message: 'Ask Gemini API about the Denver Broncos.' }), makeEnv(bucket, { OPENAI_API_KEY: 'openai-test-key', GEMINI_API_KEY: 'gemini-test-key' }));
+  }, (body) => requestedBodies.push(body));
+  const openaiRequests = requestedBodies.filter((request) => request.tools?.some((tool) => tool.type === 'web_search_preview'));
+  const geminiRequests = requestedBodies.filter((request) => request.tools?.some((tool) => tool.type === 'google_search'));
+  assert.equal(openaiRequests.length, 2);
+  assert.equal(geminiRequests.length, 2);
+  assert.match(JSON.stringify(geminiRequests[1]), /Denver Broncos/);
+  assert.match(JSON.stringify(geminiRequests[1]), /today's NFL game/i);
+});
+
 // ---------------------------------------------------------------------------
 // MOCK FIXTURES
 // Realistic Bedrock Converse API responses for the happy-path scenario.

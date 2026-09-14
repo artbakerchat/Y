@@ -457,9 +457,24 @@ function isSportsPredictionRequest(message) {
     && /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(message);
 }
 
-function isLiveSportsRequest(message) {
-  return /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(message)
-    && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(message);
+function isLiveSportsRequest(message, history = []) {
+  const conversation = [message, ...history
+    .filter((item) => item?.role === 'user')
+    .map((item) => item.content)]
+    .join('\n');
+  return /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(conversation)
+    && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(conversation);
+}
+
+function liveSportsQuery(message, history = []) {
+  const priorUserMessages = history
+    .filter((item) => item?.role === 'user' && typeof item.content === 'string')
+    .slice(-4)
+    .map((item) => item.content.trim())
+    .filter(Boolean);
+  return priorUserMessages.length
+    ? `${message}\nRecent sports conversation:\n${priorUserMessages.join('\n')}`
+    : message;
 }
 
 function localVancouverDate() {
@@ -984,8 +999,8 @@ export default {
         }
         // Current sports lookups need the Worker-owned provider credentials too;
         // otherwise a missing R2 row is incorrectly presented as a missing API key.
-        const sportsLiveEvidence = (isSportsPredictionRequest(message) || isLiveSportsRequest(message))
-          ? await liveSportsEvidence(message, env)
+        const sportsLiveEvidence = (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages))
+          ? await liveSportsEvidence(liveSportsQuery(message, state.messages), env)
           : '';
         const answer = env.AGENTCORE_RUNTIME_ARN
           ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence)
