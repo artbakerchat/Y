@@ -240,7 +240,9 @@ def _agent_for_palette(
     profile_tool_names = set(get_tool_names(profile_id))
     profile_tools = [tool for tool in build_tools(palette, profile_id, sports_data, sports_live_evidence)
                      if getattr(tool, "__name__", "") in profile_tool_names
-                     and (profile_id != "forge" or _forge_tool_relevant(getattr(tool, "__name__", ""), supplied_text))]
+                     and (profile_id != "forge"
+                          or not supplied_text.strip()
+                          or _forge_tool_relevant(getattr(tool, "__name__", ""), supplied_text))]
 
     return Agent(
         model=configured_model(),
