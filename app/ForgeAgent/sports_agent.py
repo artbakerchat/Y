@@ -3,11 +3,14 @@
 import json
 import os
 import re
+import urllib.error
+import urllib.request
 from datetime import date, timedelta
 from pathlib import Path
 
 
 DEFAULT_DATA_PATH = Path(__file__).with_name("sports_data.json")
+_NFL_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 
 
 def load_data(path=None):
@@ -41,11 +44,70 @@ def _format_game(game):
 
 
 def _format_missing_game_date(requested_date):
-    """Answer date-focused game questions without turning missing data into a fact."""
+    """Return a clear live-data-only message when no ESPN NFL game exists for the requested date."""
     return (
         f"The requested date is {requested_date.isoformat()}. "
-        "No NFL game is listed for that date in the local dataset; this does not verify the real-world schedule."
+        "No live NFL game was found for that date in the ESPN schedule."
     )
+
+
+def _fetch_live_nfl_scoreboard(target_date):
+    """Fetch a single date of NFL games from ESPN's public scoreboard API."""
+    if not isinstance(target_date, date):
+        return []
+    request = urllib.request.Request(
+        f"{_NFL_SCOREBOARD_URL}?dates={target_date.strftime('%Y%m%d')}",
+        headers={"accept": "application/json", "user-agent": "ForgeAgent/1.0 (+https://larboard.ca)"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+
+    games = []
+    for event in payload.get("events", []):
+        competitions = event.get("competitions") or []
+        competition = competitions[0] if competitions else {}
+        competitors = competition.get("competitors") or []
+        by_side = {item.get("homeAway"): item for item in competitors}
+        away = by_side.get("away", {})
+        home = by_side.get("home", {})
+        away_name = away.get("team", {}).get("displayName")
+        home_name = home.get("team", {}).get("displayName")
+        if not away_name or not home_name:
+            continue
+        status_type = (competition.get("status") or event.get("status") or {}).get("type", {})
+        status_name = str(status_type.get("name") or status_type.get("description", "scheduled")).lower()
+        status = "final" if status_name in {"status_final", "final"} else "in_progress" if "progress" in status_name or status_name in {"in", "live"} else "scheduled"
+        game = {
+            "league": "NFL",
+            "date": target_date.isoformat(),
+            "away": away_name,
+            "home": home_name,
+            "status": status,
+            "venue": (competition.get("venue") or {}).get("fullName", "venue not listed"),
+        }
+        if status in {"final", "in_progress"}:
+            try:
+                game["away_score"] = int(away.get("score", 0))
+                game["home_score"] = int(home.get("score", 0))
+            except (TypeError, ValueError):
+                pass
+        games.append(game)
+    return games
+
+
+def _format_live_nfl_games(games):
+    if not games:
+        return "No NFL game is listed for that date in the live ESPN scoreboard."
+    lines = [
+        f"ESPN NFL scoreboard lists {len(games)} game(s) for {games[0]['date']}:"
+    ]
+    lines.extend(_format_game(game) for game in games)
+    return "\n".join(lines)
 
 
 def _format_recap(data):
@@ -81,7 +143,7 @@ def _requested_date(prompt, data):
     text = prompt.lower()
     if re.search(r"\btomorrow(?:'s|s)?\b", text):
         return reference + timedelta(days=1)
-    if re.search(r"\btoday\b", text):
+    if re.search(r"\btoday(?:'s|s)?\b", text):
         return reference
     match = re.search(
         r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
@@ -108,6 +170,12 @@ def answer(prompt, data=None):
     league = next((name for name in ("nhl", "mls", "nba", "nfl", "wnba", "mlb") if name in text), None)
 
     requested_date = _requested_date(prompt, data)
+    if "nfl" in text and requested_date is not None:
+        live_games = _fetch_live_nfl_scoreboard(requested_date)
+        if live_games:
+            return f"The requested date is {requested_date.isoformat()}. " + _format_live_nfl_games(live_games)
+        return _format_missing_game_date(requested_date)
+
     if (not requested_date and any(word in text for word in (
         "recap", "recaps", "finishers", "blowouts", "runaways", "drama",
         "touchdown", "game summary", "what happened",

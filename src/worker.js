@@ -1025,8 +1025,6 @@ export default {
           state.messages = [];
           state.pendingPrompt = '';
         }
-        if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
-        if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
         const today = new Date().toISOString().slice(0, 10);
         if (!state.rates[profile.id] || state.rates[profile.id].day !== today) state.rates[profile.id] = { day: today, count: 0 };
         state.rate = state.rates[profile.id];
@@ -1046,6 +1044,8 @@ export default {
           await saveState(env.ASSETS, sessionId, state);
           return stateResponse({ answer: resolvedAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
         }
+        if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
+        if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
         // Only profiles explicitly authorized for sports may receive live
         // provider evidence. The keys remain Worker secrets and are never
         // exposed to the browser or unrelated agents.
