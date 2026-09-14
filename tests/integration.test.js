@@ -66,6 +66,23 @@ test('Worker specialist and rewrite retain policy under conflicting skill and fe
   assert.ok(!calls[4].system[0].text.includes(conflict));
 });
 
+test('simple NFL date questions use the deterministic sports fast path', async () => {
+  const worker = await loadWorker();
+  const bucket = createMockBucket({
+    'sports/sports_data.json': JSON.stringify({ updated_at: '2026-09-14', games: [], standings: [] }),
+  });
+  let modelCalled = false;
+  const response = await withMockFetch([], () => worker.fetch(
+    makeAskRequest({ message: "What is the date of today's NFL game?" }),
+    makeEnv(bucket),
+  ), () => { modelCalled = true; });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.runtime, 'deterministic');
+  assert.match(body.answer, /Today's date is \d{4}-\d{2}-\d{2}/);
+  assert.equal(modelCalled, false);
+});
+
 // ---------------------------------------------------------------------------
 // MOCK FIXTURES
 // Realistic Bedrock Converse API responses for the happy-path scenario.

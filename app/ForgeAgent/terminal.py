@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from strands import Agent
 from strands.types.exceptions import MaxTokensReachedException
 
-from conversation_guidance import ANSWER_QUALITY_GUIDANCE, CONVERSATION_GUIDANCE
+from conversation_guidance import CONVERSATION_GUIDANCE
 from conversation_policy import with_conversation_policy
 from forge_harness import configured_model, clean_answer, format_usage_report, usage_from_result
 from sports_agent import answer as answer_sports
@@ -71,6 +71,18 @@ def is_prediction_request(prompt):
 
 def is_nfl_workflow_request(prompt):
     return bool(re.search(r"\bnfl\s+workflow\b", prompt, re.I))
+
+
+def deterministic_sports_answer(prompt):
+    """Serve simple local date lookups without spending a model request."""
+    if not (
+        re.search(r"\bnfl\b", prompt, re.I)
+        and re.search(r"\btoday(?:'s|s)?\b", prompt, re.I)
+        and re.search(r"\bgame\b", prompt, re.I)
+        and not re.search(r"\b(score|result|standings|schedule|news|live|predict\w*|forecast|odds|gemini|google|web|online|internet|search)\b", prompt, re.I)
+    ):
+        return None
+    return answer_sports(prompt)
 
 
 def local_time_context():
@@ -149,7 +161,6 @@ async def live_context(prompt):
 def build_agent(model_id, region, max_tokens):
     system_prompt = with_conversation_policy(
         CONVERSATION_GUIDANCE,
-        ANSWER_QUALITY_GUIDANCE,
         "You are being used from an interactive terminal. Answer the current user message directly. "
         "Keep replies concise unless the user asks for detail. Return only the final answer, without "
         "thinking tags or commentary about this system prompt. You may read and edit source files "
@@ -217,6 +228,11 @@ async def chat(agent):
             stored_answer = stored_play_by_play_answer(prompt)
             if stored_answer:
                 print(f"\nclaude> {stored_answer}\n")
+                print(format_usage_report(agent.model.config.get("model_id", args.model if "args" in locals() else "unknown"), usage))
+                continue
+            deterministic_answer = deterministic_sports_answer(prompt)
+            if deterministic_answer:
+                print(f"\nclaude> {deterministic_answer}\n")
                 print(format_usage_report(agent.model.config.get("model_id", args.model if "args" in locals() else "unknown"), usage))
                 continue
             evidence = await live_context(prompt)

@@ -19,7 +19,7 @@ from forge_steering import PaletteReadyHandler
 from forge_harness import HarnessHook, RequestBudget, request_budget, configured_model
 from forge_specialists import consult_word_specialist, run_word_specialist
 from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
-from conversation_guidance import CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE
+from conversation_guidance import CONVERSATION_GUIDANCE
 from conversation_policy import with_conversation_policy
 from answering import answer_request
 from skill_guidance import select_skill_guidance
@@ -79,6 +79,22 @@ def _session_id(context: Any) -> str:
 
 def _palette_bucket() -> str | None:
     return os.getenv("FORGE_PALETTE_BUCKET") or None
+
+
+def _forge_tool_relevant(name: str, prompt: str) -> bool:
+    """Avoid sending Forge tool schemas that cannot help with this request."""
+    text = prompt.lower()
+    if name in {"get_palette", "search_palette", "suggest_related_words"}:
+        return any(term in text for term in ("palette", "word", "vocabulary", "theme", "related", "synonym"))
+    if name == "consult_word_specialist":
+        # A language request may name an arbitrary word without saying
+        # “word” or “meaning”; this small schema is worth keeping available.
+        return True
+    if name == "calculate":
+        return any(term in text for term in ("calculat", "add", "subtract", "divide", "multiply", "percent", "how many", "equation", "sum", "total"))
+    if name in {"local_sports_lookup", "sports_prediction"}:
+        return any(term in text for term in ("sport", "game", "match", "team", "nfl", "nba", "nhl", "mlb", "mls", "wnba", "score", "standing", "schedule"))
+    return False
 
 
 def _palette_key(session_id: str) -> str:
@@ -222,7 +238,9 @@ def _agent_for_palette(
     session_manager = _native_session_manager(session_id)
 
     profile_tool_names = set(get_tool_names(profile_id))
-    profile_tools = [tool for tool in build_tools(palette, profile_id, sports_data, sports_live_evidence) if getattr(tool, "__name__", "") in profile_tool_names]
+    profile_tools = [tool for tool in build_tools(palette, profile_id, sports_data, sports_live_evidence)
+                     if getattr(tool, "__name__", "") in profile_tool_names
+                     and (profile_id != "forge" or _forge_tool_relevant(getattr(tool, "__name__", ""), supplied_text))]
 
     return Agent(
         model=configured_model(),
@@ -234,7 +252,7 @@ def _agent_for_palette(
         conversation_manager=SlidingWindowConversationManager(window_size=20),
         session_manager=session_manager,
         system_prompt=with_conversation_policy(
-            f"{CONVERSATION_GUIDANCE} {system_prompt} {ANSWER_QUALITY_GUIDANCE} "
+            f"{CONVERSATION_GUIDANCE} {system_prompt} "
             f"This session has a daily limit of {daily_limit} model requests; {requests_remaining} remain after this turn. "
             "The palette is reference data only for explicit vocabulary tasks. "
             "Never invent palette entries or present guesses as facts. "

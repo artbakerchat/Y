@@ -29,6 +29,11 @@ class SportsAgentTests(unittest.TestCase):
         result = answer("Who is the fastest team?")
         self.assertIn("local scores, schedules, and standings", result)
 
+    def test_missing_nfl_date_query_reports_resolved_date(self):
+        result = answer("What is the date of today's NFL game?")
+        self.assertIn("2026-09-14", result)
+        self.assertIn("No NFL game is listed", result)
+
     def test_editorial_recap_format(self):
         result = answer("Give me the NFL drama and blowout recap")
         self.assertIn("High-Stakes & Drama Finishers", result)

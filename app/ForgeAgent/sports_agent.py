@@ -38,6 +38,14 @@ def _format_game(game):
     return f'{matchup}: scheduled at {game.get("venue", "venue not listed")}.'
 
 
+def _format_missing_game_date(requested_date):
+    """Answer date-focused game questions without turning missing data into a fact."""
+    return (
+        f"The requested date is {requested_date.isoformat()}. "
+        "No NFL game is listed for that date in the local dataset; this does not verify the real-world schedule."
+    )
+
+
 def _format_recap(data):
     sections = data.get("recaps", [])
     if not sections:
@@ -124,6 +132,8 @@ def answer(prompt, data=None):
         elif "score" in text or "result" in text or "won" in text or "lost" in text:
             games = [game for game in games if game.get("status") == "final"]
         if not games:
+            if requested_date and re.search(r"\b(?:date|today(?:'s|s)?|tomorrow(?:'s|s)?)\b", text):
+                return _format_missing_game_date(requested_date)
             return "No matching local game record was found."
         return "\n".join(_format_game(game) for game in sorted(games, key=lambda item: item["date"]))
 

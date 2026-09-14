@@ -457,6 +457,22 @@ function isSportsPredictionRequest(message) {
     && /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(message);
 }
 
+function localVancouverDate() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(new Date());
+  return `${parts.find((part) => part.type === 'year').value}-${parts.find((part) => part.type === 'month').value}-${parts.find((part) => part.type === 'day').value}`;
+}
+
+function simpleSportsDateAnswer(message, sportsData) {
+  if (!sportsData || !/\bnfl\b/i.test(message) || !/\btoday(?:'s|s)?\b/i.test(message) || !/\bgame\b/i.test(message)) return null;
+  if (isSportsPredictionRequest(message) || /\b(score|result|standings|schedule|news|live|gemini|google|web|online|internet|search)\b/i.test(message)) return null;
+  const today = localVancouverDate();
+  const games = (sportsData.games || []).filter((game) => String(game.league || '').toLowerCase() === 'nfl' && game.date === today);
+  if (!games.length) return `Today's date is ${today}. No NFL game is listed for that date in the local dataset.`;
+  return games.map((game) => `${game.away} at ${game.home} — ${today}.`).join('\n');
+}
+
 function sportsTool(env) {
   return {
     spec: {
@@ -752,9 +768,24 @@ async function invokeWordSpecialist({ word, aspect = 'connotation' }, env) {
 // Step 5  stopReason === 'end_turn':
 //           Post-response steering check, return answer     (Module 3 Steering)
 // ---------------------------------------------------------------------------
+function forgeToolRelevant(name, message) {
+  const text = String(message || '').toLowerCase();
+  if (name === 'get_palette' || name === 'search_palette' || name === 'suggest_related_words') {
+    return /\bpalette\b|\bword(?:s)?\b|\bvocabulary\b|\btheme\b|\brelated\b|\bsynonym\b/i.test(text);
+  }
+  // Keep the specialist available: a language request can name an arbitrary
+  // word (for example, “rewrite this note about anchor”) without saying
+  // “word” or “meaning”. Its schema is small, so this avoids a false negative.
+  if (name === 'consult_word_specialist') return true;
+  if (name === 'calculate') return /\b(?:calculat|add|subtract|divide|multiply|percent|how many|equation|sum|total)\w*\b/i.test(text) || /[0-9].*[+*/%=-].*[0-9]/.test(text);
+  if (name === 'local_sports_lookup' || name === 'sports_prediction') return /\b(?:sport|game|match|team|nfl|nba|nhl|mlb|mls|wnba|score|standings|schedule)\w*\b/i.test(text);
+  return false;
+}
+
 async function askBedrock(message, palette, history, env, requestsRemaining, profile) {
   const availableTools = buildEditableTools(palette, profile.id, { loadSportsData: () => loadSportsData(env), searchLive: (query) => liveSportsEvidence(query, env) });
-  const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name));
+  const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name)
+    && (profile.id !== 'forge' || forgeToolRelevant(tool.spec.name, message)));
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
 
   // Step 1: Skills - inject relevant procedure into system prompt.
@@ -765,7 +796,6 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     `This session has a daily limit of ${profile.dailyRequestLimit} model requests. ${requestsRemaining} requests remain after this turn. Be useful within the current turn and never imply that more requests are available than this limit.`,
     `The user's word palette is: ${palette.length ? palette.join(', ') : '(empty)'}. Use palette words as inspiration when relevant, but never invent palette entries or present guesses as facts.`,
     skill ? `\n\nRelevant skill guidance, apply only to the requested task:\n${skill}` : '',
-    ANSWER_QUALITY_GUIDANCE,
   ].filter(Boolean).join(' ');
 
   // Step 2: Session history - pass stored messages back to Bedrock.
@@ -800,7 +830,7 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     const result = await bedrockConverse(env, {
       system: [{ text: systemText }],
       messages: runningMessages,
-      toolConfig,
+      toolConfig: tools.length ? toolConfig : undefined,
     });
 
     const assistantMessage = result.output?.message;
@@ -934,6 +964,14 @@ export default {
 
         // Route to AgentCore if configured, otherwise run the local agent loop.
         const sportsData = profile.toolNames.includes('local_sports_lookup') ? await loadSportsData(env) : null;
+        const fastAnswer = profile.id === 'forge' ? simpleSportsDateAnswer(message, sportsData) : null;
+        if (fastAnswer) {
+          state.rates[profile.id].count += 1;
+          state.rate = state.rates[profile.id];
+          state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: fastAnswer, createdAt: new Date().toISOString() }];
+          await saveState(env.ASSETS, sessionId, state);
+          return stateResponse({ answer: fastAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
+        }
         const sportsLiveEvidence = isSportsPredictionRequest(message) ? await liveSportsEvidence(message, env) : '';
         const answer = env.AGENTCORE_RUNTIME_ARN
           ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence)
