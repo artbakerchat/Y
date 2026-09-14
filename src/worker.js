@@ -425,10 +425,10 @@ async function searchGeminiSports(query, env) {
   if (!apiKey) return 'Gemini live search is not configured.';
   const model = env.GEMINI_SEARCH_MODEL || 'gemini-3.6-flash';
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, { method: 'POST', signal: AbortSignal.timeout(30000), headers: { 'x-goog-api-key': apiKey, 'content-type': 'application/json' }, body: JSON.stringify({ systemInstruction: { parts: [{ text: withConversationPolicy('Use Google Search grounding to gather current, verifiable sports evidence. Include source URLs. Distinguish evidence from uncertainty. Do not make a prediction.') }] }, contents: [{ parts: [{ text: String(query || '').slice(0, 4000) }] }], tools: [{ googleSearch: {} }] }) });
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/interactions', { method: 'POST', signal: AbortSignal.timeout(30000), headers: { 'x-goog-api-key': apiKey, 'content-type': 'application/json' }, body: JSON.stringify({ model, system_instruction: withConversationPolicy('Use Google Search grounding to gather current, verifiable sports evidence. Include source URLs. Distinguish evidence from uncertainty. Do not make a prediction.'), input: String(query || '').slice(0, 4000), tools: [{ type: 'google_search' }] }) });
     if (!response.ok) return `Gemini live search failed (${response.status}).`;
     const body = await response.json();
-    return body.candidates?.flatMap((candidate) => candidate.content?.parts || []).map((part) => part.text || '').join('') || 'Gemini returned no evidence.';
+    return body.output_text || body.output?.flatMap((item) => item.content || []).map((item) => item.text || '').join('') || 'Gemini returned no evidence.';
   } catch (error) {
     return `Gemini live search failed: ${error instanceof Error ? error.message.slice(0, 120) : 'request error'}`;
   }
@@ -457,6 +457,11 @@ function isSportsPredictionRequest(message) {
     && /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(message);
 }
 
+function isLiveSportsRequest(message) {
+  return /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(message)
+    && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(message);
+}
+
 function localVancouverDate() {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit',
@@ -469,7 +474,9 @@ function simpleSportsDateAnswer(message, sportsData) {
   if (isSportsPredictionRequest(message) || /\b(score|result|standings|schedule|news|live|gemini|google|web|online|internet|search)\b/i.test(message)) return null;
   const today = localVancouverDate();
   const games = (sportsData.games || []).filter((game) => String(game.league || '').toLowerCase() === 'nfl' && game.date === today);
-  if (!games.length) return `Today's date is ${today}. No NFL game is listed for that date in the local dataset.`;
+  // A missing local record is not proof that there is no real-world game.
+  // Let the live-evidence path verify it with the Worker-owned providers.
+  if (!games.length) return null;
   return games.map((game) => `${game.away} at ${game.home} — ${today}.`).join('\n');
 }
 
@@ -782,7 +789,7 @@ function forgeToolRelevant(name, message) {
   return false;
 }
 
-async function askBedrock(message, palette, history, env, requestsRemaining, profile) {
+async function askBedrock(message, palette, history, env, requestsRemaining, profile, sportsLiveEvidence = '') {
   const availableTools = buildEditableTools(palette, profile.id, { loadSportsData: () => loadSportsData(env), searchLive: (query) => liveSportsEvidence(query, env) });
   const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name)
     && (profile.id !== 'forge' || forgeToolRelevant(tool.spec.name, message)));
@@ -805,9 +812,12 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => ({ role: m.role, content: [{ text: m.content }] }));
 
+  const evidenceMessage = sportsLiveEvidence
+    ? `${message}\n\nVERIFIED LIVE SPORTS EVIDENCE (use as evidence; do not invent missing facts):\n${sportsLiveEvidence}`
+    : message;
   const runningMessages = [
     ...historyMessages,
-    { role: 'user', content: [{ text: message }] },
+    { role: 'user', content: [{ text: evidenceMessage }] },
   ];
 
   // Modules 2 + 3: per-invocation limits and successful-call workflow checks.
@@ -972,10 +982,14 @@ export default {
           await saveState(env.ASSETS, sessionId, state);
           return stateResponse({ answer: fastAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
         }
-        const sportsLiveEvidence = isSportsPredictionRequest(message) ? await liveSportsEvidence(message, env) : '';
+        // Current sports lookups need the Worker-owned provider credentials too;
+        // otherwise a missing R2 row is incorrectly presented as a missing API key.
+        const sportsLiveEvidence = (isSportsPredictionRequest(message) || isLiveSportsRequest(message))
+          ? await liveSportsEvidence(message, env)
+          : '';
         const answer = env.AGENTCORE_RUNTIME_ARN
           ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence)
-          : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile);
+          : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
         answer.answer = cleanAnswer(answer.answer);
         answer.agentId = profile.id;
 

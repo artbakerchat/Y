@@ -66,21 +66,26 @@ test('Worker specialist and rewrite retain policy under conflicting skill and fe
   assert.ok(!calls[4].system[0].text.includes(conflict));
 });
 
-test('simple NFL date questions use the deterministic sports fast path', async () => {
+test('NFL date questions use Worker-owned live providers when local data is missing', async () => {
   const worker = await loadWorker();
   const bucket = createMockBucket({
     'sports/sports_data.json': JSON.stringify({ updated_at: '2026-09-14', games: [], standings: [] }),
   });
   let modelCalled = false;
+  const requestedBodies = [];
   const response = await withMockFetch([], () => worker.fetch(
     makeAskRequest({ message: "What is the date of today's NFL game?" }),
-    makeEnv(bucket),
-  ), () => { modelCalled = true; });
+    makeEnv(bucket, { OPENAI_API_KEY: 'openai-test-key', GEMINI_API_KEY: 'gemini-test-key' }),
+  ), (body) => {
+    modelCalled = true;
+    requestedBodies.push(body);
+  });
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.runtime, 'deterministic');
-  assert.match(body.answer, /Today's date is \d{4}-\d{2}-\d{2}/);
-  assert.equal(modelCalled, false);
+  assert.notEqual(body.runtime, 'deterministic');
+  assert.equal(modelCalled, true);
+  assert.ok(requestedBodies.some((request) => request.tools?.some((tool) => tool.type === 'web_search_preview')));
+  assert.ok(requestedBodies.some((request) => request.tools?.some((tool) => tool.type === 'google_search')));
 });
 
 // ---------------------------------------------------------------------------
