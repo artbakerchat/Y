@@ -1,0 +1,25 @@
+{
+  "games": [
+    {
+      "league": "NFL",
+      "date": "2026-09-14",
+      "away": "Denver Broncos",
+      "home": "Kansas City Chiefs",
+      "status": "scheduled",
+      "source_urls": [
+        "https://foxsports.com",
+        "https://si.com",
+        "https://nfl.com"
+      ],
+      "prediction": {
+        "predicted_winner": "Kansas City Chiefs",
+        "predicted_score": "Chiefs 24, Broncos 20",
+        "pick_against_the_spread": "Chiefs -2.5"
+      },
+      "uncertainty": "This is a forecast based on analysis and not a verified outcome."
+    }
+  ],
+  "updated_at": "2026-09-14",
+  "generated_by": "Claude via Strands/Bedrock",
+  "data_contract": "scheduled NFL forecasts; not verified outcomes"
+}

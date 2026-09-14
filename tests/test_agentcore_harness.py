@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "ForgeAgent"))
 import main
-from forge_harness import HarnessHook, RequestBudget, request_budget, clean_answer
+from forge_harness import HarnessHook, RequestBudget, request_budget, clean_answer, format_usage_report, usage_cost
 from forge_profiles import get_profile
 from conversation_policy import CONVERSATION_POLICY
 
@@ -53,6 +53,13 @@ class HarnessTests(unittest.TestCase):
         self.assertEqual(clean_answer(answer), answer)
         with self.assertRaises(ValueError):
             clean_answer("<thinking>hidden</thinking>")
+
+    def test_usage_cost_report(self):
+        usage = {"inputTokens": 1000, "outputTokens": 500, "totalTokens": 1500}
+        self.assertEqual(usage_cost("ca.amazon.nova-lite-v1:0", usage), 0.00018)
+        report = format_usage_report("ca.amazon.nova-lite-v1:0", usage)
+        self.assertIn("input_tokens=1000", report)
+        self.assertIn("estimated_bedrock_cost_usd=$0.000180", report)
 
     def test_unknown_profile_rejected(self):
         with self.assertRaises(ValueError):

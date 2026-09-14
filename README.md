@@ -116,6 +116,49 @@ PORT=3000
 
 The local Node server stores sessions under `.data/sessions/`. The deployed Worker stores web state in the configured R2 bucket.
 
+### Shared sports data
+
+The website conversation uses the existing `ASSETS` R2 bucket for sports data under the `sports/` prefix. The deployment workflow uploads `app/ForgeAgent/sports_data.json` to `sports/sports_data.json`. The Worker reads that object for its `local_sports_lookup` tool and passes the same dataset to the Python AgentCore runtime when AgentCore routing is enabled. The standalone terminal keeps its local JSON fallback for offline development.
+
+For sports forecasts, the Worker-side `sports_prediction` tool combines the R2 record with supplemental OpenAI and Gemini search evidence. Store `OPENAI_API_KEY` and `GEMINI_API_KEY` as Worker secrets; they are never sent to the browser. If either key is absent or a provider fails, the evidence is labeled unavailable and the agent must not treat it as verified.
+
+### Terminal Claude client
+
+The repository also includes a small interactive terminal client using the Python Strands SDK and Amazon Bedrock. Install the Python dependencies first, then run:
+
+```bash
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+npm run claude
+```
+
+It uses shell exports (default model `ca.amazon.nova-lite-v1:0` in `ca-central-1`), keeps conversation history for the session, and accepts `/exit` or Ctrl-D. You can select another Nova model or inference profile with `npm run claude -- --model MODEL_ID --region AWS_REGION`. Bedrock model access and `bedrock:InvokeModel` permission must be enabled for the selected model/profile; availability varies by region.
+
+Configure the terminal without `.env`:
+
+```bash
+export AWS_REGION=ca-central-1
+export CLAUDE_MODEL_ID=ca.amazon.nova-lite-v1:0
+export OPENAI_API_KEY='your-key'
+export GEMINI_API_KEY='your-key'
+```
+
+For the standard local-agent path, do not put provider keys in `.env`. Set `FORGE_WORKER_URL` and `FORGE_WORKER_TOKEN` instead; the terminal sends complete turns to the Worker, which owns Bedrock, OpenAI, and Gemini credentials. `OPENAI_SEARCH_MODEL` and `GEMINI_SEARCH_MODEL` remain Worker configuration values. The sports evidence reports whether each provider was used or unavailable, and the agent tells the user when a provider could not contribute. The local sports JSON remains authoritative when it contains a matching record.
+
+To keep provider keys only in Cloudflare, set `FORGE_WORKER_URL=https://larboard.ca` and a local `FORGE_WORKER_TOKEN` in `.env`, then store the same value as the Worker secret `FORGE_WORKER_TOKEN`. The local Python terminal calls `POST /api/agent-gateway` for all agent turns; sports evidence uses the Worker’s `POST /api/sports/evidence` path internally. Direct local Bedrock is available only with the explicit `--direct-bedrock` option.
+
+Sports forecasts use the `sports_prediction` tool. It exposes structured local JSON inputs first, adds live provider evidence as supplemental context, and requires the response to be labeled as an uncertain forecast rather than a verified result.
+
+Forecasts can be stored separately with `write_nfl_prediction_json`, which requires unmodified `nfl_workflow` schedule evidence and creates an immutable `app/ForgeAgent/nfl_predictions_YYYY-MM-DD.json` file only for explicitly listed scheduled games. Completed scores continue to use `write_nfl_results_json`.
+
+The terminal prints provider-reported input/output token usage and an estimated Bedrock cost after each request. Amazon Nova Lite uses the built-in estimate of $0.06 per million input tokens and $0.24 per million output tokens; set `BEDROCK_INPUT_PRICE_PER_MILLION` and `BEDROCK_OUTPUT_PRICE_PER_MILLION` for other models. Optional OpenAI or Gemini live-search charges are not included.
+
+Detailed play-by-play is opt-in: when a user explicitly requests play-by-play or minute-by-minute commentary for a specific game, the terminal may use `write_game_play_by_play_json` to create a separate `app/ForgeAgent/play_by_play_YYYY-MM-DD_away_home.json` file. It records only sourced events and does not create files for ordinary game-summary requests.
+
+After games finish, use `nfl_results_evidence` followed by `write_nfl_results_json`. The writer creates an immutable `app/ForgeAgent/sports_data_YYYY-MM-DD.json` file and requires final scores, prediction-versus-actual fields, source URLs, and an uncertainty note for every NFL game.
+
+Saying `NFL workflow` requests a live snapshot of every NFL game from today onward in `America/Vancouver` time, separating scheduled, in-progress, and final games. It is request-based tracking; rerun it for updates or connect it to an external scheduler.
+
 ## API overview
 
 The runtime architecture is represented by the Worker, AgentCore, Python runtime, storage, and Good Neighbour components described throughout this document.

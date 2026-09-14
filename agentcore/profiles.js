@@ -10,7 +10,9 @@ export default {
         "search_palette",
         "suggest_related_words",
         "consult_word_specialist",
-        "calculate"
+        "calculate",
+        "local_sports_lookup",
+        "sports_prediction"
       ],
       "skillNames": "*",
       "dailyRequestLimit": 10,

@@ -4,6 +4,7 @@ The functions are intentionally small and deterministic so the model can use
 them to inspect the user's palette without inventing palette state.
 """
 
+import json
 from collections.abc import Callable
 
 from strands import tool
@@ -11,9 +12,10 @@ from strands import tool
 from forge_specialists import consult_word_specialist, tech_support_specialist
 from community_tools import build_community_tools
 from calculator import calculate
+from sports_agent import answer as answer_sports
 
 
-def build_tools(palette: list[str], profile_id: str = "forge") -> list[Callable[..., str]]:
+def build_tools(palette: list[str], profile_id: str = "forge", sports_data: dict | None = None, sports_live_evidence: str = "") -> list[Callable[..., str]]:
     """Build the tools for one request with its current palette in scope.
 
     Args:
@@ -61,6 +63,32 @@ def build_tools(palette: list[str], profile_id: str = "forge") -> list[Callable[
         words = banks.get(key, ["horizon", "ember", "mosaic", "compass", "echo"])
         return f'Suggested words for theme "{theme}": {", ".join(words)}'
 
+    @tool
+    def local_sports_lookup(prompt: str) -> str:
+        """Answer sports questions from the shared R2 dataset supplied by the Worker.
+
+        The Worker loads the dataset from its existing ASSETS R2 binding and
+        passes it into AgentCore for this request. The local JSON file remains
+        the fallback for the standalone terminal client.
+        """
+        if not sports_data:
+            return "The shared R2 sports dataset is unavailable."
+        return answer_sports(prompt, data=sports_data)
+
+    @tool
+    def sports_prediction(query: str) -> str:
+        """Combine R2 sports inputs with live provider evidence for a forecast."""
+        if not sports_data:
+            return "The shared R2 sports dataset is unavailable; no forecast should be made."
+        return (
+            "PREDICTION INPUTS — NOT A VERIFIED OUTCOME\n"
+            "[Local R2 JSON — priority source]\n"
+            f"{json.dumps(sports_data, ensure_ascii=False)}\n\n"
+            "[Supplemental OpenAI and Gemini evidence]\n"
+            f"{sports_live_evidence or 'Live sports evidence is unavailable.'}\n\n"
+        "Any conclusion must be labeled as an uncertain forecast, include assumptions, state uncertainty, and tell the user if either provider was unavailable."
+        )
+
     return [
         get_palette,
         search_palette,
@@ -69,4 +97,6 @@ def build_tools(palette: list[str], profile_id: str = "forge") -> list[Callable[
         calculate,
         *build_community_tools(profile_id),
         tech_support_specialist,
+        local_sports_lookup,
+        sports_prediction,
     ]

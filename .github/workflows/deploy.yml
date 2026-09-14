@@ -106,5 +106,11 @@ jobs:
             put_object "$key" "$asset" "$content_type" "$asset_cache"
           done
 
+          # Keep the website's sports lookup on the same R2-backed dataset used
+          # by the local AgentCore tools. Sports records live under a namespace
+          # so they cannot collide with website assets or session state.
+          put_object "sports/sports_data.json" "app/ForgeAgent/sports_data.json" \
+            'application/json; charset=utf-8' 'no-cache'
+
       - name: Deploy Worker
         run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy

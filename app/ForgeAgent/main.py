@@ -209,6 +209,8 @@ def _agent_for_palette(
     profile_id: str = 'forge',
     messages: list | None = None,
     supplied_text: str = '',
+    sports_data: dict | None = None,
+    sports_live_evidence: str = '',
 ) -> Agent:
     palette_text = ", ".join(palette) if palette else "(empty)"
     profile = get_profile(profile_id) or get_profile('forge')
@@ -220,7 +222,7 @@ def _agent_for_palette(
     session_manager = _native_session_manager(session_id)
 
     profile_tool_names = set(get_tool_names(profile_id))
-    profile_tools = [tool for tool in build_tools(palette, profile_id) if getattr(tool, "__name__", "") in profile_tool_names]
+    profile_tools = [tool for tool in build_tools(palette, profile_id, sports_data, sports_live_evidence) if getattr(tool, "__name__", "") in profile_tool_names]
 
     return Agent(
         model=configured_model(),
@@ -292,7 +294,7 @@ async def invoke(payload: dict[str, Any], context: Any):
                 native_sessions = _session_bucket() is not None
                 history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages]
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
-                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text)
+                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, payload.get("sports_data"), payload.get("sports_live_evidence", ""))
                 answer = await answer_request(agent, prompt)
                 if not native_sessions:
                     _save_messages(session_id, messages + [
