@@ -15,6 +15,14 @@ from strands import tool
 from sports_agent import answer as answer_sports
 from sports_agent import prediction_inputs
 from conversation_policy import with_conversation_policy
+from nflmeta_api import (
+    fetch_live_scores as _nflmeta_live_scores,
+    fetch_standings as _nflmeta_standings,
+    fetch_team_games as _nflmeta_team_games,
+    fetch_schedule as _nflmeta_schedule,
+    fetch_injuries as _nflmeta_injuries,
+    fetch_nflmeta_snapshot as _nflmeta_snapshot,
+)
 
 
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".data", "dist"}
@@ -406,6 +414,61 @@ def build_repository_tools(root: Path | None = None):
             return "Write rejected: play-by-play files require an explicit user request in the current prompt."
         return write_game_play_by_play_file(repository, game_date, away, home, records_json)
 
+    @tool
+    def nflmeta_live_scores() -> str:
+        """Fetch best-effort live NFL scores from the NFLMeta API.
+
+        Returns a snapshot of all games currently in the NFLMeta live-scores
+        feed, labeled by status (scheduled, in-progress, final). This is the
+        primary live-score source; use nfl_workflow for a full snapshot with
+        web evidence merged in.
+        """
+        return _nflmeta_live_scores()
+
+    @tool
+    def nflmeta_standings(season: int = 0) -> str:
+        """Fetch current NFL standings from the NFLMeta API.
+
+        Args:
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+        """
+        return _nflmeta_standings(season=season or None)
+
+    @tool
+    def nflmeta_team_games(team_abbr: str, season: int = 0) -> str:
+        """Fetch the game schedule and results for one NFL team from the NFLMeta API.
+
+        Args:
+            team_abbr: Standard NFL team abbreviation such as BUF, KC, or NE.
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+        """
+        return _nflmeta_team_games(team_abbr, season=season or None)
+
+    @tool
+    def nflmeta_schedule(season: int = 0, week: int = 0) -> str:
+        """Fetch the NFL game schedule from the NFLMeta API.
+
+        Args:
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+            week: Week number (1–18 regular season). Pass 0 to fetch the full season.
+        """
+        return _nflmeta_schedule(season=season or None, week=week or None)
+
+    @tool
+    def nflmeta_injuries(season: int = 0, week: int = 0, team_abbr: str = "") -> str:
+        """Fetch NFL injury reports from the NFLMeta API.
+
+        Args:
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+            week: Reporting week number. Pass 0 for the latest available.
+            team_abbr: Optional team abbreviation to filter results, e.g. BUF.
+        """
+        return _nflmeta_injuries(
+            season=season or None,
+            week=week or None,
+            team_abbr=team_abbr.strip() or None,
+        )
+
     return [
         find_repository_files,
         search_repository,
@@ -420,6 +483,11 @@ def build_repository_tools(root: Path | None = None):
         write_nfl_results_json,
         write_nfl_prediction_json,
         write_game_play_by_play_json,
+        nflmeta_live_scores,
+        nflmeta_standings,
+        nflmeta_team_games,
+        nflmeta_schedule,
+        nflmeta_injuries,
     ]
 
 
@@ -644,7 +712,9 @@ def build_nfl_workflow_evidence(start_date: str = "") -> str:
     return (
         "NFL WORKFLOW SNAPSHOT — live evidence, not a final JSON record\n"
         f"Start date: {target.isoformat()}\n\n"
-        "[NFL scoreboard API]\n"
+        "[NFLMeta live scores & schedule — authoritative source]\n"
+        f"{_nflmeta_snapshot(target.isoformat())}\n\n"
+        "[NFL scoreboard API — supplemental]\n"
         f"{fetch_nfl_scoreboard(target.isoformat())}\n\n"
         "[OpenAI live web search]\n"
         f"{search_live_web_openai(query)}\n\n"

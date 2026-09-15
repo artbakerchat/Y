@@ -487,7 +487,44 @@ async function liveSportsEvidence(query, env) {
   return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[ESPN NFL scoreboard]\n${nflScoreboard}\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
 }
 
-async function sportsEvidenceFromRequest(request, env) {
+async function nflmetaGatewayFromRequest(request, env) {
+  const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
+  const suppliedToken = request.headers.get('x-forge-worker-token') || '';
+  if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) {
+    return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+  }
+  const apiKey = env.NFLMETA_API_KEY?.trim();
+  if (!apiKey) return json({ error: 'NFLMeta API key is not configured on the Worker.' }, 503);
+
+  const body = await request.json();
+  const nflmetaPath = typeof body?.path === 'string' ? body.path.trim() : '';
+  const query = typeof body?.query === 'object' && body.query ? body.query : {};
+  if (!nflmetaPath.startsWith('/api/v1/')) {
+    return json({ error: 'path must start with /api/v1/' }, 400);
+  }
+
+  const url = new URL(`https://nflmeta.org${nflmetaPath}`);
+  for (const [key, value] of Object.entries(query)) {
+    if (value != null) url.searchParams.set(String(key), String(value));
+  }
+  try {
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      signal: AbortSignal.timeout(30000),
+      headers: {
+        'x-nflmeta-key': apiKey,
+        'accept': 'application/json',
+        'user-agent': 'ForgeAgent/1.0 (+https://larboard.ca)',
+      },
+    });
+    const data = await response.json();
+    return json({ ok: response.ok, status: response.status, data });
+  } catch (error) {
+    return json({ error: `NFLMeta request failed: ${error instanceof Error ? error.message.slice(0, 120) : 'request error'}` }, 502);
+  }
+}
+
+
   const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
   const suppliedToken = request.headers.get('x-forge-worker-token') || '';
   if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
@@ -986,6 +1023,7 @@ export default {
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);
       if (url.pathname === '/api/sports/evidence' && request.method === 'POST') return sportsEvidenceFromRequest(request, env);
+      if (url.pathname === '/api/sports/nflmeta' && request.method === 'POST') return nflmetaGatewayFromRequest(request, env);
       if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
         const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
         const suppliedToken = request.headers.get('x-forge-worker-token') || '';
