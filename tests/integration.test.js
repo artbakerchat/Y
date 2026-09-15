@@ -86,6 +86,22 @@ test('NFL date questions use Worker-owned live providers when local data is miss
   assert.ok(requestedBodies.some((request) => request.tools?.some((tool) => tool.type === 'google_search')));
 });
 
+test('standalone NFL workflow JSON requests fetch evidence and retain workflow guidance', async () => {
+  const worker = await loadWorker();
+  const calls = [];
+  const response = await withMockFetch([], () => worker.fetch(
+    makeAskRequest({ message: 'can you show me nfl workflow JSON' }),
+    makeEnv(createMockBucket(), { OPENAI_API_KEY: 'openai-test-key', GEMINI_API_KEY: 'gemini-test-key' }),
+  ), body => calls.push(body));
+  assert.equal(response.status, 200);
+  assert.ok(calls.some(call => call.tools?.some(tool => tool.type === 'web_search_preview')));
+  assert.ok(calls.some(call => call.tools?.some(tool => tool.type === 'google_search')));
+  const generation = calls.find(call => call.system);
+  assert.ok(generation.system[0].text.startsWith(CONVERSATION_POLICY));
+  assert.match(generation.system[0].text, /provide valid JSON/);
+  assert.match(generation.system[0].text, /not the structure of the NFL season/);
+});
+
 test('NFL date questions handle absent provider keys gracefully', async () => {
   const worker = await loadWorker();
   const bucket = createMockBucket();

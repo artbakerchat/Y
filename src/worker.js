@@ -453,7 +453,7 @@ function isLiveSportsRequest(message, history = []) {
     .map((item) => item.content)]
     .join('\n');
   return /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(conversation)
-    && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(conversation);
+    && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google|workflow)\b/i.test(conversation);
 }
 
 function liveSportsQuery(message, history = []) {
