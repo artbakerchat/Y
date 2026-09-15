@@ -119,6 +119,24 @@ test('NFL follow-ups keep using Worker-owned providers with conversational conte
   assert.match(JSON.stringify(geminiRequests[1]), /today's NFL game/i);
 });
 
+test('"next nfl game" triggers the live ESPN scoreboard (regression: "next" was missing from isLiveSportsRequest)', async () => {
+  const worker = await loadWorker();
+  const bucket = createMockBucket({
+    'sports/sports_data.json': JSON.stringify({ updated_at: '2026-09-14', games: [], standings: [] }),
+  });
+  const requests = [];
+  await withMockFetch([], () => worker.fetch(
+    makeAskRequest({ message: 'next nfl game' }),
+    makeEnv(bucket),
+  ), (req) => requests.push(req));
+  // The Worker must call the ESPN scoreboard for "next nfl game",
+  // the same as it does for "today's nfl game" or "upcoming nfl schedule".
+  assert.ok(
+    requests.some((req) => typeof req.url === 'string' && req.url.includes('site.api.espn.com')),
+    '"next nfl game" must reach the ESPN scoreboard endpoint',
+  );
+});
+
 // ---------------------------------------------------------------------------
 // MOCK FIXTURES
 // Realistic Bedrock Converse API responses for the happy-path scenario.

@@ -29,10 +29,13 @@ from terminal_tools import (
     build_nfl_workflow_evidence,
     build_repository_tools,
     fetch_nfl_scoreboard,
+    is_sports_query,
     search_live_web_gemini,
     search_live_web_openai,
     search_live_web_via_worker,
+    search_sports_via_worker,
     local_live_search_configured,
+    worker_live_search_configured,
     worker_agent_request,
     set_play_by_play_request,
 )
@@ -98,20 +101,71 @@ def deterministic_sports_answer(prompt):
     return local_answer
 
 
+def _parse_next_limit_terminal(prompt: str) -> int | None:
+    """Parse an explicit 'next N' or 'N games' limit from a prompt."""
+    m = re.search(r"\bnext\s+(\d+)\b|\b(\d+)\s+(?:next\s+)?games?\b", prompt, re.I)
+    if m:
+        return max(1, min(32, int(m.group(1) or m.group(2))))
+    if re.search(r"\bnext\s+game\b", prompt, re.I):
+        return 1
+    return None
+
+
+def _parse_week_number_terminal(prompt: str) -> int | None:
+    """Parse an explicit 'week N' from a prompt."""
+    m = re.search(r"\bweek\s+(\d{1,2})\b", prompt, re.I)
+    return int(m.group(1)) if m else None
+
+
 def deterministic_live_nfl_answer(prompt, recent_prompts=()):
-    """Answer current NFL schedule questions directly from ESPN's scoreboard."""
+    """Answer current NFL schedule questions directly from ESPN's scoreboard.
+
+    Supports:
+    - today's games (filtered by team keywords if present)
+    - 'next N games' — return the N soonest scheduled games
+    - 'week N' — return only that week's games from the API (when week field present)
+    """
     conversation = "\n".join([*recent_prompts[-4:], prompt])
-    if not re.search(r"\bnfl\b", conversation, re.I) or not re.search(r"\b(today(?:'s|s)?|game|schedule|team)\b", conversation, re.I):
+    has_nfl_or_espn = re.search(r"\b(nfl|espn)\b", conversation, re.I)
+    has_schedule_term = re.search(r"\b(today(?:'s|s)?|game|schedule|next|upcoming|week|scoreboard|score|scores)\b", conversation, re.I)
+    if not has_nfl_or_espn or not has_schedule_term:
         return None
     if is_prediction_request(prompt):
         return None
-    result = fetch_nfl_scoreboard(datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat())
+
+    today = datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
+    result = fetch_nfl_scoreboard(today)
     if not result.startswith("ESPN NFL scoreboard API for"):
         return None
+
     lines = result.splitlines()[1:]
-    words = [word for word in re.findall(r"[a-z0-9]+", prompt.lower()) if len(word) > 3 and word not in {"today", "game", "which", "team", "playing"}]
-    if words:
-        lines = [line for line in lines if any(word in line.lower() for word in words)]
+    if not lines:
+        return None
+
+    next_limit = _parse_next_limit_terminal(prompt)
+    week_number = _parse_week_number_terminal(prompt)
+
+    # Week filter: apply if the API returned week info in lines
+    if week_number is not None:
+        week_lines = [line for line in lines if re.search(rf"\bwk\s*{week_number}\b", line, re.I)]
+        if week_lines:
+            return "\n".join(week_lines)
+        # API doesn't include week data — fall through to model
+
+    # Team keyword filter (only for plain today queries)
+    if next_limit is None and week_number is None:
+        words = [w for w in re.findall(r"[a-z0-9]+", prompt.lower()) if len(w) > 3 and w not in {"today", "game", "games", "which", "team", "playing", "schedule", "next", "upcoming", "espn", "scoreboard", "score", "scores"}]
+        if words:
+            lines = [line for line in lines if any(w in line.lower() for w in words)]
+
+    # Next N: filter to scheduled lines, take first N
+    if next_limit is not None:
+        scheduled = [line for line in lines if "scheduled" in line.lower()]
+        if scheduled:
+            return "\n".join(scheduled[:next_limit])
+        # No scheduled games on today's scoreboard — not enough info for a deterministic answer
+        return None
+
     return "\n".join(lines) if lines else None
 
 
@@ -180,10 +234,10 @@ async def live_context(prompt, prior_prompts=()):
         )
     if is_prediction_request(prompt):
         return "\n\n" + await asyncio.to_thread(build_prediction_evidence, grounded_prompt)
-    # Prefer provider keys loaded from the repository .env. The Worker remains
-    # the fallback when no local OpenAI/Gemini key is configured.
+    # ESPN scoreboard API is public and does not require Worker credentials.
+    # Always fetch it locally for sports/NFL/ESPN queries in the terminal.
     nfl_api_result = None
-    if re.search(r"\bnfl\b", prompt, re.IGNORECASE):
+    if is_sports_query(prompt) or re.search(r"\b(nfl|espn)\b", prompt, re.IGNORECASE):
         nfl_api_result = await asyncio.to_thread(
             fetch_nfl_scoreboard,
             datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat(),
@@ -227,8 +281,13 @@ def build_agent(model_id, region, max_tokens):
         "local JSON dataset first; matching local records are authoritative and must not be overridden "
         "by model memory or web results. If the local tool reports no matching record, treat that as a "
         "stale-data signal and use the supplied scoreboard API and live-web results to answer the current "
-        "question. Mention the local-data gap only when useful. For current "
-        "or time-sensitive questions, use the supplied verified live-web "
+        "question. Mention the local-data gap only when useful. "
+        "When the user asks for 'next game', 'next N games', or 'upcoming games': return only the "
+        "soonest N scheduled games from today onward — do not dump the full season schedule or "
+        "include completed games. When the user specifies 'week N', return only that week's games. "
+        "Never list Week 15/16/17 games in response to 'next game' unless they are genuinely the "
+        "first scheduled games from today. "
+        "For current or time-sensitive questions, use the supplied verified live-web "
         "results and cite their sources; do not claim that web access failed unless both result blocks "
         "report a failure. If the live results do not establish a game or other fact, say it cannot "
         "be verified; never fill the gap with memory or a previous answer. Clearly label disagreement "

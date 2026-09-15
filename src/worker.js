@@ -121,6 +121,17 @@ async function allowLegacyAlias(request, env) {
   return success;
 }
 
+// Rate-limit token-gated gateway endpoints per token identity.
+// The token is hashed with SHA-256 before use as a key so the raw secret
+// value is never stored in the rate-limiter's key-space or logs.
+async function checkGatewayRateLimit(token, env) {
+  if (!env.GATEWAY_RATE_LIMITER) return true;
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+  const hex = Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, '0')).join('');
+  const { success } = await env.GATEWAY_RATE_LIMITER.limit({ key: `gateway:${hex}` });
+  return success;
+}
+
 function json(data, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
@@ -493,6 +504,9 @@ async function sportsUpdateFromRequest(request, env) {
   if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) {
     return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
   }
+  if (!(await checkGatewayRateLimit(suppliedToken, env))) {
+    return json({ error: 'Rate limit exceeded. Try again later.' }, 429);
+  }
   let body;
   try {
     body = await request.json();
@@ -512,6 +526,9 @@ async function nflmetaGatewayFromRequest(request, env) {
   const suppliedToken = request.headers.get('x-forge-worker-token') || '';
   if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) {
     return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+  }
+  if (!(await checkGatewayRateLimit(suppliedToken, env))) {
+    return json({ error: 'Rate limit exceeded. Try again later.' }, 429);
   }
   const apiKey = env.NFLMETA_API_KEY?.trim();
   if (!apiKey) return json({ error: 'NFLMeta API key is not configured on the Worker.' }, 503);
@@ -549,10 +566,35 @@ async function sportsEvidenceFromRequest(request, env) {
   const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
   const suppliedToken = request.headers.get('x-forge-worker-token') || '';
   if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+  if (!(await checkGatewayRateLimit(suppliedToken, env))) return json({ error: 'Rate limit exceeded. Try again later.' }, 429);
   const body = await request.json();
   const query = typeof body?.query === 'string' ? body.query.trim().slice(0, 4000) : '';
   if (!query) return json({ error: 'query is required.' }, 400);
   return json({ evidence: await liveSportsEvidence(query, env) });
+}
+
+// General-purpose provider search without sports-specific ESPN overhead.
+// Used by the terminal when no local OpenAI/Gemini keys are configured.
+async function liveGeneralEvidence(query, env) {
+  const [openai, gemini] = await Promise.all([
+    searchOpenAISports(query, env),
+    searchGeminiSports(query, env),
+  ]);
+  const unavailable = (value) => /not configured|failed|returned no evidence/i.test(value);
+  const openaiStatus = unavailable(openai) ? 'unavailable' : 'used';
+  const geminiStatus = unavailable(gemini) ? 'unavailable' : 'used';
+  return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
+}
+
+async function searchEvidenceFromRequest(request, env) {
+  const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
+  const suppliedToken = request.headers.get('x-forge-worker-token') || '';
+  if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+  if (!(await checkGatewayRateLimit(suppliedToken, env))) return json({ error: 'Rate limit exceeded. Try again later.' }, 429);
+  const body = await request.json();
+  const query = typeof body?.query === 'string' ? body.query.trim().slice(0, 4000) : '';
+  if (!query) return json({ error: 'query is required.' }, 400);
+  return json({ evidence: await liveGeneralEvidence(query, env) });
 }
 
 function isSportsPredictionRequest(message) {
@@ -566,7 +608,7 @@ function isLiveSportsRequest(message, history = []) {
     .map((item) => item.content)]
     .join('\n');
   return /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(conversation)
-    && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(conversation);
+    && /\b(today|tomorrow|current|latest|live|next|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(conversation);
 }
 
 function liveSportsQuery(message, history = []) {
@@ -1044,6 +1086,7 @@ export default {
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);
       if (url.pathname === '/api/sports/evidence' && request.method === 'POST') return sportsEvidenceFromRequest(request, env);
+      if (url.pathname === '/api/search/evidence' && request.method === 'POST') return searchEvidenceFromRequest(request, env);
       if (url.pathname === '/api/sports/update' && request.method === 'POST') return sportsUpdateFromRequest(request, env);
       if (url.pathname === '/api/sports/nflmeta' && request.method === 'POST') return nflmetaGatewayFromRequest(request, env);
       if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
@@ -1051,6 +1094,9 @@ export default {
         const suppliedToken = request.headers.get('x-forge-worker-token') || '';
         if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) {
           return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+        }
+        if (!(await checkGatewayRateLimit(suppliedToken, env))) {
+          return json({ error: 'Rate limit exceeded. Try again later.' }, 429);
         }
         const body = await request.json();
         const sessionId = typeof body?.session_id === 'string' ? body.session_id.trim() : '';

@@ -41,8 +41,55 @@ def local_live_search_configured() -> bool:
     return bool(os.getenv("OPENAI_API_KEY", "").strip() or os.getenv("GEMINI_API_KEY", "").strip())
 
 
+def worker_live_search_configured() -> bool:
+    """Return whether the Worker gateway is available for live search."""
+    return bool(
+        os.getenv("FORGE_WORKER_URL", "").strip()
+        and os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    )
+
+
+def is_sports_query(query: str) -> bool:
+    """Return True when the query is sports-related (NFL, NBA, NHL, etc.)."""
+    return bool(re.search(
+        r"\b(nfl|nba|nhl|mlb|mls|wnba|football|basketball|hockey|baseball|soccer|"
+        r"game|games|match|matchup|team|teams|score|scores|standings|schedule|"
+        r"playoff|playoffs|season|touchdown|quarterback|coach|roster|injury|injuries|"
+        r"draft|trade|espn|sports?)\b",
+        query,
+        re.IGNORECASE,
+    ))
+
+
 def search_live_web_via_worker(query: str) -> str | None:
-    """Ask the Cloudflare Worker to perform both provider searches server-side."""
+    """Ask the Cloudflare Worker to perform both provider searches server-side.
+
+    Uses /api/search/evidence for general queries (no ESPN overhead).
+    Returns None if the gateway is not configured.
+    """
+    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
+    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    if not worker_url or not worker_token:
+        return None
+    request = urllib.request.Request(
+        f"{worker_url}/api/search/evidence",
+        data=json.dumps({"query": query.strip()[:4000]}).encode("utf-8"),
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return str(payload.get("evidence", "Worker returned no live evidence."))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return f"Cloudflare Worker live search failed: {type(error).__name__}: {error}"
+
+
+def search_sports_via_worker(query: str) -> str | None:
+    """Ask the Cloudflare Worker for sports-specific evidence (includes ESPN scoreboard).
+
+    Returns None if the gateway is not configured.
+    """
     worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
     worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
     if not worker_url or not worker_token:
@@ -544,10 +591,10 @@ def build_repository_tools(root: Path | None = None):
 def search_live_web_openai(query: str) -> str:
     """Perform an OpenAI web lookup outside the model's optional tool loop."""
     if not os.getenv("OPENAI_API_KEY"):
-        if not local_live_search_configured():
-            worker_result = search_live_web_via_worker(query)
-            if worker_result is not None:
-                return worker_result
+        # Route through the Worker when the local key is absent.
+        worker_result = search_live_web_via_worker(query)
+        if worker_result is not None:
+            return worker_result
         return "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
     try:
         from openai import OpenAI
@@ -569,10 +616,10 @@ def search_live_web_openai(query: str) -> str:
 def search_live_web_gemini(query: str) -> str:
     """Perform a Gemini Google Search lookup outside the model's optional tool loop."""
     if not os.getenv("GEMINI_API_KEY"):
-        if not local_live_search_configured():
-            worker_result = search_live_web_via_worker(query)
-            if worker_result is not None:
-                return worker_result
+        # Route through the Worker when the local key is absent.
+        worker_result = search_live_web_via_worker(query)
+        if worker_result is not None:
+            return worker_result
         return "Gemini web search is not configured (GEMINI_API_KEY is missing)."
     try:
         from google import genai
@@ -599,17 +646,19 @@ def search_live_web_gemini(query: str) -> str:
 def build_prediction_evidence(query: str) -> str:
     """Combine local prediction inputs with supplemental live provider evidence."""
     local = json.dumps(prediction_inputs(query), ensure_ascii=False, indent=2)
-    live = None if local_live_search_configured() else search_live_web_via_worker(query)
-    if live is None:
-        live = (
-            f"[OpenAI live web search — supplemental]\n{search_live_web_openai(query)}\n\n"
-            f"[Gemini Google Search — supplemental]\n{search_live_web_gemini(query)}"
-        )
+    scoreboard = fetch_nfl_scoreboard(
+        datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
+    )
     return (
         "PREDICTION INPUTS — NOT A VERIFIED OUTCOME\n"
         "[Local JSON — priority source]\n"
         f"{local}\n\n"
-        f"[OpenAI and Gemini live web search — supplemental]\n{live}\n\n"
+        "[ESPN NFL scoreboard — local API]\n"
+        f"{scoreboard}\n\n"
+        "[OpenAI live web search — supplemental]\n"
+        f"{search_live_web_openai(query)}\n\n"
+        "[Gemini Google Search — supplemental]\n"
+        f"{search_live_web_gemini(query)}\n\n"
         "Any conclusion must be labeled as a forecast, include assumptions, and state uncertainty."
     )
 
@@ -759,9 +808,11 @@ def build_nfl_workflow_evidence(start_date: str = "") -> str:
     except ValueError:
         return "Invalid start_date. Use YYYY-MM-DD."
     query = (
-        f"Track every NFL game from {target.isoformat()} onward: upcoming schedule, games in progress, "
-        "final scores, venues, and live commentary. Group all games by date. Clearly distinguish "
-        "scheduled, live, and final games. Use official or reputable source URLs."
+        f"NFL schedule starting from {target.isoformat()}: list every upcoming scheduled game "
+        f"in date order with matchup, date, week number, venue, and kickoff time. "
+        f"Also include any games currently in progress and recently completed final scores. "
+        f"Clearly label each game as scheduled, in progress, or final. "
+        f"Include official or reputable source URLs."
     )
     return (
         "NFL WORKFLOW SNAPSHOT — live evidence, not a final JSON record\n"

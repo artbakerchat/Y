@@ -18,7 +18,11 @@ class SportsAgentTests(unittest.TestCase):
         self.assertIn("Austin FC 2, Vancouver Whitecaps FC 1", result)
 
     def test_upcoming_schedule(self):
-        result = answer("What is the next Canucks game?")
+        from datetime import date
+        with patch("sports_agent.date") as mock_date:
+            mock_date.today.return_value = date(2026, 9, 14)
+            mock_date.fromisoformat = date.fromisoformat
+            result = answer("What is the next Canucks game?")
         self.assertIn("Edmonton Oilers at Vancouver Canucks", result)
         self.assertIn("Rogers Arena", result)
 

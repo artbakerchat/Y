@@ -98,6 +98,22 @@ def _requested_date(prompt, data):
     return date(reference.year, month, int(match.group(1)))
 
 
+def _parse_next_limit(text: str) -> int | None:
+    """Return an explicit 'next N' limit from text, or None if absent."""
+    m = re.search(r"\bnext\s+(\d+)\b|\b(\d+)\s+(?:next\s+)?games?\b", text)
+    if m:
+        return max(1, min(32, int(m.group(1) or m.group(2))))
+    if re.search(r"\bnext\s+game\b", text):
+        return 1
+    return None
+
+
+def _parse_week_number(text: str) -> int | None:
+    """Return an explicit 'week N' number from text, or None if absent."""
+    m = re.search(r"\bweek\s+(\d{1,2})\b", text)
+    return int(m.group(1)) if m else None
+
+
 def answer(prompt, data=None):
     """Answer a small set of sports questions from local records."""
     if not isinstance(prompt, str) or not prompt.strip():
@@ -128,16 +144,43 @@ def answer(prompt, data=None):
         games = [game for game in games if game.get("date") == requested_date.isoformat()]
     if teams:
         games = [game for game in games if any(team in (game.get("away"), game.get("home")) for team in teams)]
+
+    # Week-based filter: "week 17", "week 2"
+    week_number = _parse_week_number(text)
+    if week_number is not None:
+        week_games = [g for g in games if g.get("week") == week_number]
+        if not week_games:
+            return f"No local games found for week {week_number}. This only means the local JSON has no record; it does not verify the real-world schedule."
+        return "\n".join(_format_game(g) for g in sorted(week_games, key=lambda g: g.get("date", "")))
+
+    # Next N games: filter to scheduled games from today onward, then slice
+    is_score_query = any(word in text for word in ("score", "result", "won", "lost"))
+    is_next_query = any(word in text for word in ("next", "upcoming")) and not is_score_query
+    next_limit = _parse_next_limit(text)
+
+    if is_next_query or next_limit is not None:
+        today = date.today().isoformat()
+        upcoming = [
+            g for g in games
+            if g.get("status") == "scheduled" and str(g.get("date", "")) >= today
+        ]
+        upcoming.sort(key=lambda g: str(g.get("date", "")))
+        if next_limit is not None:
+            upcoming = upcoming[:next_limit]
+        if not upcoming:
+            return "No upcoming local scheduled games found from today onward. This only means the local JSON has no record."
+        return "\n".join(_format_game(g) for g in upcoming)
+
     if any(word in text for word in ("score", "result", "won", "lost", "game")):
-        if "next" in text or "upcoming" in text or "schedule" in text:
+        if "schedule" in text:
             games = [game for game in games if game.get("status") == "scheduled"]
-        elif "score" in text or "result" in text or "won" in text or "lost" in text:
+        elif is_score_query:
             games = [game for game in games if game.get("status") == "final"]
         if not games:
             if requested_date and re.search(r"\b(?:date|today(?:'s|s)?|tomorrow(?:'s|s)?)\b", text):
                 return _format_missing_game_date(requested_date)
             return "No matching local game record was found."
-        return "\n".join(_format_game(game) for game in sorted(games, key=lambda item: item["date"]))
+        return "\n".join(_format_game(game) for game in sorted(games, key=lambda item: item.get("date", "")))
 
     available = sorted({row.get("team") for row in data["standings"] if row.get("team")})
     return (

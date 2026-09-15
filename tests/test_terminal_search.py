@@ -7,7 +7,7 @@ from unittest.mock import patch
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "ForgeAgent"))
-from terminal import deterministic_live_nfl_answer, deterministic_sports_answer, needs_live_search, worker_gateway_state
+from terminal import deterministic_live_nfl_answer, deterministic_sports_answer, needs_live_search, worker_gateway_state, live_context
 from terminal_tools import fetch_nfl_scoreboard, sync_nfl_schedule_json
 
 
@@ -43,6 +43,22 @@ class TerminalSearchTests(unittest.TestCase):
             result = deterministic_live_nfl_answer("Bronco", ["today's nfl game"])
         self.assertIn("Denver Broncos at Kansas City Chiefs", result)
         self.assertNotIn("Seattle Seahawks", result)
+
+    def test_espn_query_triggers_deterministic_answer(self):
+        with patch("terminal.fetch_nfl_scoreboard", return_value="ESPN NFL scoreboard API for 2026-09-14:\n- Denver Broncos at Kansas City Chiefs; status: Scheduled; score: ?-?; venue: Arrowhead Stadium."):
+            result = deterministic_live_nfl_answer("today's espn scoreboard")
+        self.assertIn("Denver Broncos at Kansas City Chiefs", result)
+
+    def test_live_context_fetches_espn_locally_without_worker(self):
+        import asyncio
+        with patch("terminal.fetch_nfl_scoreboard", return_value="ESPN NFL scoreboard API for 2026-09-14:\n- Denver Broncos at Kansas City Chiefs; status: Scheduled.") as mock_fetch:
+            with patch("terminal.search_sports_via_worker") as mock_worker:
+                with patch("terminal.search_live_web_via_worker", return_value="[Worker Web Evidence]"):
+                    with patch("terminal.local_live_search_configured", return_value=False):
+                        result = asyncio.run(live_context("What are the ESPN scores today?"))
+        mock_fetch.assert_called_once()
+        mock_worker.assert_not_called()
+        self.assertIn("ESPN NFL scoreboard API for 2026-09-14", result)
 
     def test_nfl_scoreboard_api_formats_current_games(self):
         payload = {

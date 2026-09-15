@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Wave Comparison</title>
+    <style>
+        /* --- CSS Variables & Reset --- */
+        :root {
+            --bg-color: #F4F5F7;
+            --panel-bg: #FFFFFF;
+            --text-primary: #1D2129;
+            --text-secondary: #4B5563;
+            --accent-color: #5C478E; /* Purple */
+            --border-color: #E5E7EB;
+            --icon-color: #6B7280;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        /* --- Main Title --- */
+        h1.main-title {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 40px;
+            color: var(--text-primary);
+        }
+
+        /* --- Container for Side-by-Side Panels --- */
+        .comparison-container {
+            display: flex;
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 40px;
+            flex-wrap: wrap; /* Wraps on small screens */
+        }
+
+        /* --- Audio Panel Styling --- */
+        .audio-panel {
+            flex: 1;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            min-width: 350px; /* Ensures panels don't get too squished */
+        }
+
+        .panel-header {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: var(--text-primary);
+        }
+
+        /* --- Waveform Visualization (CSS generated) --- */
+        .waveform-visual {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+            /* Simulating the bars using a linear gradient */
+            background: linear-gradient(to right, 
+                #6B7280 0px, #6B7280 1px, transparent 1px, transparent 4px,
+                #6B7280 4px, #6B7280 6px, transparent 6px, transparent 9px,
+                #6B7280 9px, #6B7280 12px, transparent 12px, transparent 15px,
+                #4B5563 15px, #4B5563 20px, transparent 20px, transparent 25px,
+                /* Adding variation to simulate the image wave density */
+                #4B5563 25px, #4B5563 35px, transparent 35px, transparent 40px,
+                #1D2129 40px, #1D2129 60px, transparent 60px, transparent 65px,
+                #4B5563 65px, #4B5563 75px, transparent 75px, transparent 80px,
+                #6B7280 80px, #6B7280 85px, transparent 85px, transparent 90px,
+                #6B7280 90px, #6B7280 92px
+            );
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: 100% 70%; /* Stretches bars vertically */
+            position: relative;
+        }
+
+        /* The gray vertical line on the right of the wave area */
+        .waveform-visual::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: #D1D5DB;
+        }
+
+        /* --- Player Controls (Pill Shape) --- */
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            background-color: #F9FAFB; /* Light gray control bar */
+            border-radius: 30px;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--icon-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+        .icon-btn:hover { color: var(--accent-color); }
+
+        /* Play button specific styling (purple circle) */
+        .play-btn {
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            transition: background-color 0.2s;
+        }
+        .play-btn:hover { background-color: #4a3972; }
+        .play-btn svg { margin-left: 1px; } /* Optical alignment */
+
+        .time-code {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums; /* Keeps numbers aligned while playing */
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            flex: 1;
+            height: 6px;
+            background-color: #E5E7EB; /* Gray track */
+            border-radius: 3px;
+            position: relative;
+            cursor: pointer;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-color);
+            border-radius: 3px;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        .progress-handle {
+            width: 14px;
+            height: 14px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            position: absolute;
+            top: -4px;
+            transform: translateX(-50%);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: grab;
+        }
+        .progress-handle:active { cursor: grabbing; }
+
+        /* Volume group icons */
+        .volume-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #9CA3AF; /* Lighter icons for volume */
+        }
+        .volume-group svg { width: 16px; height: 16px; }
+
+        /* --- Panel Footer --- */
+        .panel-footer {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .download-icon-link {
+            color: var(--icon-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: color 0.2s;
+            gap: 4px;
+        }
+        .download-icon-link:hover { color: var(--accent-color); }
+
+        /* --- Review Criteria Section --- */
+        .criteria-section {
+            width: 100%;
+            max-width: 800px;
+            text-align: left;
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+        .criteria-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .criteria-list {
+            margin-left: 20px;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        .criteria-list li {
+            margin-bottom: 8px;
+            padding-left: 8px;
+        }
+
+        /* --- Star Rating --- */
+        .rating-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+        .star-label { color: var(--text-secondary); }
+        .stars {
+            display: flex;
+            gap: 6px;
+            cursor: pointer;
+        }
+        .star {
+            color: #D1D5DB; /* Default gray star */
+            font-size: 24px;
+            transition: color 0.1s;
+        }
+        .star.selected, .star:hover, .star:hover ~ .star {
+            color: #FBBF24; /* Amber yellow on hover/active */
+        }
+        .final-text {
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* --- SVG Icons General Styling --- */
+        svg { width: 20px; height: 20px; fill: currentColor; }
+
+        /* --- Responsive Breakpoints --- */
+        @media (max-width: 850px) {
+            .comparison-container { flex-direction: column; }
+            .audio-panel { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1 class="main-title">Compare Response A and B Audio Waves</h1>
+
+    <!-- Side-by-Side Audio Panels Container -->
+    <div class="comparison-container">
+
+        <!-- PANEL A -->
+        <div class="audio-panel" id="panel-a">
+            <div class="panel-header">Response A</div>
+            
+            <!-- Waveform Visualization (CSS generated) -->
+            <div class="waveform-visual"></div>
+
+            <!-- Player Controls -->
+            <div class="player-controls">
+                <!-- Play Button -->
+                <button class="icon-btn play-btn" id="play-a" aria-label="Play Response A">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <!-- Timecode -->
+                <span class="time-code" id="time-a">0:37 / 0:57</span>
+                <!-- Progress Bar (interactive) -->
+                <div class="progress-container" id="prog-a">
+                    <div class="progress-bar" style="width: 65%;"></div>
+                    <div class="progress-handle" style="left: 65%;"></div>
+                </div>
+                <!-- Volume Group -->
+                <div class="volume-group">
+                    <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.74 2.5-2.26 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                    <svg viewBox="0 0 24 24"><path d="M19 13H5v-2h14v2z"/></svg> <!-- Minus sign for low volume -->
+                </div>
+                <!-- Replay button -->
+                <button class="icon-btn" aria-label="Replay">
+                    <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+                </button>
+                <!-- Download icon (Pill) -->
+                <a href="#" class="icon-btn download-icon-link" aria-label="Download">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                </a>
+            </div>
+
+            <!-- Panel Footer -->
+            <div class="panel-footer">
+                <span>Quick Review: Not Rated</span>
+                <a href="#" class="download-icon-link">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    Download
+                </a>
+            </div>
+        </div>
+
+        <!-- PANEL B (Identical structure to A, just visually distinct wave) -->
+        <div class="audio-panel" id="panel-b">
+            <div class="panel-header">Response B</div>
+            
+            <!-- Waveform Visualization (CSS generated, slightly different look) -->
+            <div class="waveform-visual" style="background-size: 100% 50%; background-image: linear-gradient(to right, #6B7280 0px, #6B7280 2px, transparent 2px, transparent 5px, #1D2129 5px, #1D2129 7px, transparent 7px, transparent 10px, #4B5563 10px, #4B5563 18px, transparent 18px, transparent 21px);"></div>
+
+            <!-- Player Controls -->
+            <div class="player-controls">
+                <button class="icon-btn play-btn" id="play-b" aria-label="Play Response B">
+                    <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <span class="time-code" id="time-b">0:41 / 0:57</span>
+                <!--
