@@ -1,229 +1,202 @@
-"""Offline sports agent backed by a local, timestamped JSON dataset."""
+"""Sports answering agent powered purely by Google and OpenAI APIs."""
 
 import json
 import os
-import re
-from datetime import date, timedelta
-from pathlib import Path
+import urllib.error
+import urllib.request
+from typing import Any
+
+from conversation_policy import with_conversation_policy
 
 
-DEFAULT_DATA_PATH = Path(__file__).with_name("sports_data.json")
+_SEARCH_TIMEOUT_SECONDS = float(os.getenv("LIVE_SEARCH_TIMEOUT_SECONDS", "30"))
+_WORKER_HEADERS = {
+    "accept": "application/json",
+    "content-type": "application/json",
+    "user-agent": "ForgeAgent/1.0 (+https://larboard.ca)",
+}
 
 
-def load_data(path=None):
-    """Load local sports data; no network or model connection is used."""
-    data_path = Path(path or os.getenv("SPORTS_DATA_PATH", DEFAULT_DATA_PATH))
-    with data_path.open(encoding="utf-8") as stream:
-        data = json.load(stream)
-    if not isinstance(data, dict) or not isinstance(data.get("games"), list) or not isinstance(data.get("standings"), list):
-        raise ValueError("Sports data must contain games and standings arrays")
-    return data
+def load_data(path: Any = None) -> dict[str, Any]:
+    """Stub retained for backwards compatibility; no static dataset is used."""
+    return {"updated_at": "live", "games": [], "standings": []}
 
 
-def _team_matches(team, query):
-    query = query.lower().strip()
-    name = team.lower()
-    query_words = set(re.findall(r"[a-z0-9]+", query))
-    return query in name or any(part in name for part in query_words if len(part) > 3)
+def _local_credentials_configured() -> bool:
+    return bool(os.getenv("OPENAI_API_KEY", "").strip() or os.getenv("GEMINI_API_KEY", "").strip())
 
 
-def _find_teams(data, prompt):
-    return sorted({team for game in data["games"] for team in (game.get("away"), game.get("home")) if team and _team_matches(team, prompt)}, key=len, reverse=True)
-
-
-def _format_game(game):
-    matchup = f'{game["away"]} at {game["home"]} on {game["date"]}'
-    if game.get("status") == "final":
-        return f'{matchup}: {game["away"]} {game["away_score"]}, {game["home"]} {game["home_score"]}.'
-    if game.get("status") == "in_progress":
-        return f'{matchup}: in progress at {game.get("venue", "venue not listed")} ({game.get("away_score", "?")}-{game.get("home_score", "?")}).'
-    return f'{matchup}: scheduled at {game.get("venue", "venue not listed")}.'
-
-
-def _format_missing_game_date(requested_date):
-    """Answer date-focused game questions without turning missing data into a fact."""
-    return (
-        f"The requested date is {requested_date.isoformat()}. "
-        "No NFL game is listed for that date in the local dataset; this does not verify the real-world schedule."
-    )
-
-
-def _format_recap(data):
-    sections = data.get("recaps", [])
-    if not sections:
-        return "No local recap data is available."
-    return "\n\n".join(
-        f'{section["section"]}\n' + "\n".join(f'◌ {game}' for game in section.get("games", []))
-        for section in sections
-    )
-
-
-def _recap_team_matches(data, prompt):
-    words = set(re.findall(r"[a-z0-9]+", prompt.lower()))
-    teams = set()
-    for section in data.get("recaps", []):
-        for summary in section.get("games", []):
-            matchup = summary.split(":", 1)[0]
-            for side in re.split(r"\s+at\s+|,|\s+\d+\s+", matchup, flags=re.I):
-                side = side.strip(" .()")
-                if side and any(token in words for token in re.findall(r"[a-z0-9]+", side.lower()) if len(token) > 3):
-                    teams.add(side)
-    return bool(teams)
-
-
-def _requested_date(prompt, data):
-    """Resolve simple relative or month/day dates against the dataset date."""
-    updated = data.get("updated_at", "")
-    try:
-        reference = date.fromisoformat(updated)
-    except ValueError:
-        reference = date.today()
-    text = prompt.lower()
-    if re.search(r"\btomorrow(?:'s|s)?\b", text):
-        return reference + timedelta(days=1)
-    if re.search(r"\btoday\b", text):
-        return reference
-    match = re.search(
-        r"\b(?:jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|"
-        r"jul(?:y)?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)"
-        r"\s+(\d{1,2})(?:st|nd|rd|th)?\b",
-        text,
-    )
-    if not match:
+def search_worker_gateway(query: str) -> str | None:
+    """Ask the Cloudflare Worker to perform both provider searches server-side."""
+    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
+    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    if not worker_url or not worker_token:
         return None
-    month_name = match.group(0).split()[0][:3]
-    month = {name: number for number, name in enumerate(
-        ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"), 1
-    )}[month_name]
-    return date(reference.year, month, int(match.group(1)))
-
-
-def _parse_next_limit(text: str) -> int | None:
-    """Return an explicit 'next N' limit from text, or None if absent."""
-    m = re.search(r"\bnext\s+(\d+)\b|\b(\d+)\s+(?:next\s+)?games?\b", text)
-    if m:
-        return max(1, min(32, int(m.group(1) or m.group(2))))
-    if re.search(r"\bnext\s+game\b", text):
-        return 1
-    return None
-
-
-def _parse_week_number(text: str) -> int | None:
-    """Return an explicit 'week N' number from text, or None if absent."""
-    m = re.search(r"\bweek\s+(\d{1,2})\b", text)
-    return int(m.group(1)) if m else None
-
-
-def answer(prompt, data=None):
-    """Answer a small set of sports questions from local records."""
-    if not isinstance(prompt, str) or not prompt.strip():
-        raise ValueError("Prompt is required")
-    data = data or load_data()
-    text = prompt.lower()
-    teams = _find_teams(data, prompt)
-    league = next((name for name in ("nhl", "mls", "nba", "nfl", "wnba", "mlb") if name in text), None)
-
-    requested_date = _requested_date(prompt, data)
-    if (not requested_date and any(word in text for word in (
-        "recap", "recaps", "finishers", "blowouts", "runaways", "drama",
-        "touchdown", "game summary", "what happened",
-    ))) or (not requested_date and _recap_team_matches(data, prompt)):
-        return _format_recap(data)
-
-    if any(word in text for word in ("standings", "table", "rank", "record")):
-        rows = [row for row in data["standings"] if not league or row.get("league", "").lower() == league]
-        if teams:
-            rows = [row for row in rows if row.get("team") in teams]
-        if not rows:
-            return "No matching local standings record was found."
-        rows.sort(key=lambda row: (row.get("league", ""), row.get("rank", 999)))
-        return "\n".join(f'{row["league"]} #{row["rank"]} {row["team"]}: {row["points"]} points ({row["wins"]}-{row["losses"]}).' for row in rows)
-
-    games = [game for game in data["games"] if not league or game.get("league", "").lower() == league]
-    if requested_date:
-        games = [game for game in games if game.get("date") == requested_date.isoformat()]
-    if teams:
-        games = [game for game in games if any(team in (game.get("away"), game.get("home")) for team in teams)]
-
-    # Week-based filter: "week 17", "week 2"
-    week_number = _parse_week_number(text)
-    if week_number is not None:
-        week_games = [g for g in games if g.get("week") == week_number]
-        if not week_games:
-            return f"No local games found for week {week_number}. This only means the local JSON has no record; it does not verify the real-world schedule."
-        return "\n".join(_format_game(g) for g in sorted(week_games, key=lambda g: g.get("date", "")))
-
-    # Next N games: filter to scheduled games from today onward, then slice
-    is_score_query = any(word in text for word in ("score", "result", "won", "lost"))
-    is_next_query = any(word in text for word in ("next", "upcoming")) and not is_score_query
-    next_limit = _parse_next_limit(text)
-
-    if is_next_query or next_limit is not None:
-        today = date.today().isoformat()
-        upcoming = [
-            g for g in games
-            if g.get("status") == "scheduled" and str(g.get("date", "")) >= today
-        ]
-        upcoming.sort(key=lambda g: str(g.get("date", "")))
-        if next_limit is not None:
-            upcoming = upcoming[:next_limit]
-        if not upcoming:
-            return "No upcoming local scheduled games found from today onward. This only means the local JSON has no record."
-        return "\n".join(_format_game(g) for g in upcoming)
-
-    if any(word in text for word in ("score", "result", "won", "lost", "game")):
-        if "schedule" in text:
-            games = [game for game in games if game.get("status") == "scheduled"]
-        elif is_score_query:
-            games = [game for game in games if game.get("status") == "final"]
-        if not games:
-            if requested_date and re.search(r"\b(?:date|today(?:'s|s)?|tomorrow(?:'s|s)?)\b", text):
-                return _format_missing_game_date(requested_date)
-            return "No matching local game record was found."
-        return "\n".join(_format_game(game) for game in sorted(games, key=lambda item: item.get("date", "")))
-
-    available = sorted({row.get("team") for row in data["standings"] if row.get("team")})
-    return (
-        "I can answer local scores, schedules, and standings, plus football recaps. "
-        "Teams in this dataset: " + ", ".join(available) + ". "
-        "The local football recap covers drama finishers, low-margin control games, "
-        "runaways and blowouts, plus in-progress games."
+    request = urllib.request.Request(
+        f"{worker_url}/api/sports/evidence",
+        data=json.dumps({"query": query.strip()[:4000]}).encode("utf-8"),
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
+        method="POST",
     )
+    try:
+        with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return str(payload.get("evidence", "Worker returned no live evidence."))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return f"Cloudflare Worker live search failed: {type(error).__name__}: {error}"
 
 
-def prediction_inputs(prompt, data=None):
-    """Return JSON-derived inputs for a forecast without making a prediction."""
+def _with_source_note(answer_text: str, sources: list[tuple[str, str]]) -> str:
+    if not sources:
+        return answer_text
+    return answer_text + "\n\nSources:\n" + "\n".join(f"- {title}: {url}" for title, url in sources)
+
+
+def _openai_sources(response: Any) -> list[tuple[str, str]]:
+    sources: list[tuple[str, str]] = []
+    for item in getattr(response, "output", []) or []:
+        for content in getattr(item, "content", []) or []:
+            for annotation in getattr(content, "annotations", []) or []:
+                url = getattr(annotation, "url", None)
+                title = getattr(annotation, "title", None) or url
+                if url and (title, url) not in sources:
+                    sources.append((title, url))
+    return sources
+
+
+def _gemini_sources(response: Any) -> list[tuple[str, str]]:
+    sources: list[tuple[str, str]] = []
+    for step in getattr(response, "steps", []) or []:
+        for content in getattr(step, "content", []) or []:
+            for annotation in getattr(content, "annotations", []) or []:
+                url = getattr(annotation, "url", None)
+                title = getattr(annotation, "title", None) or url
+                if url and (title, url) not in sources:
+                    sources.append((title, url))
+    candidates = getattr(response, "candidates", None) or []
+    metadata = getattr(candidates[0], "grounding_metadata", None) if candidates else None
+    for chunk in getattr(metadata, "grounding_chunks", []) or []:
+        web = getattr(chunk, "web", None)
+        url = getattr(web, "uri", None)
+        title = getattr(web, "title", None) or url
+        if url and (title, url) not in sources:
+            sources.append((title, url))
+    return sources
+
+
+def search_openai(query: str) -> str:
+    """Perform an OpenAI web search lookup for current sports information."""
+    worker_result = search_worker_gateway(query)
+    if worker_result is not None:
+        return worker_result
+    if not os.getenv("OPENAI_API_KEY"):
+        return "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
+    try:
+        from openai import OpenAI
+
+        response = OpenAI(timeout=_SEARCH_TIMEOUT_SECONDS, max_retries=0).responses.create(
+            model=os.getenv("OPENAI_SEARCH_MODEL", "gpt-4.1-mini"),
+            instructions=with_conversation_policy(
+                "Use web search to answer the user's sports query with current, verifiable information. "
+                "Distinguish evidence from uncertainty and include useful source links."
+            ),
+            input=query.strip()[:4000],
+            tools=[{"type": "web_search_preview"}],
+        )
+        return _with_source_note(response.output_text, _openai_sources(response))
+    except Exception as error:
+        return f"OpenAI web search failed: {type(error).__name__}: {error}"
+
+
+def search_gemini(query: str) -> str:
+    """Perform a Google Gemini Search grounding lookup for current sports information."""
+    worker_result = search_worker_gateway(query)
+    if worker_result is not None:
+        return worker_result
+    if not os.getenv("GEMINI_API_KEY"):
+        return "Gemini Google Search is not configured (GEMINI_API_KEY is missing)."
+    try:
+        from google import genai
+
+        client = genai.Client(
+            api_key=os.environ["GEMINI_API_KEY"],
+            http_options={"timeout": int(_SEARCH_TIMEOUT_SECONDS * 1000)},
+        )
+        response = client.interactions.create(
+            model=os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.6-flash"),
+            system_instruction=with_conversation_policy(
+                "Use Google Search grounding to answer the user's sports query with current, "
+                "verifiable information. Distinguish evidence from uncertainty and "
+                "include useful source links."
+            ),
+            input=query.strip()[:4000],
+            tools=[{"type": "google_search"}],
+        )
+        return _with_source_note(response.output_text or "Gemini returned no text.", _gemini_sources(response))
+    except Exception as error:
+        return f"Gemini Google Search failed: {type(error).__name__}: {error}"
+
+
+def answer(prompt: str, data: Any = None) -> str:
+    """Answer sports questions purely using the Google and OpenAI APIs."""
     if not isinstance(prompt, str) or not prompt.strip():
         raise ValueError("Prompt is required")
-    data = data or load_data()
-    text = prompt.lower()
-    teams = _find_teams(data, prompt)
-    league = next((name for name in ("nhl", "mls", "nba", "nfl", "wnba", "mlb") if name in text), None)
-    games = [game for game in data["games"] if not league or game.get("league", "").lower() == league]
-    if teams:
-        games = [game for game in games if any(team in (game.get("away"), game.get("home")) for team in teams)]
-    standings = [row for row in data["standings"] if not league or row.get("league", "").lower() == league]
-    if teams:
-        standings = [row for row in standings if row.get("team") in teams]
+
+    text = prompt.strip()
+    worker_res = search_worker_gateway(text)
+    if worker_res is not None:
+        return worker_res
+
+    openai_res = search_openai(text)
+    gemini_res = search_gemini(text)
+
+    openai_failed = "not configured" in openai_res.lower() or "failed" in openai_res.lower()
+    gemini_failed = "not configured" in gemini_res.lower() or "failed" in gemini_res.lower()
+
+    if openai_failed and gemini_failed:
+        return (
+            f"Google and OpenAI live search APIs are currently unavailable.\n\n"
+            f"[OpenAI]: {openai_res}\n\n[Google Gemini]: {gemini_res}"
+        )
+
+    sections = []
+    if not openai_failed:
+        sections.append(f"[OpenAI Web Search]\n{openai_res}")
+    else:
+        sections.append(f"[OpenAI Web Search (Unavailable)]\n{openai_res}")
+
+    if not gemini_failed:
+        sections.append(f"[Google Gemini Search]\n{gemini_res}")
+    else:
+        sections.append(f"[Google Gemini Search (Unavailable)]\n{gemini_res}")
+
+    return "\n\n".join(sections)
+
+
+def prediction_inputs(prompt: str, data: Any = None) -> dict[str, Any]:
+    """Gather live Google and OpenAI search evidence for sports predictions."""
+    if not isinstance(prompt, str) or not prompt.strip():
+        raise ValueError("Prompt is required")
+    text = prompt.strip()
     return {
-        "source": "local_json",
-        "updated_at": data.get("updated_at"),
-        "matching_games": games,
-        "matching_standings": standings,
-        "limitation": "These are inputs only. No local prediction or outcome is asserted.",
+        "source": "google_and_openai_apis",
+        "openai_evidence": search_openai(text),
+        "gemini_evidence": search_gemini(text),
+        "limitation": "Live search evidence only; no outcome is asserted.",
     }
 
 
 if __name__ == "__main__":
-    print("Offline sports agent. Data updated:", load_data().get("updated_at", "unknown"))
+    print("Live sports assistant powered purely by Google and OpenAI APIs.")
     while True:
         try:
-            prompt = input("sports> ").strip()
+            user_prompt = input("sports> ").strip()
         except EOFError:
             break
-        if prompt.lower() in {"quit", "exit"}:
+        if user_prompt.lower() in {"quit", "exit"}:
             break
-        try:
-            print(answer(prompt))
-        except ValueError as error:
-            print(f"Error: {error}")
+        if user_prompt:
+            try:
+                print(answer(user_prompt))
+            except Exception as exc:
+                print(f"Error: {exc}")

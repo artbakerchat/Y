@@ -8,7 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "ForgeAgent"))
 from terminal import deterministic_live_nfl_answer, deterministic_sports_answer, needs_live_search, worker_gateway_state, live_context
-from terminal_tools import fetch_nfl_scoreboard, sync_nfl_schedule_json
+from terminal_tools import build_nfl_workflow_evidence, build_prediction_evidence, fetch_nfl_scoreboard, sync_nfl_schedule_json
 
 
 class TerminalSearchTests(unittest.TestCase):
@@ -17,6 +17,10 @@ class TerminalSearchTests(unittest.TestCase):
 
     def test_explicit_provider_request_is_grounded(self):
         self.assertTrue(needs_live_search("Ask Gemini API."))
+
+    def test_sports_queries_are_grounded(self):
+        self.assertTrue(needs_live_search("What is today's NFL game?"))
+        self.assertTrue(needs_live_search("Show me current standings."))
 
     def test_static_request_does_not_require_live_search(self):
         self.assertFalse(needs_live_search("Explain what a touchdown is."))
@@ -29,9 +33,28 @@ class TerminalSearchTests(unittest.TestCase):
         with patch.dict("os.environ", {"FORGE_WORKER_URL": "https://larboard.ca", "FORGE_WORKER_TOKEN": "secret"}, clear=True):
             self.assertEqual(worker_gateway_state(), "configured")
 
-    def test_missing_local_nfl_record_falls_through_to_live_search(self):
-        with patch("terminal.answer_sports", return_value="The requested date is 2026-09-14. No NFL game is listed for that date in the local dataset; this does not verify the real-world schedule."):
-            self.assertIsNone(deterministic_sports_answer("today's NFL game"))
+    def test_simple_sports_lookup_defers_to_grounded_tools(self):
+        self.assertIsNone(deterministic_sports_answer("today's NFL game"))
+
+    @patch("terminal_tools.search_live_web_gemini", return_value="Gemini schedule evidence")
+    @patch("terminal_tools.search_live_web_openai", return_value="OpenAI schedule evidence")
+    def test_nfl_workflow_evidence_uses_google_and_openai(self, mock_openai, mock_gemini):
+        evidence = build_nfl_workflow_evidence("2026-09-14")
+        self.assertIn("NFL WORKFLOW SNAPSHOT", evidence)
+        self.assertIn("[OpenAI live web search]", evidence)
+        self.assertIn("OpenAI schedule evidence", evidence)
+        self.assertIn("[Gemini Google Search]", evidence)
+        self.assertIn("Gemini schedule evidence", evidence)
+
+    @patch("terminal_tools.search_live_web_via_worker", return_value=None)
+    @patch("terminal_tools.search_live_web_gemini", return_value="Gemini prediction evidence")
+    @patch("terminal_tools.search_live_web_openai", return_value="OpenAI prediction evidence")
+    def test_sports_prediction_evidence_uses_google_and_openai(self, mock_openai, mock_gemini, mock_worker):
+        evidence = build_prediction_evidence("Super Bowl forecast")
+        self.assertIn("PREDICTION INPUTS", evidence)
+        self.assertIn("[Google and OpenAI live search evidence]", evidence)
+        self.assertIn("OpenAI prediction evidence", evidence)
+        self.assertIn("Gemini prediction evidence", evidence)
 
     def test_current_nfl_question_lists_scoreboard_games(self):
         with patch("terminal.fetch_nfl_scoreboard", return_value="ESPN NFL scoreboard API for 2026-09-14:\n- Denver Broncos at Kansas City Chiefs; status: Scheduled; score: ?-?; venue: Arrowhead Stadium."):
@@ -52,12 +75,10 @@ class TerminalSearchTests(unittest.TestCase):
     def test_live_context_fetches_espn_locally_without_worker(self):
         import asyncio
         with patch("terminal.fetch_nfl_scoreboard", return_value="ESPN NFL scoreboard API for 2026-09-14:\n- Denver Broncos at Kansas City Chiefs; status: Scheduled.") as mock_fetch:
-            with patch("terminal.search_sports_via_worker") as mock_worker:
-                with patch("terminal.search_live_web_via_worker", return_value="[Worker Web Evidence]"):
-                    with patch("terminal.local_live_search_configured", return_value=False):
-                        result = asyncio.run(live_context("What are the ESPN scores today?"))
+            with patch("terminal.search_live_web_via_worker", return_value="[Worker Web Evidence]"):
+                with patch("terminal.local_live_search_configured", return_value=False):
+                    result = asyncio.run(live_context("What are the ESPN scores today?"))
         mock_fetch.assert_called_once()
-        mock_worker.assert_not_called()
         self.assertIn("ESPN NFL scoreboard API for 2026-09-14", result)
 
     def test_nfl_scoreboard_api_formats_current_games(self):

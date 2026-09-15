@@ -608,7 +608,24 @@ function isLiveSportsRequest(message, history = []) {
     .map((item) => item.content)]
     .join('\n');
   return /\b(sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(conversation)
-    && /\b(today|tomorrow|current|latest|live|next|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google)\b/i.test(conversation);
+    && /\b(today|tomorrow|current|latest|live|next|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google|workflow)\b/i.test(conversation);
+}
+
+/**
+ * Detects whether the message is asking for general real-time web information
+ * that isn't sports-specific: news, weather, prices, current events, etc.
+ * Sports queries are handled separately by isLiveSportsRequest.
+ */
+function isLiveWebRequest(message, history = []) {
+  const conversation = [message, ...history
+    .filter((item) => item?.role === 'user')
+    .map((item) => item.content)]
+    .join('\n');
+  const wantsLive = /\b(today|current|latest|recent|right now|this week|this month|live|breaking|just announced|as of|search|look up|find out|what is the|what are the|who won|who is|what happened)\b/i.test(conversation);
+  const liveTopic = /\b(news|weather|forecast|temperature|price|stock|market|exchange rate|election|politics|policy|law|legislation|event|concert|show|release|launch|update|version|recall|outbreak|crisis|award|winner|result|ranking|trending|viral)\b/i.test(conversation);
+  const directSearch = /\b(search the web|google|look it up|find online|web search|internet|check online)\b/i.test(conversation);
+  const isSports = /\b(nfl|nba|nhl|mlb|mls|wnba|sport\w*)\b/i.test(conversation);
+  return (directSearch || (wantsLive && liveTopic)) && !isSports;
 }
 
 function liveSportsQuery(message, history = []) {

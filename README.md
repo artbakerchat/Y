@@ -116,11 +116,13 @@ PORT=3000
 
 The local Node server stores sessions under `.data/sessions/`. The deployed Worker stores web state in the configured R2 bucket.
 
-### Shared sports data
+### Live sports and web answering
 
-The website conversation uses the existing `ASSETS` R2 bucket for sports data under the `sports/` prefix. The deployment workflow uploads `app/ForgeAgent/sports_data.json` to `sports/sports_data.json`. The Worker reads that object for its `local_sports_lookup` tool and passes the same dataset to the Python AgentCore runtime when AgentCore routing is enabled. The standalone terminal keeps its local JSON fallback for offline development.
+Sports questions and forecasts use the Google (Gemini Google Search grounding) and OpenAI (Web Search) live APIs. General real-time queries — news, weather, current events, prices, and other time-sensitive questions — use the same two APIs via the `web_search` tool available to the `forge` and `civic-knowledge` profiles.
 
-For sports forecasts, the Worker-side `sports_prediction` tool combines the R2 record with supplemental OpenAI and Gemini search evidence. Store `OPENAI_API_KEY` and `GEMINI_API_KEY` as Worker secrets; they are never sent to the browser. If either key is absent or a provider fails, the evidence is labeled unavailable and the agent must not treat it as verified.
+No static local dataset or ESPN scraping is used to answer sports queries. For general web queries the agent calls `web_search` directly; for sports questions live evidence is pre-fetched before the agent loop starts to reduce latency.
+
+Store `OPENAI_API_KEY` and `GEMINI_API_KEY` as Worker secrets; they are never sent to the browser. `OPENAI_API_KEY` enables both sports and general web search through the OpenAI Web Search API. If either key is absent or a provider fails, the evidence is labeled unavailable and the agent informs the user which provider was unavailable.
 
 ### Terminal Claude client
 
@@ -143,11 +145,11 @@ export OPENAI_API_KEY='your-key'
 export GEMINI_API_KEY='your-key'
 ```
 
-For local sports searches, repository `.env` provider keys take priority over the Worker gateway. If a local `OPENAI_API_KEY` or `GEMINI_API_KEY` is present, the terminal calls the configured provider directly and reports any provider that is missing or unavailable. If neither local key is present, it falls back to `FORGE_WORKER_URL` and `FORGE_WORKER_TOKEN`; the Worker then owns Bedrock, OpenAI, and Gemini credentials. The local sports JSON remains authoritative when it contains a matching record.
+For sports and live web searches, a configured Worker gateway takes priority over repository `.env` provider keys. Set `FORGE_WORKER_URL` and `FORGE_WORKER_TOKEN`; the Worker owns Bedrock, OpenAI, and Gemini credentials. Provider keys are only used locally when the gateway is not configured. Gateway failures are reported without falling back to local provider calls. AgentCore sports lookup reuses live evidence supplied by the Worker, so it does not need provider keys to answer that request.
 
 To keep provider keys only in Cloudflare, set `FORGE_WORKER_URL=https://larboard.ca` and a local `FORGE_WORKER_TOKEN` in `.env`, then store the same value as the Worker secret `FORGE_WORKER_TOKEN`. The local Python terminal calls `POST /api/agent-gateway` for all agent turns; sports evidence uses the Worker’s `POST /api/sports/evidence` path internally. Direct local Bedrock is available only with the explicit `--direct-bedrock` option.
 
-Sports forecasts use the `sports_prediction` tool. It exposes structured local JSON inputs first, adds live provider evidence as supplemental context, and requires the response to be labeled as an uncertain forecast rather than a verified result.
+Sports forecasts use the `sports_prediction` tool, which gathers live search evidence from Google and OpenAI APIs, and requires the response to be labeled as an uncertain forecast rather than a verified result.
 
 Forecasts can be stored separately with `write_nfl_prediction_json`, which requires unmodified `nfl_workflow` schedule evidence and creates an immutable `app/ForgeAgent/nfl_predictions_YYYY-MM-DD.json` file only for explicitly listed scheduled games. Completed scores continue to use `write_nfl_results_json`.
 
@@ -157,7 +159,7 @@ Detailed play-by-play is opt-in: when a user explicitly requests play-by-play or
 
 After games finish, use `nfl_results_evidence` followed by `write_nfl_results_json`. The writer creates an immutable `app/ForgeAgent/sports_data_YYYY-MM-DD.json` file and requires final scores, prediction-versus-actual fields, source URLs, and an uncertainty note for every NFL game.
 
-Saying `NFL workflow` requests a live snapshot of every NFL game from today onward in `America/Vancouver` time, using the public ESPN NFL scoreboard API plus OpenAI and Gemini web evidence. It separates scheduled, in-progress, and final games, then merges that date's API schedule into `app/ForgeAgent/sports_data.json`; existing final records are preserved and new/non-final games are refreshed. Rerun it for updates or connect it to an external scheduler.
+Saying `NFL workflow` requests a live snapshot of NFL games from today onward in `America/Vancouver` time using Google and OpenAI live web search evidence. It separates scheduled, in-progress, and final games.
 
 ## API overview
 

@@ -7,6 +7,7 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
 import { getPaletteTemplate, detectPaletteContext } from './src/palettes.js';
 import { getAgentProfile, inferAgentId, listAgentProfiles } from './src/agents.js';
 import { createAgentHarness } from './src/agent-harness.js';
+import { liveSportsEvidence, liveWebEvidence } from './src/live-search.js';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const port = Number(process.env.PORT || 3000);
@@ -26,6 +27,18 @@ const canonicalHtmlRoutes = { '/index.html': '/' };
 const runAgent = createAgentHarness({
   modelId,
   converse: (input, options) => client.send(new ConverseCommand(input), options),
+  searchLive: (query) => liveSportsEvidence(query, {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_SEARCH_MODEL: process.env.OPENAI_SEARCH_MODEL,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GEMINI_SEARCH_MODEL: process.env.GEMINI_SEARCH_MODEL,
+  }),
+  searchLiveWeb: (query) => liveWebEvidence(query, {
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    OPENAI_SEARCH_MODEL: process.env.OPENAI_SEARCH_MODEL,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    GEMINI_SEARCH_MODEL: process.env.GEMINI_SEARCH_MODEL,
+  }),
 });
 
 const defaultPalette = ['anchor','pinnacle','summit','twilight','static','ocean','wander','spark','gravity','money','book','Glimmer','compass','voyage','solitude','prism','nectar','blossom','fossil','zenith','vortex','mirage','starlight','ember','cyclone','glacier','radiance','labyrinth','aurora','thistle','apple','Nebula','crisp','whisper','avalanche','horizon','velvet','mosaic','thunder','marble','cascade','echo','lantern','silver','standard','puzzle','orbit','shadow','flicker','autumn','rhythm','canvas'];

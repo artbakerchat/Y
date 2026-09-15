@@ -16,6 +16,14 @@ PROFILES = ["forge", "food-bank", "nonprofit-helpdesk", "mutual-aid", "civic-kno
 
 
 class HarnessTests(unittest.TestCase):
+    def test_sports_tool_reuses_worker_evidence_without_local_search(self):
+        from forge_tools import build_tools
+        with patch("forge_tools.answer_sports") as local_search:
+            tools = build_tools([], sports_live_evidence="Worker search evidence with source URLs")
+            lookup = next(tool for tool in tools if tool.__name__ == "local_sports_lookup")
+            self.assertEqual(lookup(prompt="Today's NFL games?"), "Worker search evidence with source URLs")
+            local_search.assert_not_called()
+
     def test_all_profiles_have_tools_model_and_role(self):
         for profile_id in PROFILES:
             with self.subTest(profile=profile_id):
@@ -70,6 +78,10 @@ class HarnessTests(unittest.TestCase):
         self.assertIn("Today's NFL game?", prompt)
         self.assertIn("PROVIDER USAGE: Gemini Google Search=used.", prompt)
         self.assertEqual(main._prompt_with_live_sports_evidence("Hello", ""), "Hello")
+
+    def test_forge_web_search_tool_relevance(self):
+        self.assertTrue(main._forge_tool_relevant("web_search", "What is the latest weather forecast this week?"))
+        self.assertFalse(main._forge_tool_relevant("web_search", "Please rewrite this sentence in plain language."))
 
     def test_stream_contract_and_profile_isolation(self):
         async def exercise():

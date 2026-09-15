@@ -23,7 +23,6 @@ from strands.types.exceptions import MaxTokensReachedException
 from conversation_guidance import CONVERSATION_GUIDANCE
 from conversation_policy import with_conversation_policy
 from forge_harness import configured_model, clean_answer, format_usage_report, usage_from_result
-from sports_agent import answer as answer_sports
 from terminal_tools import (
     build_prediction_evidence,
     build_nfl_workflow_evidence,
@@ -33,7 +32,6 @@ from terminal_tools import (
     search_live_web_gemini,
     search_live_web_openai,
     search_live_web_via_worker,
-    search_sports_via_worker,
     local_live_search_configured,
     worker_live_search_configured,
     worker_agent_request,
@@ -87,18 +85,8 @@ def is_nfl_workflow_request(prompt):
 
 
 def deterministic_sports_answer(prompt):
-    """Serve simple local date lookups without spending a model request."""
-    if not (
-        re.search(r"\bnfl\b", prompt, re.I)
-        and re.search(r"\btoday(?:'s|s)?\b", prompt, re.I)
-        and re.search(r"\bgame\b", prompt, re.I)
-        and not re.search(r"\b(score|result|standings|schedule|news|live|predict\w*|forecast|odds|gemini|google|web|online|internet|search)\b", prompt, re.I)
-    ):
-        return None
-    local_answer = answer_sports(prompt)
-    if local_answer.startswith(("No matching local game record", "The requested date is ")):
-        return None
-    return local_answer
+    """Sports questions are answered via grounded live evidence."""
+    return None
 
 
 def _parse_next_limit_terminal(prompt: str) -> int | None:
@@ -234,8 +222,8 @@ async def live_context(prompt, prior_prompts=()):
         )
     if is_prediction_request(prompt):
         return "\n\n" + await asyncio.to_thread(build_prediction_evidence, grounded_prompt)
-    # ESPN scoreboard API is public and does not require Worker credentials.
-    # Always fetch it locally for sports/NFL/ESPN queries in the terminal.
+    # ESPN's public scoreboard helps ground current NFL answers even when the
+    # provider-backed live search is routed through the Worker fallback.
     nfl_api_result = None
     if is_sports_query(prompt) or re.search(r"\b(nfl|espn)\b", prompt, re.IGNORECASE):
         nfl_api_result = await asyncio.to_thread(
@@ -246,20 +234,17 @@ async def live_context(prompt, prior_prompts=()):
     if not local_live_search_configured():
         worker_result = await asyncio.to_thread(search_live_web_via_worker, grounded_prompt)
     if worker_result is not None:
-        local_result, openai_result, gemini_result = await asyncio.gather(
-            asyncio.to_thread(answer_sports, grounded_prompt),
+        openai_result, gemini_result = await asyncio.gather(
             asyncio.to_thread(lambda: worker_result),
             asyncio.to_thread(lambda: worker_result),
         )
     else:
-        local_result, openai_result, gemini_result = await asyncio.gather(
-            asyncio.to_thread(answer_sports, grounded_prompt),
+        openai_result, gemini_result = await asyncio.gather(
             asyncio.to_thread(search_live_web_openai, grounded_prompt),
             asyncio.to_thread(search_live_web_gemini, grounded_prompt),
         )
     return (
-        "\n\nVERIFIED SPORTS AND LIVE WEB RESULTS (use as evidence; do not invent missing facts):\n"
-        f"[Local JSON lookup — authoritative when matching]\n{local_result[:9000]}\n\n"
+        "\n\nVERIFIED LIVE WEB RESULTS (from Google and OpenAI APIs; do not invent missing facts):\n"
         f"[NFL scoreboard API]\n{nfl_api_result[:9000] if nfl_api_result else 'Not applicable.'}\n\n"
         f"[OpenAI web search]\n{openai_result[:9000]}\n\n"
         f"[Gemini Google Search]\n{gemini_result[:9000]}\n"
@@ -275,25 +260,18 @@ def build_agent(model_id, region, max_tokens):
         "through the repository tools when the user requests a code change. Make focused edits and "
         "explain what changed. When the user asks about files, code, "
         "the repository, or whether something exists locally, you MUST use the repository "
-        "tools before answering. For a question about a local sports agent, search filenames for "
-        "sports first, then report the matching path. Never claim that you cannot access the repository "
-        "when the repository tools are available. For sports questions, use local_sports_lookup and its "
-        "local JSON dataset first; matching local records are authoritative and must not be overridden "
-        "by model memory or web results. If the local tool reports no matching record, treat that as a "
-        "stale-data signal and use the supplied scoreboard API and live-web results to answer the current "
-        "question. Mention the local-data gap only when useful. "
+        "tools before answering. Never claim that you cannot access the repository "
+        "when the repository tools are available. For sports questions, use local_sports_lookup. "
         "When the user asks for 'next game', 'next N games', or 'upcoming games': return only the "
         "soonest N scheduled games from today onward — do not dump the full season schedule or "
         "include completed games. When the user specifies 'week N', return only that week's games. "
         "Never list Week 15/16/17 games in response to 'next game' unless they are genuinely the "
-        "first scheduled games from today. "
-        "For current or time-sensitive questions, use the supplied verified live-web "
+        "first scheduled games from today. For current or time-sensitive sports questions, use the "
+        "supplied scoreboard API and verified live-web "
         "results and cite their sources; do not claim that web access failed unless both result blocks "
         "report a failure. If the live results do not establish a game or other fact, say it cannot "
-        "be verified; never fill the gap with memory or a previous answer. Clearly label disagreement "
-        "with the local dataset rather than silently replacing local data. If asked to predict a game, "
-        "use the sports_prediction evidence, keep local JSON inputs primary, use web evidence only as "
-        "supplemental context, and label the result as an uncertain forecast—not a fact.",
+        "be verified; never fill the gap with memory or a previous answer. If asked to predict a game, "
+        "use the sports_prediction evidence gathered from Google and OpenAI APIs, and label the result as an uncertain forecast—not a fact.",
         "When asked to store an NFL forecast, call nfl_workflow first for the requested date and pass "
         "its unmodified output as schedule_evidence to write_nfl_prediction_json. Include only games "
         "explicitly listed there, with a prediction object, source URLs, and an uncertainty note. If "

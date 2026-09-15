@@ -13,7 +13,6 @@ from zoneinfo import ZoneInfo
 from strands import tool
 
 from sports_agent import answer as answer_sports
-from sports_agent import prediction_inputs
 from conversation_policy import with_conversation_policy
 from nflmeta_api import (
     fetch_live_scores as _nflmeta_live_scores,
@@ -644,21 +643,21 @@ def search_live_web_gemini(query: str) -> str:
 
 
 def build_prediction_evidence(query: str) -> str:
-    """Combine local prediction inputs with supplemental live provider evidence."""
-    local = json.dumps(prediction_inputs(query), ensure_ascii=False, indent=2)
+    """Gather live provider evidence for a sports forecast, with scoreboard context."""
     scoreboard = fetch_nfl_scoreboard(
         datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
     )
+    live = search_live_web_via_worker(query)
+    if live is None:
+        live = (
+            f"[OpenAI live web search]\n{search_live_web_openai(query)}\n\n"
+            f"[Gemini Google Search]\n{search_live_web_gemini(query)}"
+        )
     return (
         "PREDICTION INPUTS — NOT A VERIFIED OUTCOME\n"
-        "[Local JSON — priority source]\n"
-        f"{local}\n\n"
         "[ESPN NFL scoreboard — local API]\n"
         f"{scoreboard}\n\n"
-        "[OpenAI live web search — supplemental]\n"
-        f"{search_live_web_openai(query)}\n\n"
-        "[Gemini Google Search — supplemental]\n"
-        f"{search_live_web_gemini(query)}\n\n"
+        f"[Google and OpenAI live search evidence]\n{live}\n\n"
         "Any conclusion must be labeled as a forecast, include assumptions, and state uncertainty."
     )
 

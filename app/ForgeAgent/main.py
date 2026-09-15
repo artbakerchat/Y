@@ -105,6 +105,8 @@ def _forge_tool_relevant(name: str, prompt: str) -> bool:
         return any(term in text for term in ("calculat", "add", "subtract", "divide", "multiply", "percent", "how many", "equation", "sum", "total"))
     if name in {"local_sports_lookup", "sports_prediction"}:
         return any(term in text for term in ("sport", "game", "match", "team", "nfl", "nba", "nhl", "mlb", "mls", "wnba", "score", "standing", "schedule"))
+    if name == "web_search":
+        return any(term in text for term in ("today", "current", "latest", "recent", "right now", "this week", "this month", "live", "breaking", "news", "weather", "forecast", "temperature", "price", "stock", "market", "election", "event", "release", "launch", "update", "search", "look up", "find", "what is the", "what are the", "who won", "who is", "what happened", "google", "internet"))
     return False
 
 
@@ -327,7 +329,7 @@ async def invoke(payload: dict[str, Any], context: Any):
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
                 profile_tools = set(get_tool_names(profile_id))
                 sports_data = payload.get("sports_data") if "local_sports_lookup" in profile_tools else None
-                sports_live_evidence = payload.get("sports_live_evidence", "") if "sports_prediction" in profile_tools else ""
+                sports_live_evidence = payload.get("sports_live_evidence", "") if ("sports_prediction" in profile_tools or "local_sports_lookup" in profile_tools) else ""
                 agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, sports_data, sports_live_evidence)
                 answer = await answer_request(
                     agent,
