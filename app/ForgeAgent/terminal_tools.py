@@ -141,6 +141,25 @@ def fetch_nfl_scoreboard(game_date: str) -> str:
     return "\n".join(lines)
 
 
+def upload_file_to_s3(local_path: Path, s3_key: str) -> str:
+    """Upload a local file to the configured sports archive S3 bucket.
+
+    Reads FORGE_SPORTS_BUCKET and optional FORGE_SPORTS_PREFIX from the
+    environment. Silently skips when the bucket is not configured so offline
+    development is unaffected. Returns a short status string.
+    """
+    bucket = os.getenv("FORGE_SPORTS_BUCKET", "").strip()
+    if not bucket:
+        return "S3 upload skipped: FORGE_SPORTS_BUCKET not set."
+    prefix = os.getenv("FORGE_SPORTS_PREFIX", "").strip().strip("/")
+    key = f"{prefix}/{s3_key}" if prefix else s3_key
+    try:
+        s3.upload_file(str(local_path), bucket, key, ExtraArgs={"ContentType": "application/json"})
+        return f"Uploaded to s3://{bucket}/{key}."
+    except Exception as error:  # noqa: BLE001
+        return f"S3 upload failed: {type(error).__name__}: {str(error)[:200]}"
+
+
 def sync_nfl_schedule_json(game_date: str, repository: Path | None = None) -> str:
     """Merge one API-backed NFL date into the local sports JSON.
 
@@ -170,7 +189,9 @@ def sync_nfl_schedule_json(game_date: str, repository: Path | None = None) -> st
             changed += 1
     data["updated_at"] = target.isoformat()
     data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Updated {data_path.name}: {added} NFL game(s) added and {changed} non-final game(s) refreshed for {target.isoformat()}. Existing final records were preserved."
+    local_result = f"Updated {data_path.name}: {added} NFL game(s) added and {changed} non-final game(s) refreshed for {target.isoformat()}. Existing final records were preserved."
+    upload_result = upload_sports_data_to_worker(data, repository)
+    return f"{local_result}\n{upload_result}"
 
 
 def worker_agent_request(prompt: str, agent_id: str = "forge", session_id: str = "local-terminal") -> str:
@@ -196,6 +217,35 @@ def worker_agent_request(prompt: str, agent_id: str = "forge", session_id: str =
         raise RuntimeError(f"Worker request failed ({error.code}): {detail}") from error
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
         raise RuntimeError(f"Worker request failed: {type(error).__name__}: {error}") from error
+
+
+def upload_sports_data_to_worker(data: dict, repository: Path | None = None) -> str:
+    """Push the local sports_data.json to R2 via the authenticated Worker endpoint.
+
+    Returns a short status string. Silently skips the upload when
+    FORGE_WORKER_URL or FORGE_WORKER_TOKEN are not set (offline development).
+    """
+    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
+    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    if not worker_url or not worker_token:
+        return "Worker upload skipped: FORGE_WORKER_URL or FORGE_WORKER_TOKEN not set."
+    request = urllib.request.Request(
+        f"{worker_url}/api/sports/update",
+        data=json.dumps(data).encode("utf-8"),
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        games = payload.get("games", "?")
+        updated_at = payload.get("updated_at") or "unknown"
+        return f"Worker R2 updated: {games} game(s) written, updated_at={updated_at}."
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", errors="replace")[:240]
+        return f"Worker R2 upload failed ({error.code}): {detail}"
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return f"Worker R2 upload failed: {type(error).__name__}: {error}"
 
 
 def set_play_by_play_request(prompt: str):
@@ -642,7 +692,9 @@ def write_nfl_prediction_file(repository: Path, game_date: str, records_json: st
         return f"Write rejected: {destination.relative_to(repository)} already exists; existing data was not overwritten."
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Created {destination.relative_to(repository)} with {len(payload['games'])} forecast game(s)."
+    local_result = f"Created {destination.relative_to(repository)} with {len(payload['games'])} forecast game(s)."
+    upload_result = upload_file_to_s3(destination, destination.name)
+    return f"{local_result}\n{upload_result}"
 
 
 def write_game_play_by_play_file(repository: Path, game_date: str, away: str, home: str, records_json: str) -> str:
@@ -695,7 +747,9 @@ def write_game_play_by_play_file(repository: Path, game_date: str, away: str, ho
         return f"Write rejected: {destination.relative_to(repository)} already exists; existing data was not overwritten."
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Created {destination.relative_to(repository)} with {len(payload['events'])} play(s)."
+    local_result = f"Created {destination.relative_to(repository)} with {len(payload['events'])} play(s)."
+    upload_result = upload_file_to_s3(destination, destination.name)
+    return f"{local_result}\n{upload_result}"
 def build_nfl_workflow_evidence(start_date: str = "") -> str:
     """Collect a live NFL snapshot beginning on the requested local date."""
     if not start_date:
@@ -772,7 +826,9 @@ def write_nfl_results_file(repository: Path, game_date: str, records_json: str) 
         return f"Write rejected: {destination.relative_to(repository)} already exists; existing data was not overwritten."
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Created {destination.relative_to(repository)} with {len(payload['games'])} completed NFL game(s)."
+    local_result = f"Created {destination.relative_to(repository)} with {len(payload['games'])} completed NFL game(s)."
+    upload_result = upload_file_to_s3(destination, destination.name)
+    return f"{local_result}\n{upload_result}"
 
 
 def _with_source_note(answer, sources):

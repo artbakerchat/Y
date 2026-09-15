@@ -487,6 +487,26 @@ async function liveSportsEvidence(query, env) {
   return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[ESPN NFL scoreboard]\n${nflScoreboard}\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
 }
 
+async function sportsUpdateFromRequest(request, env) {
+  const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
+  const suppliedToken = request.headers.get('x-forge-worker-token') || '';
+  if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) {
+    return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
+  }
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: 'Request body must be valid JSON.' }, 400);
+  }
+  if (!body || typeof body !== 'object' || !Array.isArray(body.games)) {
+    return json({ error: 'Body must be a JSON object with a games array.' }, 400);
+  }
+  const payload = JSON.stringify(body);
+  await env.ASSETS.put('sports/sports_data.json', payload, { httpMetadata: { contentType: 'application/json' } });
+  return json({ ok: true, games: body.games.length, updated_at: body.updated_at || null });
+}
+
 async function nflmetaGatewayFromRequest(request, env) {
   const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
   const suppliedToken = request.headers.get('x-forge-worker-token') || '';
@@ -525,6 +545,7 @@ async function nflmetaGatewayFromRequest(request, env) {
 }
 
 
+async function sportsEvidenceFromRequest(request, env) {
   const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
   const suppliedToken = request.headers.get('x-forge-worker-token') || '';
   if (!configuredToken || !(await secureTokenEqual(suppliedToken, configuredToken))) return json({ error: 'Unauthorized.' }, configuredToken ? 401 : 503);
@@ -1023,6 +1044,7 @@ export default {
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);
       if (url.pathname === '/api/sports/evidence' && request.method === 'POST') return sportsEvidenceFromRequest(request, env);
+      if (url.pathname === '/api/sports/update' && request.method === 'POST') return sportsUpdateFromRequest(request, env);
       if (url.pathname === '/api/sports/nflmeta' && request.method === 'POST') return nflmetaGatewayFromRequest(request, env);
       if (url.pathname === '/api/agent-gateway' && request.method === 'POST') {
         const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
