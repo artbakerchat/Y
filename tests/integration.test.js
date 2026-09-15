@@ -73,7 +73,8 @@ for (const runtime of ['bedrock', 'agentcore']) {
     let answerInput;
     globalThis.fetch = async (url, options) => {
       const payload = JSON.parse(options.body);
-      if (String(url).includes('generativelanguage.googleapis.com')) {
+      const hostname = new URL(String(url)).hostname;
+      if (hostname === 'generativelanguage.googleapis.com') {
         assert.ok(payload.system_instruction.startsWith(CONVERSATION_POLICY));
         assert.deepEqual(payload.tools, [{ type: 'google_search' }]);
         return Response.json({ status: 'completed', steps: [
@@ -82,7 +83,7 @@ for (const runtime of ['bedrock', 'agentcore']) {
           { type: 'model_output', content: [{ type: 'text', text: 'NFL schedule: https://www.nfl.com/schedules/' }] },
         ] });
       }
-      if (String(url).includes('api.openai.com')) {
+      if (hostname === 'api.openai.com') {
         assert.ok(payload.instructions.startsWith(CONVERSATION_POLICY));
         return Response.json({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'OpenAI schedule evidence.' }] }] });
       }
