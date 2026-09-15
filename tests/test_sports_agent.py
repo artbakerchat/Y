@@ -1,108 +1,116 @@
-import json
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "app" / "ForgeAgent"))
-from sports_agent import answer, load_data
+from sports_agent import answer, load_data, prediction_inputs
 
 
 class SportsAgentTests(unittest.TestCase):
-    def test_local_dataset_loads(self):
+    def setUp(self):
+        environment = patch.dict("os.environ", {}, clear=True)
+        environment.start()
+        self.addCleanup(environment.stop)
+
+    def test_worker_secrets_take_priority_over_local_keys(self):
+        import json
+        from unittest.mock import MagicMock
+        from sports_agent import search_openai, search_gemini
+
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = json.dumps({"evidence": "Worker evidence"}).encode()
+        with patch.dict("os.environ", {
+            "FORGE_WORKER_URL": "https://worker.example",
+            "FORGE_WORKER_TOKEN": "gateway-access",
+            "OPENAI_API_KEY": "unused-local-key",
+            "GEMINI_API_KEY": "unused-local-key",
+        }), patch("sports_agent.urllib.request.urlopen", return_value=response) as send:
+            for lookup in (answer, search_openai, search_gemini):
+                self.assertEqual(lookup("Today's NFL games?"), "Worker evidence")
+            self.assertEqual(send.call_count, 3)
+            request = send.call_args.args[0]
+            self.assertEqual(request.full_url, "https://worker.example/api/sports/evidence")
+            self.assertEqual(request.get_header("X-forge-worker-token"), "gateway-access")
+            self.assertNotIn("unused-local-key", str(request.headers))
+
+    @patch("sports_agent.search_worker_gateway", return_value="Cloudflare Worker live search failed: Unauthorized")
+    @patch("sports_agent.search_openai")
+    @patch("sports_agent.search_gemini")
+    def test_worker_failure_does_not_fall_back_to_local_providers(self, gemini, openai, worker):
+        self.assertIn("Worker live search failed", answer("Today's games?"))
+        openai.assert_not_called()
+        gemini.assert_not_called()
+
+    def test_empty_prompt_raises_value_error(self):
+        with self.assertRaises(ValueError):
+            answer("")
+        with self.assertRaises(ValueError):
+            answer("   ")
+
+    def test_load_data_returns_live_structure(self):
         data = load_data()
-        self.assertEqual(data["updated_at"], "2026-09-14")
+        self.assertEqual(data["updated_at"], "live")
+        self.assertIsInstance(data["games"], list)
 
-    def test_score_lookup(self):
-        result = answer("What was the Vancouver Canucks score?")
-        self.assertIn("Austin FC 2, Vancouver Whitecaps FC 1", result)
+    @patch("sports_agent.search_gemini")
+    @patch("sports_agent.search_openai")
+    @patch("sports_agent._local_credentials_configured", return_value=True)
+    def test_answer_uses_openai_and_gemini_apis(self, mock_creds, mock_openai, mock_gemini):
+        mock_openai.return_value = "Kansas City Chiefs defeated Denver Broncos 27-20.\n\nSources:\n- ESPN: https://espn.com"
+        mock_gemini.return_value = "The Chiefs won 27-20 over the Broncos.\n\nSources:\n- NFL: https://nfl.com"
 
-    def test_upcoming_schedule(self):
-        result = answer("What is the next Canucks game?")
-        self.assertIn("Edmonton Oilers at Vancouver Canucks", result)
-        self.assertIn("Rogers Arena", result)
+        result = answer("Who won the NFL game?")
+        self.assertIn("[OpenAI Web Search]", result)
+        self.assertIn("Kansas City Chiefs defeated Denver Broncos 27-20", result)
+        self.assertIn("[Google Gemini Search]", result)
+        self.assertIn("The Chiefs won 27-20 over the Broncos", result)
+        self.assertIn("https://espn.com", result)
+        self.assertIn("https://nfl.com", result)
 
-    def test_standings_lookup(self):
-        result = answer("Show NHL standings")
-        self.assertIn("NHL #1 Vancouver Canucks", result)
-        self.assertIn("NHL #3 Calgary Flames", result)
+    @patch("sports_agent.search_gemini")
+    @patch("sports_agent.search_openai")
+    @patch("sports_agent._local_credentials_configured", return_value=True)
+    def test_answer_when_one_provider_unavailable(self, mock_creds, mock_openai, mock_gemini):
+        mock_openai.return_value = "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
+        mock_gemini.return_value = "The game is scheduled for 5 PM PT."
 
-    def test_unknown_query_is_honest(self):
-        result = answer("Who is the fastest team?")
-        self.assertIn("local scores, schedules, and standings", result)
+        result = answer("What time is the game?")
+        self.assertIn("[OpenAI Web Search (Unavailable)]", result)
+        self.assertIn("[Google Gemini Search]", result)
+        self.assertIn("The game is scheduled for 5 PM PT", result)
 
-    def test_missing_nfl_date_query_reports_resolved_date(self):
-        result = answer("What is the date of today's NFL game?")
-        self.assertIn("2026-09-14", result)
-        self.assertIn("No live NFL game was found", result)
+    @patch("sports_agent.search_gemini")
+    @patch("sports_agent.search_openai")
+    @patch("sports_agent._local_credentials_configured", return_value=True)
+    def test_answer_when_both_providers_unavailable(self, mock_creds, mock_openai, mock_gemini):
+        mock_openai.return_value = "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
+        mock_gemini.return_value = "Gemini Google Search is not configured (GEMINI_API_KEY is missing)."
 
-    @patch("sports_agent.urllib.request.urlopen")
-    def test_live_nfl_game_query_uses_espn_scoreboard(self, mock_urlopen):
-        payload = {
-            "events": [
-                {
-                    "competitions": [{
-                        "status": {"type": {"name": "scheduled", "description": "Scheduled"}},
-                        "venue": {"fullName": "Arrowhead Stadium"},
-                        "competitors": [
-                            {"homeAway": "away", "team": {"displayName": "Denver Broncos"}, "score": 0},
-                            {"homeAway": "home", "team": {"displayName": "Kansas City Chiefs"}, "score": 0},
-                        ],
-                    }],
-                }
-            ]
-        }
-        response = Mock()
-        response.read.return_value = json.dumps(payload).encode("utf-8")
-        mock_urlopen.return_value.__enter__.return_value = response
+        result = answer("What is the score?")
+        self.assertIn("Google and OpenAI live search APIs are currently unavailable", result)
 
-        result = answer("What is the date of today's NFL game?")
-        self.assertIn("2026-09-14", result)
-        self.assertIn("Denver Broncos at Kansas City Chiefs", result)
+    @patch("sports_agent.search_worker_gateway")
+    @patch("sports_agent._local_credentials_configured", return_value=False)
+    def test_worker_gateway_used_when_local_keys_missing(self, mock_creds, mock_worker):
+        mock_worker.return_value = "Live sports evidence from Worker gateway"
+        result = answer("Today's games?")
+        self.assertEqual(result, "Live sports evidence from Worker gateway")
 
-    @patch("sports_agent.urllib.request.urlopen")
-    def test_live_nfl_missing_date_does_not_fallback_to_local_data(self, mock_urlopen):
-        response = Mock()
-        response.read.return_value = json.dumps({"events": []}).encode("utf-8")
-        mock_urlopen.return_value.__enter__.return_value = response
+    @patch("sports_agent.search_gemini")
+    @patch("sports_agent.search_openai")
+    def test_prediction_inputs_gathers_live_evidence(self, mock_openai, mock_gemini):
+        mock_openai.return_value = "OpenAI forecast context"
+        mock_gemini.return_value = "Google Search forecast context"
 
-        result = answer("What is the date of today's NFL game?")
-        self.assertIn("No live NFL game was found", result)
-        self.assertNotIn("local dataset", result.lower())
+        inputs = prediction_inputs("Predict the Canucks game")
+        self.assertEqual(inputs["source"], "google_and_openai_apis")
+        self.assertEqual(inputs["openai_evidence"], "OpenAI forecast context")
+        self.assertEqual(inputs["gemini_evidence"], "Google Search forecast context")
 
-    @patch("sports_agent.urllib.request.urlopen")
-    def test_live_nfl_today_question_returns_live_game(self, mock_urlopen):
-        payload = {
-            "events": [{
-                "competitions": [{
-                    "status": {"type": {"name": "scheduled", "description": "Scheduled"}},
-                    "venue": {"fullName": "Arrowhead Stadium"},
-                    "competitors": [
-                        {"homeAway": "away", "team": {"displayName": "Denver Broncos"}, "score": 0},
-                        {"homeAway": "home", "team": {"displayName": "Kansas City Chiefs"}, "score": 0},
-                    ],
-                }],
-            }]
-        }
-        response = Mock()
-        response.read.return_value = json.dumps(payload).encode("utf-8")
-        mock_urlopen.return_value.__enter__.return_value = response
 
-        result = answer("What is the date of today's NFL game?")
-        self.assertIn("2026-09-14", result)
-        self.assertIn("Denver Broncos at Kansas City Chiefs", result)
-        self.assertNotIn("No live NFL game was found", result)
-
-    def test_editorial_recap_format(self):
-        result = answer("Give me the NFL drama and blowout recap")
-        self.assertIn("High-Stakes & Drama Finishers", result)
-        self.assertIn("◌ Detroit Lions 31, New Orleans Saints 30 (OT)", result)
-        self.assertIn("Runaways & Blowouts", result)
-        self.assertIn("Sunday Night Football (In Progress)", result)
-
-    def test_team_recap_question_returns_narrative(self):
-        result = answer("What happened with the Detroit Lions?")
-        self.assertIn("Detroit Lions 31, New Orleans Saints 30 (OT)", result)
+if __name__ == "__main__":
+    unittest.main()
 
     def test_empty_prompt_rejected(self):
         with self.assertRaises(ValueError):

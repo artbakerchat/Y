@@ -16,6 +16,14 @@ PROFILES = ["forge", "food-bank", "nonprofit-helpdesk", "mutual-aid", "civic-kno
 
 
 class HarnessTests(unittest.TestCase):
+    def test_sports_tool_reuses_worker_evidence_without_local_search(self):
+        from forge_tools import build_tools
+        with patch("forge_tools.answer_sports") as local_search:
+            tools = build_tools([], sports_live_evidence="Worker search evidence with source URLs")
+            lookup = next(tool for tool in tools if tool.__name__ == "local_sports_lookup")
+            self.assertEqual(lookup(prompt="Today's NFL games?"), "Worker search evidence with source URLs")
+            local_search.assert_not_called()
+
     def test_all_profiles_have_tools_model_and_role(self):
         for profile_id in PROFILES:
             with self.subTest(profile=profile_id):

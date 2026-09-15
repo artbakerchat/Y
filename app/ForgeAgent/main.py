@@ -327,7 +327,7 @@ async def invoke(payload: dict[str, Any], context: Any):
                 supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
                 profile_tools = set(get_tool_names(profile_id))
                 sports_data = payload.get("sports_data") if "local_sports_lookup" in profile_tools else None
-                sports_live_evidence = payload.get("sports_live_evidence", "") if "sports_prediction" in profile_tools else ""
+                sports_live_evidence = payload.get("sports_live_evidence", "") if ("sports_prediction" in profile_tools or "local_sports_lookup" in profile_tools) else ""
                 agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, sports_data, sports_live_evidence)
                 answer = await answer_request(
                     agent,

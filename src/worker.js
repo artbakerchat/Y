@@ -395,18 +395,6 @@ function legacyBuildTools(palette) {
   ];
 }
 
-async function loadSportsData(env) {
-  const object = await env.ASSETS?.get('sports/sports_data.json');
-  if (!object) return null;
-  try {
-    const data = await object.json();
-    if (!data || !Array.isArray(data.games) || !Array.isArray(data.standings)) return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-
 async function searchOpenAISports(query, env) {
   const apiKey = env.OPENAI_API_KEY?.trim();
   if (!apiKey) return 'OpenAI live search is not configured.';
@@ -434,57 +422,14 @@ async function searchGeminiSports(query, env) {
   }
 }
 
-async function fetchNflScoreboardEvidence(query) {
-  if (!/\bnfl\b/i.test(query)) return 'Not applicable.';
-  const target = localVancouverDate().replaceAll('-', '');
-  try {
-    const response = await fetch(`https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard?dates=${target}`, {
-      signal: AbortSignal.timeout(15000),
-      headers: { accept: 'application/json', 'user-agent': 'ForgeAgent/1.0 (+https://larboard.ca)' },
-    });
-    if (!response.ok) return `ESPN NFL scoreboard failed (${response.status}).`;
-    const body = await response.json();
-    const games = (body.events || []).flatMap((event) => {
-      const competition = event.competitions?.[0];
-      const competitors = competition?.competitors || [];
-      const away = competitors.find((item) => item.homeAway === 'away');
-      const home = competitors.find((item) => item.homeAway === 'home');
-      if (!away?.team?.displayName || !home?.team?.displayName) return [];
-      const status = competition.status?.type?.description || event.status?.type?.description || 'Scheduled';
-      const scores = away.score != null && home.score != null ? ` (${away.score}-${home.score})` : '';
-      return [`${away.team.displayName} at ${home.team.displayName}: ${status}${scores}.`];
-    });
-    return games.length
-      ? `ESPN NFL scoreboard for ${localVancouverDate()} (live schedule source):\n${games.join('\n')}`
-      : `ESPN NFL scoreboard returned no games for ${localVancouverDate()}.`;
-  } catch (error) {
-    return `ESPN NFL scoreboard failed: ${error instanceof Error ? error.message.slice(0, 120) : 'request error'}`;
-  }
-}
-
-async function simpleLiveNflAnswer(message, history = []) {
-  const conversation = [message, ...history.filter((item) => item?.role === 'user').map((item) => item.content)].join('\n');
-  if (!/\bnfl\b/i.test(conversation) || !/\b(today(?:'s|s)?|game|schedule|team)\b/i.test(conversation) || isSportsPredictionRequest(message)) return null;
-  const evidence = await fetchNflScoreboardEvidence(conversation);
-  if (!evidence.startsWith('ESPN NFL scoreboard for ')) return null;
-  const lines = evidence.split('\n').slice(1).filter(Boolean);
-  const words = String(message).toLowerCase().match(/[a-z0-9]+/g) || [];
-  const teamWords = words.filter((word) => word.length > 3 && !['today', 'game', 'which', 'team', 'playing'].includes(word));
-  const matching = teamWords.length ? lines.filter((line) => teamWords.some((word) => line.toLowerCase().includes(word))) : lines;
-  return matching.length ? matching.join('\n') : teamWords.length ? null : lines.join('\n');
-}
-
 async function liveSportsEvidence(query, env) {
-  // Keep a public scoreboard fallback so a missing provider key does not turn
-  // a straightforward current NFL schedule question into a refusal.
-  const scoreboard = fetchNflScoreboardEvidence(query);
-  const [openai, gemini, nflScoreboard] = await Promise.all([
-    searchOpenAISports(query, env), searchGeminiSports(query, env), scoreboard,
+  const [openai, gemini] = await Promise.all([
+    searchOpenAISports(query, env), searchGeminiSports(query, env),
   ]);
   const unavailable = (value) => /not configured|failed|returned no evidence/i.test(value);
   const openaiStatus = unavailable(openai) ? 'unavailable' : 'used';
   const geminiStatus = unavailable(gemini) ? 'unavailable' : 'used';
-  return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[ESPN NFL scoreboard]\n${nflScoreboard}\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
+  return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
 }
 
 async function sportsEvidenceFromRequest(request, env) {
@@ -522,29 +467,11 @@ function liveSportsQuery(message, history = []) {
     : message;
 }
 
-function localVancouverDate() {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Vancouver', year: 'numeric', month: '2-digit', day: '2-digit',
-  }).formatToParts(new Date());
-  return `${parts.find((part) => part.type === 'year').value}-${parts.find((part) => part.type === 'month').value}-${parts.find((part) => part.type === 'day').value}`;
-}
-
-function simpleSportsDateAnswer(message, sportsData) {
-  if (!sportsData || !/\bnfl\b/i.test(message) || !/\btoday(?:'s|s)?\b/i.test(message) || !/\bgame\b/i.test(message)) return null;
-  if (isSportsPredictionRequest(message) || /\b(score|result|standings|schedule|news|live|gemini|google|web|online|internet|search)\b/i.test(message)) return null;
-  const today = localVancouverDate();
-  const games = (sportsData.games || []).filter((game) => String(game.league || '').toLowerCase() === 'nfl' && game.date === today);
-  // A missing local record is not proof that there is no real-world game.
-  // Let the live-evidence path verify it with the Worker-owned providers.
-  if (!games.length) return null;
-  return games.map((game) => `${game.away} at ${game.home} — ${today}.`).join('\n');
-}
-
 function sportsTool(env) {
   return {
     spec: {
       name: 'local_sports_lookup',
-      description: 'Answer sports scores, schedules, standings, and football recaps from the shared R2 sports dataset. Do not use memory or infer facts missing from the dataset.',
+      description: 'Answer sports questions using Google and OpenAI live web search APIs. Do not use memory or infer facts missing from live results.',
       inputSchema: {
         json: {
           type: 'object',
@@ -554,34 +481,9 @@ function sportsTool(env) {
       },
     },
     fn: async ({ prompt }) => {
-      const data = await loadSportsData(env);
-      if (!data) return 'The shared R2 sports dataset is unavailable.';
       const text = String(prompt || '').trim();
       if (!text) return 'A sports question is required.';
-      const lower = text.toLowerCase();
-      const teams = [...new Set(data.games.flatMap((game) => [game.away, game.home]).filter(Boolean))]
-        .filter((team) => lower.includes(String(team).toLowerCase()));
-      const league = ['nhl', 'mls', 'nba', 'nfl', 'wnba', 'mlb'].find((name) => lower.includes(name));
-      let games = data.games.filter((game) => !league || String(game.league || '').toLowerCase() === league);
-      if (teams.length) games = games.filter((game) => teams.includes(game.away) || teams.includes(game.home));
-      if (lower.includes('standings') || lower.includes('table') || lower.includes('rank') || lower.includes('record')) {
-        const rows = data.standings.filter((row) => !league || String(row.league || '').toLowerCase() === league)
-          .filter((row) => !teams.length || teams.includes(row.team));
-        return rows.length
-          ? rows.sort((a, b) => (a.league || '').localeCompare(b.league || '') || (a.rank || 999) - (b.rank || 999))
-            .map((row) => `${row.league} #${row.rank} ${row.team}: ${row.points} points (${row.wins}-${row.losses}).`).join('\n')
-          : 'No matching shared R2 standings record was found.';
-      }
-      if (lower.includes('score') || lower.includes('result') || lower.includes('won') || lower.includes('lost') || lower.includes('game')) {
-        if (lower.includes('next') || lower.includes('upcoming') || lower.includes('schedule')) games = games.filter((game) => game.status === 'scheduled');
-        else if (lower.includes('score') || lower.includes('result') || lower.includes('won') || lower.includes('lost')) games = games.filter((game) => game.status === 'final');
-        return games.length
-          ? games.sort((a, b) => String(a.date).localeCompare(String(b.date))).map((game) => game.status === 'final'
-            ? `${game.away} at ${game.home} on ${game.date}: ${game.away} ${game.away_score}, ${game.home} ${game.home_score}.`
-            : `${game.away} at ${game.home} on ${game.date}: scheduled at ${game.venue || 'venue not listed'}.`).join('\n')
-          : 'No matching shared R2 game record was found. This does not establish that no real-world game occurred.';
-      }
-      return `Shared R2 sports data updated ${data.updated_at || 'on an unknown date'}; ask for a score, schedule, or standings record.`;
+      return await liveSportsEvidence(text, env);
     },
   };
 }
@@ -850,7 +752,7 @@ function forgeToolRelevant(name, message) {
 }
 
 async function askBedrock(message, palette, history, env, requestsRemaining, profile, sportsLiveEvidence = '') {
-  const availableTools = buildEditableTools(palette, profile.id, { loadSportsData: () => loadSportsData(env), searchLive: (query) => liveSportsEvidence(query, env) });
+  const availableTools = buildEditableTools(palette, profile.id, { searchLive: (query) => liveSportsEvidence(query, env) });
   const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name)
     && (profile.id !== 'forge' || forgeToolRelevant(tool.spec.name, message)));
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
@@ -1030,31 +932,15 @@ export default {
         state.rate = state.rates[profile.id];
         if (state.rate.count >= profile.dailyRequestLimit) return new Response(JSON.stringify({ error: 'Daily request limit reached. Please try again tomorrow.', limit: profile.dailyRequestLimit }), { status: 429, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'set-cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`, 'retry-after': String(86400 - Math.floor((Date.now() - new Date(`${today}T00:00:00Z`).getTime()) / 1000)) } });
 
-        // Route to AgentCore if configured, otherwise run the local agent loop.
-        const sportsData = profile.toolNames.includes('local_sports_lookup') ? await loadSportsData(env) : null;
-        const fastAnswer = profile.id === 'forge' ? simpleSportsDateAnswer(message, sportsData) : null;
-        const liveFastAnswer = profile.id === 'forge' && !fastAnswer && isLiveSportsRequest(message, state.messages)
-          ? await simpleLiveNflAnswer(message, state.messages)
-          : null;
-        if (fastAnswer || liveFastAnswer) {
-          const resolvedAnswer = fastAnswer || liveFastAnswer;
-          state.rates[profile.id].count += 1;
-          state.rate = state.rates[profile.id];
-          state.messages = [...state.messages, { role: 'user', content: message, createdAt: new Date().toISOString() }, { role: 'assistant', content: resolvedAnswer, createdAt: new Date().toISOString() }];
-          await saveState(env.ASSETS, sessionId, state);
-          return stateResponse({ answer: resolvedAnswer, agent: false, agentId: profile.id, runtime: 'deterministic' }, sessionId);
-        }
         if (env.MODEL_REQUESTS_ENABLED !== 'true' && !env.AGENTCORE_RUNTIME_ARN) return json({ error: 'Model requests are temporarily disabled.' }, 503);
         if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
-        // Only profiles explicitly authorized for sports may receive live
-        // provider evidence. The keys remain Worker secrets and are never
-        // exposed to the browser or unrelated agents.
-        const sportsAuthorized = profile.toolNames.includes('sports_prediction');
+        // Live provider evidence is fetched via Google and OpenAI search APIs.
+        const sportsAuthorized = profile.toolNames.includes('sports_prediction') || profile.toolNames.includes('local_sports_lookup');
         const sportsLiveEvidence = sportsAuthorized && (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages))
           ? await liveSportsEvidence(liveSportsQuery(message, state.messages), env)
           : '';
         const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence)
+          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, null, sportsLiveEvidence)
           : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
         answer.answer = cleanAnswer(answer.answer);
         answer.agentId = profile.id;

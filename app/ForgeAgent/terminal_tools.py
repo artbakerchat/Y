@@ -12,14 +12,18 @@ from zoneinfo import ZoneInfo
 
 from strands import tool
 
-from sports_agent import answer as answer_sports
-from sports_agent import prediction_inputs
+from sports_agent import (
+    answer as answer_sports,
+    prediction_inputs,
+    search_gemini,
+    search_openai,
+    search_worker_gateway,
+)
 from conversation_policy import with_conversation_policy
 
 
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".data", "dist"}
 _SEARCH_TIMEOUT_SECONDS = float(os.getenv("LIVE_SEARCH_TIMEOUT_SECONDS", "30"))
-_NFL_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 _PLAY_BY_PLAY_REQUEST = ContextVar("play_by_play_request", default=False)
 _WORKER_HEADERS = {
     "accept": "application/json",
@@ -35,22 +39,7 @@ def local_live_search_configured() -> bool:
 
 def search_live_web_via_worker(query: str) -> str | None:
     """Ask the Cloudflare Worker to perform both provider searches server-side."""
-    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
-    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
-    if not worker_url or not worker_token:
-        return None
-    request = urllib.request.Request(
-        f"{worker_url}/api/sports/evidence",
-        data=json.dumps({"query": query.strip()[:4000]}).encode("utf-8"),
-        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT_SECONDS) as response:
-            payload = json.loads(response.read().decode("utf-8"))
-        return str(payload.get("evidence", "Worker returned no live evidence."))
-    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
-        return f"Cloudflare Worker sports search failed: {type(error).__name__}: {error}"
+    return search_worker_gateway(query)
 
 
 def _fetch_nfl_scoreboard_payload(game_date: str):
@@ -300,17 +289,12 @@ def build_repository_tools(root: Path | None = None):
 
     @tool
     def local_sports_lookup(prompt: str) -> str:
-        """Answer a sports question strictly from the local JSON dataset.
+        """Answer a sports question purely using Google and OpenAI live web search APIs.
 
-        No web access or model inference is used. If the dataset has no matching
-        record, the tool says so rather than guessing.
         Args:
             prompt: The user's sports question.
         """
-        result = answer_sports(prompt)
-        if result.startswith("No matching local game record"):
-            return result + " This only means the local JSON dataset has no matching record; it does not establish that no game occurred."
-        return result
+        return answer_sports(prompt)
 
     @tool
     def live_web_search_openai(query: str) -> str:
@@ -324,11 +308,8 @@ def build_repository_tools(root: Path | None = None):
 
     @tool
     def sports_prediction(query: str) -> str:
-        """Gather local JSON and live-web evidence for a clearly labeled sports forecast.
+        """Gather Google and OpenAI live-web evidence for a sports forecast.
 
-        This tool does not assert a future result. The caller must use the local JSON
-        inputs first, treat web results as supplemental, and label any forecast and
-        uncertainty explicitly.
         Args:
             query: Sports prediction request, including league/team and date if known.
         """
@@ -347,17 +328,12 @@ def build_repository_tools(root: Path | None = None):
 
     @tool
     def nfl_workflow(start_date: str = "") -> str:
-        """Track the NFL schedule, live games, and completed results from a date onward.
+        """Track the NFL schedule, live games, and completed results from a date onward using Google and OpenAI APIs.
 
-        This fetches the public NFL scoreboard API plus OpenAI/Gemini web
-        evidence. It also merges the requested date's API schedule into the
-        local sports_data.json, preserving existing final records.
         Args:
             start_date: Optional ISO date; defaults to today's America/Vancouver date.
         """
-        evidence = build_nfl_workflow_evidence(start_date)
-        target = start_date or datetime.now(ZoneInfo("America/Vancouver")).date().isoformat()
-        return f"{evidence}\n\nLOCAL JSON ADJUSTMENT\n{sync_nfl_schedule_json(target)}"
+        return build_nfl_workflow_evidence(start_date)
 
     @tool
     def write_nfl_results_json(game_date: str, records_json: str) -> str:
@@ -425,73 +401,25 @@ def build_repository_tools(root: Path | None = None):
 
 def search_live_web_openai(query: str) -> str:
     """Perform an OpenAI web lookup outside the model's optional tool loop."""
-    if not os.getenv("OPENAI_API_KEY"):
-        if not local_live_search_configured():
-            worker_result = search_live_web_via_worker(query)
-            if worker_result is not None:
-                return worker_result
-        return "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
-    try:
-        from openai import OpenAI
-
-        response = OpenAI(timeout=_SEARCH_TIMEOUT_SECONDS, max_retries=0).responses.create(
-            model=os.getenv("OPENAI_SEARCH_MODEL", "gpt-4.1-mini"),
-            instructions=with_conversation_policy(
-                "Use web search to answer the user's query with current, verifiable information. "
-                "Distinguish evidence from uncertainty and include useful source links."
-            ),
-            input=query.strip()[:4000],
-            tools=[{"type": "web_search_preview"}],
-        )
-        return _with_source_note(response.output_text, _openai_sources(response))
-    except Exception as error:
-        return f"OpenAI web search failed: {type(error).__name__}: {error}"
+    return search_openai(query)
 
 
 def search_live_web_gemini(query: str) -> str:
     """Perform a Gemini Google Search lookup outside the model's optional tool loop."""
-    if not os.getenv("GEMINI_API_KEY"):
-        if not local_live_search_configured():
-            worker_result = search_live_web_via_worker(query)
-            if worker_result is not None:
-                return worker_result
-        return "Gemini web search is not configured (GEMINI_API_KEY is missing)."
-    try:
-        from google import genai
-
-        client = genai.Client(
-            api_key=os.environ["GEMINI_API_KEY"],
-            http_options={"timeout": int(_SEARCH_TIMEOUT_SECONDS * 1000)},
-        )
-        response = client.interactions.create(
-            model=os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.6-flash"),
-            system_instruction=with_conversation_policy(
-                "Use Google Search grounding to answer the user's query with current, "
-                "verifiable information. Distinguish evidence from uncertainty and "
-                "include useful source links."
-            ),
-            input=query.strip()[:4000],
-            tools=[{"type": "google_search"}],
-        )
-        return _with_source_note(response.output_text or "Gemini returned no text.", _gemini_sources(response))
-    except Exception as error:
-        return f"Gemini web search failed: {type(error).__name__}: {error}"
+    return search_gemini(query)
 
 
 def build_prediction_evidence(query: str) -> str:
-    """Combine local prediction inputs with supplemental live provider evidence."""
-    local = json.dumps(prediction_inputs(query), ensure_ascii=False, indent=2)
-    live = None if local_live_search_configured() else search_live_web_via_worker(query)
+    """Gather live Google and OpenAI provider search evidence for a sports forecast."""
+    live = search_live_web_via_worker(query)
     if live is None:
         live = (
-            f"[OpenAI live web search — supplemental]\n{search_live_web_openai(query)}\n\n"
-            f"[Gemini Google Search — supplemental]\n{search_live_web_gemini(query)}"
+            f"[OpenAI live web search]\n{search_live_web_openai(query)}\n\n"
+            f"[Gemini Google Search]\n{search_live_web_gemini(query)}"
         )
     return (
         "PREDICTION INPUTS — NOT A VERIFIED OUTCOME\n"
-        "[Local JSON — priority source]\n"
-        f"{local}\n\n"
-        f"[OpenAI and Gemini live web search — supplemental]\n{live}\n\n"
+        f"[Google and OpenAI live search evidence]\n{live}\n\n"
         "Any conclusion must be labeled as a forecast, include assumptions, and state uncertainty."
     )
 
@@ -644,8 +572,6 @@ def build_nfl_workflow_evidence(start_date: str = "") -> str:
     return (
         "NFL WORKFLOW SNAPSHOT — live evidence, not a final JSON record\n"
         f"Start date: {target.isoformat()}\n\n"
-        "[NFL scoreboard API]\n"
-        f"{fetch_nfl_scoreboard(target.isoformat())}\n\n"
         "[OpenAI live web search]\n"
         f"{search_live_web_openai(query)}\n\n"
         "[Gemini Google Search]\n"
