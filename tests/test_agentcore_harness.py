@@ -79,6 +79,10 @@ class HarnessTests(unittest.TestCase):
         self.assertIn("PROVIDER USAGE: Gemini Google Search=used.", prompt)
         self.assertEqual(main._prompt_with_live_sports_evidence("Hello", ""), "Hello")
 
+    def test_forge_web_search_tool_relevance(self):
+        self.assertTrue(main._forge_tool_relevant("web_search", "What is the latest weather forecast this week?"))
+        self.assertFalse(main._forge_tool_relevant("web_search", "Please rewrite this sentence in plain language."))
+
     def test_stream_contract_and_profile_isolation(self):
         async def exercise():
             sessions = []

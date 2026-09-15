@@ -105,6 +105,8 @@ def _forge_tool_relevant(name: str, prompt: str) -> bool:
         return any(term in text for term in ("calculat", "add", "subtract", "divide", "multiply", "percent", "how many", "equation", "sum", "total"))
     if name in {"local_sports_lookup", "sports_prediction"}:
         return any(term in text for term in ("sport", "game", "match", "team", "nfl", "nba", "nhl", "mlb", "mls", "wnba", "score", "standing", "schedule"))
+    if name == "web_search":
+        return any(term in text for term in ("today", "current", "latest", "recent", "right now", "this week", "this month", "live", "breaking", "news", "weather", "forecast", "temperature", "price", "stock", "market", "election", "event", "release", "launch", "update", "search", "look up", "find", "what is the", "what are the", "who won", "who is", "what happened", "google", "internet"))
     return False
 
 

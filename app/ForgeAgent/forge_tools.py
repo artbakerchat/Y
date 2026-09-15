@@ -80,6 +80,13 @@ def build_tools(palette: list[str], profile_id: str = "forge", sports_data: dict
             "Any conclusion must be labeled as an uncertain forecast, include assumptions, state uncertainty, and tell the user if either provider was unavailable."
         )
 
+    @tool
+    def web_search(query: str) -> str:
+        """Return Worker-provided live web evidence for grounding."""
+        if sports_live_evidence:
+            return sports_live_evidence
+        return "Live web search evidence is unavailable."
+
     return [
         get_palette,
         search_palette,
@@ -90,4 +97,5 @@ def build_tools(palette: list[str], profile_id: str = "forge", sports_data: dict
         tech_support_specialist,
         local_sports_lookup,
         sports_prediction,
+        web_search,
     ]
