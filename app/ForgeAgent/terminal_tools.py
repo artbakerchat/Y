@@ -12,18 +12,21 @@ from zoneinfo import ZoneInfo
 
 from strands import tool
 
-from sports_agent import (
-    answer as answer_sports,
-    prediction_inputs,
-    search_gemini,
-    search_openai,
-    search_worker_gateway,
-)
+from sports_agent import answer as answer_sports
 from conversation_policy import with_conversation_policy
+from nflmeta_api import (
+    fetch_live_scores as _nflmeta_live_scores,
+    fetch_standings as _nflmeta_standings,
+    fetch_team_games as _nflmeta_team_games,
+    fetch_schedule as _nflmeta_schedule,
+    fetch_injuries as _nflmeta_injuries,
+    fetch_nflmeta_snapshot as _nflmeta_snapshot,
+)
 
 
 _SKIP_DIRS = {".git", ".venv", "node_modules", "__pycache__", ".data", "dist"}
 _SEARCH_TIMEOUT_SECONDS = float(os.getenv("LIVE_SEARCH_TIMEOUT_SECONDS", "30"))
+_NFL_SCOREBOARD_URL = "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
 _PLAY_BY_PLAY_REQUEST = ContextVar("play_by_play_request", default=False)
 _WORKER_HEADERS = {
     "accept": "application/json",
@@ -37,9 +40,71 @@ def local_live_search_configured() -> bool:
     return bool(os.getenv("OPENAI_API_KEY", "").strip() or os.getenv("GEMINI_API_KEY", "").strip())
 
 
+def worker_live_search_configured() -> bool:
+    """Return whether the Worker gateway is available for live search."""
+    return bool(
+        os.getenv("FORGE_WORKER_URL", "").strip()
+        and os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    )
+
+
+def is_sports_query(query: str) -> bool:
+    """Return True when the query is sports-related (NFL, NBA, NHL, etc.)."""
+    return bool(re.search(
+        r"\b(nfl|nba|nhl|mlb|mls|wnba|football|basketball|hockey|baseball|soccer|"
+        r"game|games|match|matchup|team|teams|score|scores|standings|schedule|"
+        r"playoff|playoffs|season|touchdown|quarterback|coach|roster|injury|injuries|"
+        r"draft|trade|espn|sports?)\b",
+        query,
+        re.IGNORECASE,
+    ))
+
+
 def search_live_web_via_worker(query: str) -> str | None:
-    """Ask the Cloudflare Worker to perform both provider searches server-side."""
-    return search_worker_gateway(query)
+    """Ask the Cloudflare Worker to perform both provider searches server-side.
+
+    Uses /api/search/evidence for general queries (no ESPN overhead).
+    Returns None if the gateway is not configured.
+    """
+    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
+    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    if not worker_url or not worker_token:
+        return None
+    request = urllib.request.Request(
+        f"{worker_url}/api/search/evidence",
+        data=json.dumps({"query": query.strip()[:4000]}).encode("utf-8"),
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return str(payload.get("evidence", "Worker returned no live evidence."))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return f"Cloudflare Worker live search failed: {type(error).__name__}: {error}"
+
+
+def search_sports_via_worker(query: str) -> str | None:
+    """Ask the Cloudflare Worker for sports-specific evidence (includes ESPN scoreboard).
+
+    Returns None if the gateway is not configured.
+    """
+    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
+    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    if not worker_url or not worker_token:
+        return None
+    request = urllib.request.Request(
+        f"{worker_url}/api/sports/evidence",
+        data=json.dumps({"query": query.strip()[:4000]}).encode("utf-8"),
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=_SEARCH_TIMEOUT_SECONDS) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        return str(payload.get("evidence", "Worker returned no live evidence."))
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return f"Cloudflare Worker sports search failed: {type(error).__name__}: {error}"
 
 
 def _fetch_nfl_scoreboard_payload(game_date: str):
@@ -122,6 +187,25 @@ def fetch_nfl_scoreboard(game_date: str) -> str:
     return "\n".join(lines)
 
 
+def upload_file_to_s3(local_path: Path, s3_key: str) -> str:
+    """Upload a local file to the configured sports archive S3 bucket.
+
+    Reads FORGE_SPORTS_BUCKET and optional FORGE_SPORTS_PREFIX from the
+    environment. Silently skips when the bucket is not configured so offline
+    development is unaffected. Returns a short status string.
+    """
+    bucket = os.getenv("FORGE_SPORTS_BUCKET", "").strip()
+    if not bucket:
+        return "S3 upload skipped: FORGE_SPORTS_BUCKET not set."
+    prefix = os.getenv("FORGE_SPORTS_PREFIX", "").strip().strip("/")
+    key = f"{prefix}/{s3_key}" if prefix else s3_key
+    try:
+        s3.upload_file(str(local_path), bucket, key, ExtraArgs={"ContentType": "application/json"})
+        return f"Uploaded to s3://{bucket}/{key}."
+    except Exception as error:  # noqa: BLE001
+        return f"S3 upload failed: {type(error).__name__}: {str(error)[:200]}"
+
+
 def sync_nfl_schedule_json(game_date: str, repository: Path | None = None) -> str:
     """Merge one API-backed NFL date into the local sports JSON.
 
@@ -151,7 +235,9 @@ def sync_nfl_schedule_json(game_date: str, repository: Path | None = None) -> st
             changed += 1
     data["updated_at"] = target.isoformat()
     data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Updated {data_path.name}: {added} NFL game(s) added and {changed} non-final game(s) refreshed for {target.isoformat()}. Existing final records were preserved."
+    local_result = f"Updated {data_path.name}: {added} NFL game(s) added and {changed} non-final game(s) refreshed for {target.isoformat()}. Existing final records were preserved."
+    upload_result = upload_sports_data_to_worker(data, repository)
+    return f"{local_result}\n{upload_result}"
 
 
 def worker_agent_request(prompt: str, agent_id: str = "forge", session_id: str = "local-terminal") -> str:
@@ -177,6 +263,35 @@ def worker_agent_request(prompt: str, agent_id: str = "forge", session_id: str =
         raise RuntimeError(f"Worker request failed ({error.code}): {detail}") from error
     except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
         raise RuntimeError(f"Worker request failed: {type(error).__name__}: {error}") from error
+
+
+def upload_sports_data_to_worker(data: dict, repository: Path | None = None) -> str:
+    """Push the local sports_data.json to R2 via the authenticated Worker endpoint.
+
+    Returns a short status string. Silently skips the upload when
+    FORGE_WORKER_URL or FORGE_WORKER_TOKEN are not set (offline development).
+    """
+    worker_url = os.getenv("FORGE_WORKER_URL", "").strip().rstrip("/")
+    worker_token = os.getenv("FORGE_WORKER_TOKEN", "").strip()
+    if not worker_url or not worker_token:
+        return "Worker upload skipped: FORGE_WORKER_URL or FORGE_WORKER_TOKEN not set."
+    request = urllib.request.Request(
+        f"{worker_url}/api/sports/update",
+        data=json.dumps(data).encode("utf-8"),
+        headers={**_WORKER_HEADERS, "x-forge-worker-token": worker_token},
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        games = payload.get("games", "?")
+        updated_at = payload.get("updated_at") or "unknown"
+        return f"Worker R2 updated: {games} game(s) written, updated_at={updated_at}."
+    except urllib.error.HTTPError as error:
+        detail = error.read().decode("utf-8", errors="replace")[:240]
+        return f"Worker R2 upload failed ({error.code}): {detail}"
+    except (urllib.error.URLError, TimeoutError, json.JSONDecodeError, OSError) as error:
+        return f"Worker R2 upload failed: {type(error).__name__}: {error}"
 
 
 def set_play_by_play_request(prompt: str):
@@ -289,12 +404,17 @@ def build_repository_tools(root: Path | None = None):
 
     @tool
     def local_sports_lookup(prompt: str) -> str:
-        """Answer a sports question purely using Google and OpenAI live web search APIs.
+        """Answer a sports question strictly from the local JSON dataset.
 
+        No web access or model inference is used. If the dataset has no matching
+        record, the tool says so rather than guessing.
         Args:
             prompt: The user's sports question.
         """
-        return answer_sports(prompt)
+        result = answer_sports(prompt)
+        if result.startswith("No matching local game record"):
+            return result + " This only means the local JSON dataset has no matching record; it does not establish that no game occurred."
+        return result
 
     @tool
     def live_web_search_openai(query: str) -> str:
@@ -308,8 +428,11 @@ def build_repository_tools(root: Path | None = None):
 
     @tool
     def sports_prediction(query: str) -> str:
-        """Gather Google and OpenAI live-web evidence for a sports forecast.
+        """Gather local JSON and live-web evidence for a clearly labeled sports forecast.
 
+        This tool does not assert a future result. The caller must use the local JSON
+        inputs first, treat web results as supplemental, and label any forecast and
+        uncertainty explicitly.
         Args:
             query: Sports prediction request, including league/team and date if known.
         """
@@ -328,12 +451,17 @@ def build_repository_tools(root: Path | None = None):
 
     @tool
     def nfl_workflow(start_date: str = "") -> str:
-        """Track the NFL schedule, live games, and completed results from a date onward using Google and OpenAI APIs.
+        """Track the NFL schedule, live games, and completed results from a date onward.
 
+        This fetches the public NFL scoreboard API plus OpenAI/Gemini web
+        evidence. It also merges the requested date's API schedule into the
+        local sports_data.json, preserving existing final records.
         Args:
             start_date: Optional ISO date; defaults to today's America/Vancouver date.
         """
-        return build_nfl_workflow_evidence(start_date)
+        evidence = build_nfl_workflow_evidence(start_date)
+        target = start_date or datetime.now(ZoneInfo("America/Vancouver")).date().isoformat()
+        return f"{evidence}\n\nLOCAL JSON ADJUSTMENT\n{sync_nfl_schedule_json(target)}"
 
     @tool
     def write_nfl_results_json(game_date: str, records_json: str) -> str:
@@ -382,6 +510,61 @@ def build_repository_tools(root: Path | None = None):
             return "Write rejected: play-by-play files require an explicit user request in the current prompt."
         return write_game_play_by_play_file(repository, game_date, away, home, records_json)
 
+    @tool
+    def nflmeta_live_scores() -> str:
+        """Fetch best-effort live NFL scores from the NFLMeta API.
+
+        Returns a snapshot of all games currently in the NFLMeta live-scores
+        feed, labeled by status (scheduled, in-progress, final). This is the
+        primary live-score source; use nfl_workflow for a full snapshot with
+        web evidence merged in.
+        """
+        return _nflmeta_live_scores()
+
+    @tool
+    def nflmeta_standings(season: int = 0) -> str:
+        """Fetch current NFL standings from the NFLMeta API.
+
+        Args:
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+        """
+        return _nflmeta_standings(season=season or None)
+
+    @tool
+    def nflmeta_team_games(team_abbr: str, season: int = 0) -> str:
+        """Fetch the game schedule and results for one NFL team from the NFLMeta API.
+
+        Args:
+            team_abbr: Standard NFL team abbreviation such as BUF, KC, or NE.
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+        """
+        return _nflmeta_team_games(team_abbr, season=season or None)
+
+    @tool
+    def nflmeta_schedule(season: int = 0, week: int = 0) -> str:
+        """Fetch the NFL game schedule from the NFLMeta API.
+
+        Args:
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+            week: Week number (1–18 regular season). Pass 0 to fetch the full season.
+        """
+        return _nflmeta_schedule(season=season or None, week=week or None)
+
+    @tool
+    def nflmeta_injuries(season: int = 0, week: int = 0, team_abbr: str = "") -> str:
+        """Fetch NFL injury reports from the NFLMeta API.
+
+        Args:
+            season: Season year, e.g. 2026. Pass 0 to use the current year.
+            week: Reporting week number. Pass 0 for the latest available.
+            team_abbr: Optional team abbreviation to filter results, e.g. BUF.
+        """
+        return _nflmeta_injuries(
+            season=season or None,
+            week=week or None,
+            team_abbr=team_abbr.strip() or None,
+        )
+
     return [
         find_repository_files,
         search_repository,
@@ -396,21 +579,74 @@ def build_repository_tools(root: Path | None = None):
         write_nfl_results_json,
         write_nfl_prediction_json,
         write_game_play_by_play_json,
+        nflmeta_live_scores,
+        nflmeta_standings,
+        nflmeta_team_games,
+        nflmeta_schedule,
+        nflmeta_injuries,
     ]
 
 
 def search_live_web_openai(query: str) -> str:
     """Perform an OpenAI web lookup outside the model's optional tool loop."""
-    return search_openai(query)
+    if not os.getenv("OPENAI_API_KEY"):
+        # Route through the Worker when the local key is absent.
+        worker_result = search_live_web_via_worker(query)
+        if worker_result is not None:
+            return worker_result
+        return "OpenAI web search is not configured (OPENAI_API_KEY is missing)."
+    try:
+        from openai import OpenAI
+
+        response = OpenAI(timeout=_SEARCH_TIMEOUT_SECONDS, max_retries=0).responses.create(
+            model=os.getenv("OPENAI_SEARCH_MODEL", "gpt-4.1-mini"),
+            instructions=with_conversation_policy(
+                "Use web search to answer the user's query with current, verifiable information. "
+                "Distinguish evidence from uncertainty and include useful source links."
+            ),
+            input=query.strip()[:4000],
+            tools=[{"type": "web_search_preview"}],
+        )
+        return _with_source_note(response.output_text, _openai_sources(response))
+    except Exception as error:
+        return f"OpenAI web search failed: {type(error).__name__}: {error}"
 
 
 def search_live_web_gemini(query: str) -> str:
     """Perform a Gemini Google Search lookup outside the model's optional tool loop."""
-    return search_gemini(query)
+    if not os.getenv("GEMINI_API_KEY"):
+        # Route through the Worker when the local key is absent.
+        worker_result = search_live_web_via_worker(query)
+        if worker_result is not None:
+            return worker_result
+        return "Gemini web search is not configured (GEMINI_API_KEY is missing)."
+    try:
+        from google import genai
+
+        client = genai.Client(
+            api_key=os.environ["GEMINI_API_KEY"],
+            http_options={"timeout": int(_SEARCH_TIMEOUT_SECONDS * 1000)},
+        )
+        response = client.interactions.create(
+            model=os.getenv("GEMINI_SEARCH_MODEL", "gemini-3.6-flash"),
+            system_instruction=with_conversation_policy(
+                "Use Google Search grounding to answer the user's query with current, "
+                "verifiable information. Distinguish evidence from uncertainty and "
+                "include useful source links."
+            ),
+            input=query.strip()[:4000],
+            tools=[{"type": "google_search"}],
+        )
+        return _with_source_note(response.output_text or "Gemini returned no text.", _gemini_sources(response))
+    except Exception as error:
+        return f"Gemini web search failed: {type(error).__name__}: {error}"
 
 
 def build_prediction_evidence(query: str) -> str:
-    """Gather live Google and OpenAI provider search evidence for a sports forecast."""
+    """Gather live provider evidence for a sports forecast, with scoreboard context."""
+    scoreboard = fetch_nfl_scoreboard(
+        datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
+    )
     live = search_live_web_via_worker(query)
     if live is None:
         live = (
@@ -419,6 +655,8 @@ def build_prediction_evidence(query: str) -> str:
         )
     return (
         "PREDICTION INPUTS — NOT A VERIFIED OUTCOME\n"
+        "[ESPN NFL scoreboard — local API]\n"
+        f"{scoreboard}\n\n"
         f"[Google and OpenAI live search evidence]\n{live}\n\n"
         "Any conclusion must be labeled as a forecast, include assumptions, and state uncertainty."
     )
@@ -502,7 +740,9 @@ def write_nfl_prediction_file(repository: Path, game_date: str, records_json: st
         return f"Write rejected: {destination.relative_to(repository)} already exists; existing data was not overwritten."
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Created {destination.relative_to(repository)} with {len(payload['games'])} forecast game(s)."
+    local_result = f"Created {destination.relative_to(repository)} with {len(payload['games'])} forecast game(s)."
+    upload_result = upload_file_to_s3(destination, destination.name)
+    return f"{local_result}\n{upload_result}"
 
 
 def write_game_play_by_play_file(repository: Path, game_date: str, away: str, home: str, records_json: str) -> str:
@@ -555,7 +795,9 @@ def write_game_play_by_play_file(repository: Path, game_date: str, away: str, ho
         return f"Write rejected: {destination.relative_to(repository)} already exists; existing data was not overwritten."
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Created {destination.relative_to(repository)} with {len(payload['events'])} play(s)."
+    local_result = f"Created {destination.relative_to(repository)} with {len(payload['events'])} play(s)."
+    upload_result = upload_file_to_s3(destination, destination.name)
+    return f"{local_result}\n{upload_result}"
 def build_nfl_workflow_evidence(start_date: str = "") -> str:
     """Collect a live NFL snapshot beginning on the requested local date."""
     if not start_date:
@@ -565,13 +807,19 @@ def build_nfl_workflow_evidence(start_date: str = "") -> str:
     except ValueError:
         return "Invalid start_date. Use YYYY-MM-DD."
     query = (
-        f"Track every NFL game from {target.isoformat()} onward: upcoming schedule, games in progress, "
-        "final scores, venues, and live commentary. Group all games by date. Clearly distinguish "
-        "scheduled, live, and final games. Use official or reputable source URLs."
+        f"NFL schedule starting from {target.isoformat()}: list every upcoming scheduled game "
+        f"in date order with matchup, date, week number, venue, and kickoff time. "
+        f"Also include any games currently in progress and recently completed final scores. "
+        f"Clearly label each game as scheduled, in progress, or final. "
+        f"Include official or reputable source URLs."
     )
     return (
         "NFL WORKFLOW SNAPSHOT — live evidence, not a final JSON record\n"
         f"Start date: {target.isoformat()}\n\n"
+        "[NFLMeta live scores & schedule — authoritative source]\n"
+        f"{_nflmeta_snapshot(target.isoformat())}\n\n"
+        "[NFL scoreboard API — supplemental]\n"
+        f"{fetch_nfl_scoreboard(target.isoformat())}\n\n"
         "[OpenAI live web search]\n"
         f"{search_live_web_openai(query)}\n\n"
         "[Gemini Google Search]\n"
@@ -628,7 +876,9 @@ def write_nfl_results_file(repository: Path, game_date: str, records_json: str) 
         return f"Write rejected: {destination.relative_to(repository)} already exists; existing data was not overwritten."
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    return f"Created {destination.relative_to(repository)} with {len(payload['games'])} completed NFL game(s)."
+    local_result = f"Created {destination.relative_to(repository)} with {len(payload['games'])} completed NFL game(s)."
+    upload_result = upload_file_to_s3(destination, destination.name)
+    return f"{local_result}\n{upload_result}"
 
 
 def _with_source_note(answer, sources):

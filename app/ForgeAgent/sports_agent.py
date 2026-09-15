@@ -200,7 +200,3 @@ if __name__ == "__main__":
                 print(answer(user_prompt))
             except Exception as exc:
                 print(f"Error: {exc}")
-        try:
-            print(answer(prompt))
-        except ValueError as error:
-            print(f"Error: {error}")

@@ -23,15 +23,17 @@ from strands.types.exceptions import MaxTokensReachedException
 from conversation_guidance import CONVERSATION_GUIDANCE
 from conversation_policy import with_conversation_policy
 from forge_harness import configured_model, clean_answer, format_usage_report, usage_from_result
-from sports_agent import answer as answer_sports
 from terminal_tools import (
     build_prediction_evidence,
     build_nfl_workflow_evidence,
     build_repository_tools,
+    fetch_nfl_scoreboard,
+    is_sports_query,
     search_live_web_gemini,
     search_live_web_openai,
     search_live_web_via_worker,
     local_live_search_configured,
+    worker_live_search_configured,
     worker_agent_request,
     set_play_by_play_request,
 )
@@ -83,13 +85,76 @@ def is_nfl_workflow_request(prompt):
 
 
 def deterministic_sports_answer(prompt):
-    """Sports questions are answered via Google and OpenAI live searches."""
+    """Sports questions are answered via grounded live evidence."""
     return None
+
+
+def _parse_next_limit_terminal(prompt: str) -> int | None:
+    """Parse an explicit 'next N' or 'N games' limit from a prompt."""
+    m = re.search(r"\bnext\s+(\d+)\b|\b(\d+)\s+(?:next\s+)?games?\b", prompt, re.I)
+    if m:
+        return max(1, min(32, int(m.group(1) or m.group(2))))
+    if re.search(r"\bnext\s+game\b", prompt, re.I):
+        return 1
+    return None
+
+
+def _parse_week_number_terminal(prompt: str) -> int | None:
+    """Parse an explicit 'week N' from a prompt."""
+    m = re.search(r"\bweek\s+(\d{1,2})\b", prompt, re.I)
+    return int(m.group(1)) if m else None
 
 
 def deterministic_live_nfl_answer(prompt, recent_prompts=()):
-    """NFL schedule questions are answered via Google and OpenAI live searches."""
-    return None
+    """Answer current NFL schedule questions directly from ESPN's scoreboard.
+
+    Supports:
+    - today's games (filtered by team keywords if present)
+    - 'next N games' — return the N soonest scheduled games
+    - 'week N' — return only that week's games from the API (when week field present)
+    """
+    conversation = "\n".join([*recent_prompts[-4:], prompt])
+    has_nfl_or_espn = re.search(r"\b(nfl|espn)\b", conversation, re.I)
+    has_schedule_term = re.search(r"\b(today(?:'s|s)?|game|schedule|next|upcoming|week|scoreboard|score|scores)\b", conversation, re.I)
+    if not has_nfl_or_espn or not has_schedule_term:
+        return None
+    if is_prediction_request(prompt):
+        return None
+
+    today = datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
+    result = fetch_nfl_scoreboard(today)
+    if not result.startswith("ESPN NFL scoreboard API for"):
+        return None
+
+    lines = result.splitlines()[1:]
+    if not lines:
+        return None
+
+    next_limit = _parse_next_limit_terminal(prompt)
+    week_number = _parse_week_number_terminal(prompt)
+
+    # Week filter: apply if the API returned week info in lines
+    if week_number is not None:
+        week_lines = [line for line in lines if re.search(rf"\bwk\s*{week_number}\b", line, re.I)]
+        if week_lines:
+            return "\n".join(week_lines)
+        # API doesn't include week data — fall through to model
+
+    # Team keyword filter (only for plain today queries)
+    if next_limit is None and week_number is None:
+        words = [w for w in re.findall(r"[a-z0-9]+", prompt.lower()) if len(w) > 3 and w not in {"today", "game", "games", "which", "team", "playing", "schedule", "next", "upcoming", "espn", "scoreboard", "score", "scores"}]
+        if words:
+            lines = [line for line in lines if any(w in line.lower() for w in words)]
+
+    # Next N: filter to scheduled lines, take first N
+    if next_limit is not None:
+        scheduled = [line for line in lines if "scheduled" in line.lower()]
+        if scheduled:
+            return "\n".join(scheduled[:next_limit])
+        # No scheduled games on today's scoreboard — not enough info for a deterministic answer
+        return None
+
+    return "\n".join(lines) if lines else None
 
 
 def local_time_context():
@@ -157,8 +222,14 @@ async def live_context(prompt, prior_prompts=()):
         )
     if is_prediction_request(prompt):
         return "\n\n" + await asyncio.to_thread(build_prediction_evidence, grounded_prompt)
-    # Prefer provider keys loaded from the repository .env. The Worker remains
-    # the fallback when no local OpenAI/Gemini key is configured.
+    # ESPN's public scoreboard helps ground current NFL answers even when the
+    # provider-backed live search is routed through the Worker fallback.
+    nfl_api_result = None
+    if is_sports_query(prompt) or re.search(r"\b(nfl|espn)\b", prompt, re.IGNORECASE):
+        nfl_api_result = await asyncio.to_thread(
+            fetch_nfl_scoreboard,
+            datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat(),
+        )
     worker_result = None
     if not local_live_search_configured():
         worker_result = await asyncio.to_thread(search_live_web_via_worker, grounded_prompt)
@@ -174,6 +245,7 @@ async def live_context(prompt, prior_prompts=()):
         )
     return (
         "\n\nVERIFIED LIVE WEB RESULTS (from Google and OpenAI APIs; do not invent missing facts):\n"
+        f"[NFL scoreboard API]\n{nfl_api_result[:9000] if nfl_api_result else 'Not applicable.'}\n\n"
         f"[OpenAI web search]\n{openai_result[:9000]}\n\n"
         f"[Gemini Google Search]\n{gemini_result[:9000]}\n"
     )
@@ -189,10 +261,14 @@ def build_agent(model_id, region, max_tokens):
         "explain what changed. When the user asks about files, code, "
         "the repository, or whether something exists locally, you MUST use the repository "
         "tools before answering. Never claim that you cannot access the repository "
-        "when the repository tools are available. For sports questions, use local_sports_lookup, "
-        "which queries the Google and OpenAI live web search APIs directly. For current "
-        "or time-sensitive questions, use the supplied verified live-web "
-        "results from Google and OpenAI APIs and cite their sources; do not claim that web access failed unless both result blocks "
+        "when the repository tools are available. For sports questions, use local_sports_lookup. "
+        "When the user asks for 'next game', 'next N games', or 'upcoming games': return only the "
+        "soonest N scheduled games from today onward — do not dump the full season schedule or "
+        "include completed games. When the user specifies 'week N', return only that week's games. "
+        "Never list Week 15/16/17 games in response to 'next game' unless they are genuinely the "
+        "first scheduled games from today. For current or time-sensitive sports questions, use the "
+        "supplied scoreboard API and verified live-web "
+        "results and cite their sources; do not claim that web access failed unless both result blocks "
         "report a failure. If the live results do not establish a game or other fact, say it cannot "
         "be verified; never fill the gap with memory or a previous answer. If asked to predict a game, "
         "use the sports_prediction evidence gathered from Google and OpenAI APIs, and label the result as an uncertain forecast—not a fact.",
@@ -210,8 +286,9 @@ def build_agent(model_id, region, max_tokens):
         "reinterpret an undated follow-up as today's game or claim it cannot be verified merely because "
         "the current schedule has no game today.",
         "If the user says NFL workflow, interpret it as every NFL game from today's local "
-        "America/Vancouver date onward, and use the nfl_workflow evidence from Google and OpenAI APIs. "
-        "Track scheduled, live, and final statuses separately; only final games may be written to "
+        "America/Vancouver date onward, and use the nfl_workflow evidence. Track scheduled, live, "
+        "and final statuses separately. The workflow also refreshes local sports_data.json from the "
+        "scoreboard API while preserving existing final records; only final games may be written to "
         "dated result JSON files.",
         "For completed NFL games, use nfl_results_evidence before writing records. Extract only "
         "facts supported by its live sources, then use write_nfl_results_json to create one dated "

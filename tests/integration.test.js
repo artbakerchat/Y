@@ -73,7 +73,8 @@ for (const runtime of ['bedrock', 'agentcore']) {
     let answerInput;
     globalThis.fetch = async (url, options) => {
       const payload = JSON.parse(options.body);
-      if (String(url).includes('generativelanguage.googleapis.com')) {
+      const hostname = new URL(String(url)).hostname;
+      if (hostname === 'generativelanguage.googleapis.com') {
         assert.ok(payload.system_instruction.startsWith(CONVERSATION_POLICY));
         assert.deepEqual(payload.tools, [{ type: 'google_search' }]);
         return Response.json({ status: 'completed', steps: [
@@ -82,7 +83,7 @@ for (const runtime of ['bedrock', 'agentcore']) {
           { type: 'model_output', content: [{ type: 'text', text: 'NFL schedule: https://www.nfl.com/schedules/' }] },
         ] });
       }
-      if (String(url).includes('api.openai.com')) {
+      if (hostname === 'api.openai.com') {
         assert.ok(payload.instructions.startsWith(CONVERSATION_POLICY));
         return Response.json({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'OpenAI schedule evidence.' }] }] });
       }
@@ -180,6 +181,24 @@ test('NFL follow-ups keep using Worker-owned providers with conversational conte
   assert.equal(geminiRequests.length, 2);
   assert.match(JSON.stringify(geminiRequests[1]), /Denver Broncos/);
   assert.match(JSON.stringify(geminiRequests[1]), /today's NFL game/i);
+});
+
+test('"next nfl game" triggers the live ESPN scoreboard (regression: "next" was missing from isLiveSportsRequest)', async () => {
+  const worker = await loadWorker();
+  const bucket = createMockBucket({
+    'sports/sports_data.json': JSON.stringify({ updated_at: '2026-09-14', games: [], standings: [] }),
+  });
+  const requests = [];
+  await withMockFetch([], () => worker.fetch(
+    makeAskRequest({ message: 'next nfl game' }),
+    makeEnv(bucket),
+  ), (req) => requests.push(req));
+  // The Worker must call the ESPN scoreboard for "next nfl game",
+  // the same as it does for "today's nfl game" or "upcoming nfl schedule".
+  assert.ok(
+    requests.some((req) => typeof req.url === 'string' && req.url.includes('site.api.espn.com')),
+    '"next nfl game" must reach the ESPN scoreboard endpoint',
+  );
 });
 
 // ---------------------------------------------------------------------------
