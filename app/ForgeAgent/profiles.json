@@ -12,7 +12,8 @@
         "consult_word_specialist",
         "calculate",
         "local_sports_lookup",
-        "sports_prediction"
+        "sports_prediction",
+        "web_search"
       ],
       "skillNames": "*",
       "dailyRequestLimit": 10,
@@ -86,7 +87,8 @@
         "suggest_related_words",
         "consult_word_specialist",
         "calculate",
-        "verify_civic_sources"
+        "verify_civic_sources",
+        "web_search"
       ],
       "skillNames": "*",
       "dailyRequestLimit": 10,
