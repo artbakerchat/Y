@@ -1,7 +1,7 @@
 import { createToolController } from './tool-controls.js';
 import { withConversationPolicy } from '../agentcore/conversation-policy.js';
 import { cleanAnswer } from './clean-answer.js';
-import { liveSportsEvidence } from './live-search.js';
+import { liveSportsEvidence, liveWebEvidence } from './live-search.js';
 import { buildTools as buildEditableTools } from '../tools/index.js';
 import { specialistTools } from '../tools/word-specialist-tool.js';
 import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
@@ -422,6 +422,27 @@ function isLiveSportsRequest(message, history = []) {
     && /\b(today|tomorrow|current|latest|live|upcoming|schedule|scheduled|score|result|news|online|internet|web|search|gemini|google|workflow)\b/i.test(conversation);
 }
 
+/**
+ * Detects whether the message is asking for general real-time web information
+ * that isn't sports-specific: news, weather, prices, current events, etc.
+ * Sports queries are handled separately by isLiveSportsRequest.
+ */
+function isLiveWebRequest(message, history = []) {
+  const conversation = [message, ...history
+    .filter((item) => item?.role === 'user')
+    .map((item) => item.content)]
+    .join('\n');
+  // Explicit intent to search or get live/current data
+  const wantsLive = /\b(today|current|latest|recent|right now|this week|this month|live|breaking|just announced|as of|search|look up|find out|what is the|what are the|who won|who is|what happened)\b/i.test(conversation);
+  // Topics that require real-time data (excluding sports, handled separately)
+  const liveTopic = /\b(news|weather|forecast|temperature|price|stock|market|exchange rate|election|politics|policy|law|legislation|event|concert|show|release|launch|update|version|recall|outbreak|crisis|award|winner|result|ranking|trending|viral)\b/i.test(conversation);
+  // Direct search/web requests
+  const directSearch = /\b(search the web|google|look it up|find online|web search|internet|check online)\b/i.test(conversation);
+  // Only trigger for non-sports queries
+  const isSports = /\b(nfl|nba|nhl|mlb|mls|wnba|sport\w*)\b/i.test(conversation);
+  return (directSearch || (wantsLive && liveTopic)) && !isSports;
+}
+
 function liveSportsQuery(message, history = []) {
   const priorUserMessages = history
     .filter((item) => item?.role === 'user' && typeof item.content === 'string')
@@ -430,6 +451,17 @@ function liveSportsQuery(message, history = []) {
     .filter(Boolean);
   return priorUserMessages.length
     ? `${message}\nRecent sports conversation:\n${priorUserMessages.join('\n')}`
+    : message;
+}
+
+function liveWebQuery(message, history = []) {
+  const priorUserMessages = history
+    .filter((item) => item?.role === 'user' && typeof item.content === 'string')
+    .slice(-4)
+    .map((item) => item.content.trim())
+    .filter(Boolean);
+  return priorUserMessages.length
+    ? `${message}\nRecent conversation context:\n${priorUserMessages.join('\n')}`
     : message;
 }
 
@@ -714,11 +746,17 @@ function forgeToolRelevant(name, message) {
   if (name === 'consult_word_specialist') return true;
   if (name === 'calculate') return /\b(?:calculat|add|subtract|divide|multiply|percent|how many|equation|sum|total)\w*\b/i.test(text) || /[0-9].*[+*/%=-].*[0-9]/.test(text);
   if (name === 'local_sports_lookup' || name === 'sports_prediction') return /\b(?:sport|game|match|team|nfl|nba|nhl|mlb|mls|wnba|score|standings|schedule)\w*\b/i.test(text);
+  if (name === 'web_search') {
+    return /\b(today|current|latest|recent|right now|this week|this month|live|breaking|news|weather|forecast|temperature|price|stock|market|election|event|release|launch|update|search|look up|find|what is the|what are the|who won|who is|what happened|google|internet)\b/i.test(text);
+  }
   return false;
 }
 
-async function askBedrock(message, palette, history, env, requestsRemaining, profile, sportsLiveEvidence = '') {
-  const availableTools = buildEditableTools(palette, profile.id, { searchLive: (query) => liveSportsEvidence(query, env) });
+async function askBedrock(message, palette, history, env, requestsRemaining, profile, sportsLiveEvidence = '', webLiveEvidence = '') {
+  const availableTools = buildEditableTools(palette, profile.id, {
+    searchLive: (query) => liveSportsEvidence(query, env),
+    searchLiveWeb: (query) => liveWebEvidence(query, env),
+  });
   const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name)
     && (profile.id !== 'forge' || forgeToolRelevant(tool.spec.name, message)));
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
@@ -734,14 +772,16 @@ async function askBedrock(message, palette, history, env, requestsRemaining, pro
   ].filter(Boolean).join(' ');
 
   // Step 2: Session history - pass stored messages back to Bedrock.
-  // Keep the last 20 turns to stay within context limits.
+  // Keep the last 40 turns to give the model enough context for long sessions.
   const historyMessages = (history || [])
-    .slice(-20)
+    .slice(-40)
     .filter((m) => m.role === 'user' || m.role === 'assistant')
     .map((m) => ({ role: m.role, content: [{ text: m.content }] }));
 
   const evidenceMessage = sportsLiveEvidence
     ? `${message}\n\nVERIFIED LIVE SPORTS EVIDENCE (use as evidence; do not invent missing facts):\n${sportsLiveEvidence}`
+    : webLiveEvidence
+    ? `${message}\n\nVERIFIED LIVE WEB SEARCH RESULTS (use as evidence; do not invent missing facts):\n${webLiveEvidence}`
     : message;
   const runningMessages = [
     ...historyMessages,
@@ -902,12 +942,16 @@ export default {
         if (!env.AWS_ACCESS_KEY_ID || !env.AWS_SECRET_ACCESS_KEY) return json({ error: 'Bedrock credentials are not configured.' }, 503);
         // Live provider evidence is fetched via Google and OpenAI search APIs.
         const sportsAuthorized = profile.toolNames.includes('sports_prediction') || profile.toolNames.includes('local_sports_lookup');
-        const sportsLiveEvidence = sportsAuthorized && (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages))
-          ? await liveSportsEvidence(liveSportsQuery(message, state.messages), env)
-          : '';
+        const webAuthorized = profile.toolNames.includes('web_search');
+        const needsSports = sportsAuthorized && (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages));
+        const needsWeb = webAuthorized && !needsSports && isLiveWebRequest(message, state.messages);
+        const [sportsLiveEvidence, webLiveEvidence] = await Promise.all([
+          needsSports ? liveSportsEvidence(liveSportsQuery(message, state.messages), env) : Promise.resolve(''),
+          needsWeb ? liveWebEvidence(liveWebQuery(message, state.messages), env) : Promise.resolve(''),
+        ]);
         const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, null, sportsLiveEvidence)
-          : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
+          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, null, sportsLiveEvidence || webLiveEvidence)
+          : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence, webLiveEvidence);
         answer.answer = cleanAnswer(answer.answer);
         answer.agentId = profile.id;
 

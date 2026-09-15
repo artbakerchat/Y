@@ -118,9 +118,11 @@ The local Node server stores sessions under `.data/sessions/`. The deployed Work
 
 ### Live sports and web answering
 
-Sports questions and forecasts purely use the Google (Gemini Google Search grounding) and OpenAI (Web Search) live APIs. No static local dataset or ESPN scraping is used to answer sports queries.
+Sports questions and forecasts use the Google (Gemini Google Search grounding) and OpenAI (Web Search) live APIs. General real-time queries — news, weather, current events, prices, and other time-sensitive questions — use the same two APIs via the `web_search` tool available to the `forge` and `civic-knowledge` profiles.
 
-Store `OPENAI_API_KEY` and `GEMINI_API_KEY` as Worker secrets; they are never sent to the browser. If either key is absent or a provider fails, the evidence is labeled unavailable and the agent informs the user which provider was unavailable.
+No static local dataset or ESPN scraping is used to answer sports queries. For general web queries the agent calls `web_search` directly; for sports questions live evidence is pre-fetched before the agent loop starts to reduce latency.
+
+Store `OPENAI_API_KEY` and `GEMINI_API_KEY` as Worker secrets; they are never sent to the browser. `OPENAI_API_KEY` enables both sports and general web search through the OpenAI Web Search API. If either key is absent or a provider fails, the evidence is labeled unavailable and the agent informs the user which provider was unavailable.
 
 ### Terminal Claude client
 

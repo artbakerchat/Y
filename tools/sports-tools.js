@@ -30,3 +30,35 @@ export function createSportsPredictionTool(searchLive) {
     },
   };
 }
+
+/**
+ * General-purpose real-time web search tool.
+ * Accepts a separate searchLiveWeb function so sports and general search
+ * can use different prompts while sharing the same provider infrastructure.
+ */
+export function createWebSearchTool(searchLiveWeb) {
+  return {
+    spec: {
+      name: 'web_search',
+      description: 'Search the web for current information: news, weather, prices, events, or any real-time query. Use this tool whenever the question requires up-to-date information beyond training data. Do not invent results not found in the search response.',
+      inputSchema: {
+        json: {
+          type: 'object',
+          properties: {
+            query: {
+              type: 'string',
+              description: 'The search query. Be specific and include relevant context (dates, locations, names).',
+            },
+          },
+          required: ['query'],
+        },
+      },
+    },
+    fn: async ({ query }) => {
+      const text = String(query || '').trim();
+      if (!text) return 'A search query is required.';
+      const fn = typeof searchLiveWeb === 'function' ? searchLiveWeb : async () => 'Live web search is unavailable.';
+      return await fn(text);
+    },
+  };
+}
