@@ -66,6 +66,60 @@ test('Worker specialist and rewrite retain policy under conflicting skill and fe
   assert.ok(!calls[4].system[0].text.includes(conflict));
 });
 
+for (const runtime of ['bedrock', 'agentcore']) {
+  test(`Gemini REST evidence reaches ${runtime} without thoughts or tool output`, async () => {
+    const worker = await loadWorker();
+    const originalFetch = globalThis.fetch;
+    let answerInput;
+    globalThis.fetch = async (url, options) => {
+      const payload = JSON.parse(options.body);
+      if (String(url).includes('generativelanguage.googleapis.com')) {
+        assert.ok(payload.system_instruction.startsWith(CONVERSATION_POLICY));
+        assert.deepEqual(payload.tools, [{ type: 'google_search' }]);
+        return Response.json({ status: 'completed', steps: [
+          { type: 'thought', content: [{ type: 'text', text: 'PRIVATE_THOUGHT' }] },
+          { type: 'tool_result', content: [{ type: 'text', text: 'INTERMEDIATE_RESULT' }] },
+          { type: 'model_output', content: [{ type: 'text', text: 'NFL schedule: https://www.nfl.com/schedules/' }] },
+        ] });
+      }
+      if (String(url).includes('api.openai.com')) {
+        assert.ok(payload.instructions.startsWith(CONVERSATION_POLICY));
+        return Response.json({ output: [{ type: 'message', content: [{ type: 'output_text', text: 'OpenAI schedule evidence.' }] }] });
+      }
+      answerInput ||= payload;
+      return Response.json(runtime === 'agentcore' ? { text: 'Schedule answer.' } : bedrockEndTurnResponse('Schedule answer.'));
+    };
+    try {
+      const response = await worker.fetch(makeAskRequest({ message: "What is today's NFL schedule?" }), makeEnv(createMockBucket(), {
+        OPENAI_API_KEY: 'openai-test-key', GEMINI_API_KEY: 'gemini-test-key',
+        ...(runtime === 'agentcore' ? { AGENTCORE_RUNTIME_ARN: 'test-runtime' } : {}),
+      }));
+      assert.equal(response.status, 200);
+      const evidence = runtime === 'agentcore' ? answerInput.sports_live_evidence : JSON.stringify(answerInput.messages);
+      assert.match(evidence, /Gemini Google Search=used/);
+      assert.match(evidence, /nfl.com\/schedules/);
+      assert.match(evidence, /OpenAI schedule evidence/);
+      assert.doesNotMatch(evidence, /PRIVATE_THOUGHT|INTERMEDIATE_RESULT/);
+      assert.doesNotMatch(JSON.stringify(answerInput), /openai-test-key|gemini-test-key/);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+}
+
+test('Gemini response without model output is reported unavailable', async () => {
+  const worker = await loadWorker();
+  const response = await withMockFetch([{ steps: [{ type: 'thought', content: [{ type: 'text', text: 'hidden' }] }] }],
+    () => worker.fetch(new Request('https://example.com/api/sports/evidence', {
+      method: 'POST', headers: { 'content-type': 'application/json', 'x-forge-worker-token': 'gateway-test' },
+      body: JSON.stringify({ query: 'NFL schedule' }),
+    }), makeEnv(createMockBucket(), { GEMINI_API_KEY: 'gemini-test-key', FORGE_WORKER_TOKEN: 'gateway-test' })));
+  const { evidence } = await response.json();
+  assert.match(evidence, /Gemini Google Search=unavailable/);
+  assert.match(evidence, /Gemini returned no evidence/);
+  assert.doesNotMatch(evidence, /hidden/);
+});
+
 test('NFL date questions use Worker-owned live providers when local data is missing', async () => {
   const worker = await loadWorker();
   const bucket = createMockBucket();
