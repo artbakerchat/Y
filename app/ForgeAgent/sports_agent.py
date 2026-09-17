@@ -79,6 +79,8 @@ def _requested_date(prompt, data):
     except ValueError:
         reference = date.today()
     text = prompt.lower()
+    if re.search(r"\byesterday(?:'s|s)?\b", text):
+        return reference - timedelta(days=1)
     if re.search(r"\btomorrow(?:'s|s)?\b", text):
         return reference + timedelta(days=1)
     if re.search(r"\btoday\b", text):

@@ -6,7 +6,7 @@ Run from the repository root with:
 
 import argparse
 import asyncio
-from datetime import datetime
+from datetime import date, datetime, timedelta
 import json
 import os
 import re
@@ -38,6 +38,8 @@ from terminal_tools import (
     worker_live_search_configured,
     worker_agent_request,
     set_play_by_play_request,
+    _nflmeta_snapshot,
+    _nflmeta_live_scores,
 )
 
 
@@ -117,8 +119,23 @@ def _parse_week_number_terminal(prompt: str) -> int | None:
     return int(m.group(1)) if m else None
 
 
-def deterministic_live_nfl_answer(prompt, recent_prompts=()):
-    """Answer current NFL schedule questions directly from ESPN's scoreboard.
+def resolve_prompt_date(prompt: str, tz_name: str = "America/Vancouver") -> date:
+    today = datetime.now(ZoneInfo(tz_name)).date()
+    match = re.search(r"\b(\d{4}-\d{2}-\d{2})\b", prompt)
+    if match:
+        try:
+            return date.fromisoformat(match.group(1))
+        except ValueError:
+            pass
+    if re.search(r"\byesterday(?:'s|s)?\b", prompt, re.I):
+        return today - timedelta(days=1)
+    if re.search(r"\btomorrow(?:'s|s)?\b", prompt, re.I):
+        return today + timedelta(days=1)
+    return today
+
+
+def deterministic_live_nfl_answer(prompt: str, recent_prompts=()) -> str | None:
+    """Check ESPN NFL scoreboard for single-turn schedule questions.
 
     Supports:
     - today's games (filtered by team keywords if present)
@@ -126,20 +143,26 @@ def deterministic_live_nfl_answer(prompt, recent_prompts=()):
     - 'week N' — return only that week's games from the API (when week field present)
     """
     conversation = "\n".join([*recent_prompts[-4:], prompt])
-    has_nfl_or_espn = re.search(r"\b(nfl|espn)\b", conversation, re.I)
-    has_schedule_term = re.search(r"\b(today(?:'s|s)?|game|schedule|next|upcoming|week|scoreboard|score|scores)\b", conversation, re.I)
+    has_nfl_or_espn = re.search(r"\b(nfl|espn|nflmeta)\b", conversation, re.I)
+    has_schedule_term = re.search(r"\b(today(?:'s|s)?|yesterday(?:'s|s)?|tomorrow(?:'s|s)?|game|schedule|next|upcoming|week|scoreboard|score|scores)\b", conversation, re.I)
     if not has_nfl_or_espn or not has_schedule_term:
         return None
     if is_prediction_request(prompt):
         return None
 
-    today = datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
-    result = fetch_nfl_scoreboard(today)
+    target_date = resolve_prompt_date(conversation, os.getenv("USER_TIMEZONE", "America/Vancouver")).isoformat()
+    result = fetch_nfl_scoreboard(target_date)
     if not result.startswith("ESPN NFL scoreboard API for"):
+        nflmeta_res = _nflmeta_live_scores()
+        if nflmeta_res.startswith("NFLMeta live scores:") and "unavailable" not in nflmeta_res.lower():
+            return nflmeta_res
         return None
 
     lines = result.splitlines()[1:]
     if not lines:
+        nflmeta_res = _nflmeta_live_scores()
+        if nflmeta_res.startswith("NFLMeta live scores:") and "unavailable" not in nflmeta_res.lower():
+            return nflmeta_res
         return None
 
     next_limit = _parse_next_limit_terminal(prompt)
@@ -234,13 +257,21 @@ async def live_context(prompt, prior_prompts=()):
         )
     if is_prediction_request(prompt):
         return "\n\n" + await asyncio.to_thread(build_prediction_evidence, grounded_prompt)
-    # ESPN scoreboard API is public and does not require Worker credentials.
-    # Always fetch it locally for sports/NFL/ESPN queries in the terminal.
+    # ESPN scoreboard API and NFLMeta API are public/direct sources that do not require Worker credentials.
+    # Always fetch them locally for sports/NFL/ESPN/NFLMeta queries in the terminal.
     nfl_api_result = None
-    if is_sports_query(prompt) or re.search(r"\b(nfl|espn)\b", prompt, re.IGNORECASE):
-        nfl_api_result = await asyncio.to_thread(
-            fetch_nfl_scoreboard,
-            datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat(),
+    nflmeta_result = None
+    if is_sports_query(prompt) or re.search(r"\b(nfl|espn|nflmeta)\b", prompt, re.IGNORECASE):
+        target_date_iso = resolve_prompt_date(prompt, os.getenv("USER_TIMEZONE", "America/Vancouver")).isoformat()
+        nfl_api_result, nflmeta_result = await asyncio.gather(
+            asyncio.to_thread(
+                fetch_nfl_scoreboard,
+                target_date_iso,
+            ),
+            asyncio.to_thread(
+                _nflmeta_snapshot,
+                target_date_iso,
+            ),
         )
     worker_result = None
     if not local_live_search_configured():
@@ -260,6 +291,7 @@ async def live_context(prompt, prior_prompts=()):
     return (
         "\n\nVERIFIED SPORTS AND LIVE WEB RESULTS (use as evidence; do not invent missing facts):\n"
         f"[Local JSON lookup — authoritative when matching]\n{local_result[:9000]}\n\n"
+        f"[NFLMeta API]\n{nflmeta_result[:9000] if nflmeta_result else 'Not applicable.'}\n\n"
         f"[NFL scoreboard API]\n{nfl_api_result[:9000] if nfl_api_result else 'Not applicable.'}\n\n"
         f"[OpenAI web search]\n{openai_result[:9000]}\n\n"
         f"[Gemini Google Search]\n{gemini_result[:9000]}\n"
@@ -280,7 +312,7 @@ def build_agent(model_id, region, max_tokens):
         "when the repository tools are available. For sports questions, use local_sports_lookup and its "
         "local JSON dataset first; matching local records are authoritative and must not be overridden "
         "by model memory or web results. If the local tool reports no matching record, treat that as a "
-        "stale-data signal and use the supplied scoreboard API and live-web results to answer the current "
+        "stale-data signal and use the supplied scoreboard API, NFLMeta API, and live-web results to answer the current "
         "question. Mention the local-data gap only when useful. "
         "When the user asks for 'next game', 'next N games', or 'upcoming games': return only the "
         "soonest N scheduled games from today onward — do not dump the full season schedule or "

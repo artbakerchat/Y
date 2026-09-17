@@ -646,13 +646,15 @@ def search_live_web_gemini(query: str) -> str:
 def build_prediction_evidence(query: str) -> str:
     """Combine local prediction inputs with supplemental live provider evidence."""
     local = json.dumps(prediction_inputs(query), ensure_ascii=False, indent=2)
-    scoreboard = fetch_nfl_scoreboard(
-        datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
-    )
+    today_iso = datetime.now(ZoneInfo(os.getenv("USER_TIMEZONE", "America/Vancouver"))).date().isoformat()
+    scoreboard = fetch_nfl_scoreboard(today_iso)
+    nflmeta = _nflmeta_snapshot(today_iso)
     return (
         "PREDICTION INPUTS — NOT A VERIFIED OUTCOME\n"
         "[Local JSON — priority source]\n"
         f"{local}\n\n"
+        "[NFLMeta API]\n"
+        f"{nflmeta}\n\n"
         "[ESPN NFL scoreboard — local API]\n"
         f"{scoreboard}\n\n"
         "[OpenAI live web search — supplemental]\n"
@@ -677,6 +679,8 @@ def build_nfl_results_evidence(game_date: str) -> str:
     return (
         "RESULT CAPTURE EVIDENCE — NOT YET A JSON RECORD\n"
         "Use only facts corroborated by the live sources below.\n\n"
+        "[NFLMeta API]\n"
+        f"{_nflmeta_snapshot(target.isoformat())}\n\n"
         "[OpenAI live web search]\n"
         f"{search_live_web_openai(query)}\n\n"
         "[Gemini Google Search]\n"
