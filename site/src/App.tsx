@@ -79,7 +79,14 @@ export function App() {
       });
 
       if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+        let detail = '';
+        try {
+          const failure = await response.json();
+          detail = typeof failure.error === 'string' ? failure.error : '';
+        } catch {
+          // Keep the status-only fallback for non-JSON server responses.
+        }
+        throw new Error(detail || `API error: ${response.status}`);
       }
 
       const data = await response.json();

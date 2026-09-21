@@ -82,7 +82,13 @@ Create a `.env` file:
 
 ```env
 AWS_REGION=ca-central-1
-BEDROCK_MODEL_ID=ca.amazon.nova-lite-v1:0
+BEDROCK_MODEL_ID=us.amazon.nova-lite-v1:0
+AWS_ACCESS_KEY_ID=your-access-key
+AWS_SECRET_ACCESS_KEY=your-secret-key
+# Optional: use the deployed Worker, which already has the AWS secrets.
+# When set, local chat uses the Worker Nova/tools/agent gateway instead.
+FORGE_WORKER_URL=https://your-worker.example.com
+FORGE_WORKER_TOKEN=your-worker-gateway-token
 PORT=3000
 ```
 
@@ -162,7 +168,11 @@ Sessions are stored in `.data/sessions/` as JSON files with a 48-hour expiration
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `AWS_REGION` | `ca-central-1` | AWS region for Bedrock |
-| `BEDROCK_MODEL_ID` | `ca.amazon.nova-lite-v1:0` | Nova model ID |
+| `BEDROCK_MODEL_ID` | `us.amazon.nova-lite-v1:0` | Nova model ID |
+| `AWS_ACCESS_KEY_ID` | — | AWS access key with Bedrock permissions |
+| `AWS_SECRET_ACCESS_KEY` | — | AWS secret key |
+| `FORGE_WORKER_URL` | — | Optional Worker URL for shared Nova/tools/routing |
+| `FORGE_WORKER_TOKEN` | — | Token for the Worker agent gateway |
 | `PORT` | `3000` | Server port |
 
 ## Building for Production

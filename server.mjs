@@ -85,6 +85,11 @@ async function handleChatRequest(req, res, sessionId) {
     try {
       const payload = JSON.parse(body);
       const message = typeof payload.prompt === 'string' ? payload.prompt : payload.message;
+      if (typeof message !== 'string' || !message.trim()) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Message is required.' }));
+        return;
+      }
       const session = await loadSession(sessionId);
       const requestedAgent = typeof payload.agent === 'string' ? payload.agent : session.agentId || 'forge';
       if (!getAgentProfile(requestedAgent)) {
@@ -97,7 +102,7 @@ async function handleChatRequest(req, res, sessionId) {
         session.messages = [];
       }
 
-      const result = await chat(message, session.messages, requestedAgent);
+      const result = await chat(message, session.messages, requestedAgent, sessionId);
 
       if (result.success) {
         session.messages.push({ role: 'user', content: message });
@@ -112,8 +117,8 @@ async function handleChatRequest(req, res, sessionId) {
         });
         res.end(JSON.stringify({ content: result.content, answer: result.content, agentId: result.agentId }));
       } else {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: result.error }));
+        res.writeHead(result.status || 502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: result.error, status: result.status || 502 }));
       }
     } catch (err) {
       res.writeHead(400, { 'Content-Type': 'application/json' });
