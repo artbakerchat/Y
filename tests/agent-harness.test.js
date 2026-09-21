@@ -35,7 +35,7 @@ test('specialist delegation runs lookup and returns to parent', async () => {
 });
 
 test('all nine roles have an executable path', async () => {
-  assert.equal(Object.keys(AGENT_PROFILES).length, 8);
+  assert.equal(Object.keys(AGENT_PROFILES).length, 9);
   const run = createAgentHarness({ modelId: 'test', converse: async () => end() });
   assert.equal((await run({ agentId: 'word-specialist', prompt: 'anchor' })).agentId, 'word-specialist');
 });

@@ -7,6 +7,7 @@ import { getAgentProfile, inferAgentId, listAgentProfiles } from './agents.js';
 import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
 import { CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE } from './conversation-guidance.js';
 import { readAgentCoreResponse } from './agentcore-response.js';
+import { liveWebEvidence } from './live-search.js';
 export { GlobalTimer } from './legacy-global-timer.js';
 
 const CONTENT_TYPES = {
@@ -224,7 +225,7 @@ async function signingKey(secret, date, region, service) {
   return hmac(serviceKey, 'aws4_request');
 }
 
-async function invokeAgentCore(message, palette, history, env, browserSessionId, requestsRemaining, agentId = 'forge', sportsData = null, sportsLiveEvidence = '') {
+async function invokeAgentCore(message, palette, history, env, browserSessionId, requestsRemaining, agentId = 'forge', sportsData = null, sportsLiveEvidence = '', webLiveEvidence = '') {
   const region = env.AWS_REGION || 'ca-central-1';
   const runtimeArn = env.AGENTCORE_RUNTIME_ARN;
   const host = env.AGENTCORE_RUNTIME_HOST || `bedrock-agentcore.${region}.amazonaws.com`;
@@ -232,7 +233,7 @@ async function invokeAgentCore(message, palette, history, env, browserSessionId,
   const path = `/runtimes/${encodedArn}/invocations`;
   const query = 'qualifier=DEFAULT';
   const mode = env.FORGE_ADVANCED_MODE === 'true' ? 'advanced' : 'simple';
-  const body = JSON.stringify({ prompt: message, mode, palette, requests_remaining: requestsRemaining, agent_id: agentId, sports_data: sportsData, sports_live_evidence: sportsLiveEvidence });
+  const body = JSON.stringify({ prompt: message, mode, palette, requests_remaining: requestsRemaining, agent_id: agentId, sports_data: sportsData, sports_live_evidence: sportsLiveEvidence, web_live_evidence: webLiveEvidence });
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -582,16 +583,7 @@ async function sportsEvidenceFromRequest(request, env) {
 
 // General-purpose provider search without sports-specific ESPN overhead.
 // Used by the terminal when no local OpenAI/Gemini keys are configured.
-async function liveGeneralEvidence(query, env) {
-  const [openai, gemini] = await Promise.all([
-    searchOpenAISports(query, env),
-    searchGeminiSports(query, env),
-  ]);
-  const unavailable = (value) => /not configured|failed|returned no evidence/i.test(value);
-  const openaiStatus = unavailable(openai) ? 'unavailable' : 'used';
-  const geminiStatus = unavailable(gemini) ? 'unavailable' : 'used';
-  return `PROVIDER USAGE: OpenAI live search=${openaiStatus}; Gemini Google Search=${geminiStatus}. If either provider is unavailable, tell the user which one was unavailable.\n\n[OpenAI live search]\n${openai}\n\n[Gemini Google Search]\n${gemini}`;
-}
+async function liveGeneralEvidence(query, env) { return liveWebEvidence(query, env); }
 
 async function searchEvidenceFromRequest(request, env) {
   const configuredToken = env.FORGE_WORKER_TOKEN?.trim();
@@ -941,11 +933,16 @@ function forgeToolRelevant(name, message) {
   if (name === 'consult_word_specialist') return true;
   if (name === 'calculate') return /\b(?:calculat|add|subtract|divide|multiply|percent|how many|equation|sum|total)\w*\b/i.test(text) || /[0-9].*[+*/%=-].*[0-9]/.test(text);
   if (name === 'local_sports_lookup' || name === 'sports_prediction') return /\b(?:sport|game|match|team|nfl|nba|nhl|mlb|mls|wnba|score|standings|schedule)\w*\b/i.test(text);
+  if (name === 'weather_lookup') return /\b(?:weather|forecast|temperature|rain|snow|wind|humidity|heat|cold)\w*\b/i.test(text);
   return false;
 }
 
 async function askBedrock(message, palette, history, env, requestsRemaining, profile, sportsLiveEvidence = '') {
-  const availableTools = buildEditableTools(palette, profile.id, { loadSportsData: () => loadSportsData(env), searchLive: (query) => liveSportsEvidence(query, env) });
+  const availableTools = buildEditableTools(palette, profile.id, {
+    loadSportsData: () => loadSportsData(env),
+    searchLive: (query) => liveSportsEvidence(query, env),
+    searchLiveWeb: (query) => liveWebEvidence(query, env),
+  });
   const tools = availableTools.filter((tool) => profile.toolNames.includes(tool.spec.name)
     && (profile.id !== 'forge' || forgeToolRelevant(tool.spec.name, message)));
   const toolConfig = { tools: tools.map((t) => ({ toolSpec: t.spec })) };
@@ -1154,8 +1151,11 @@ export default {
         const sportsLiveEvidence = sportsAuthorized && (isSportsPredictionRequest(message) || isLiveSportsRequest(message, state.messages))
           ? await liveSportsEvidence(liveSportsQuery(message, state.messages), env)
           : '';
+        const webLiveEvidence = profile.toolNames.includes('weather_lookup') && (profile.id === 'weather-agent' || isLiveWebRequest(message, state.messages))
+          ? await liveWebEvidence(message, env)
+          : '';
         const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence)
+          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence, webLiveEvidence)
           : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
         answer.answer = cleanAnswer(answer.answer);
         answer.agentId = profile.id;

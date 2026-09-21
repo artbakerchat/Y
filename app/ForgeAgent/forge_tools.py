@@ -15,7 +15,13 @@ from calculator import calculate
 from sports_agent import answer as answer_sports
 
 
-def build_tools(palette: list[str], profile_id: str = "forge", sports_data: dict | None = None, sports_live_evidence: str = "") -> list[Callable[..., str]]:
+def build_tools(
+    palette: list[str],
+    profile_id: str = "forge",
+    sports_data: dict | None = None,
+    sports_live_evidence: str = "",
+    web_live_evidence: str = "",
+) -> list[Callable[..., str]]:
     """Build the tools for one request with its current palette in scope.
 
     Args:
@@ -83,9 +89,18 @@ def build_tools(palette: list[str], profile_id: str = "forge", sports_data: dict
     @tool
     def web_search(query: str) -> str:
         """Return Worker-provided live web evidence for grounding."""
-        if sports_live_evidence:
-            return sports_live_evidence
+        if web_live_evidence:
+            return web_live_evidence
         return "Live web search evidence is unavailable."
+
+    @tool
+    def weather_lookup(location: str, date: str = "today") -> str:
+        """Return Worker-provided live weather evidence for a location and date."""
+        if not location or not location.strip():
+            return "A location is required for a weather lookup."
+        if web_live_evidence:
+            return web_live_evidence
+        return "Live weather evidence is unavailable."
 
     return [
         get_palette,
@@ -98,4 +113,5 @@ def build_tools(palette: list[str], profile_id: str = "forge", sports_data: dict
         local_sports_lookup,
         sports_prediction,
         web_search,
+        weather_lookup,
     ]

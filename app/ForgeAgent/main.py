@@ -77,6 +77,17 @@ def _prompt_with_live_sports_evidence(prompt: str, evidence: str) -> str:
     )
 
 
+def _prompt_with_live_web_evidence(prompt: str, evidence: str) -> str:
+    """Attach Worker-fetched general web evidence as reference data."""
+    if not isinstance(evidence, str) or not evidence.strip():
+        return prompt
+    return (
+        f"{prompt}\n\n"
+        "VERIFIED LIVE WEB EVIDENCE (reference data; do not invent missing facts):\n"
+        f"{evidence[:12000]}"
+    )
+
+
 def _palette_from(payload: dict[str, Any]) -> list[str]:
     palette = payload.get("palette", [])
     if not isinstance(palette, list):
@@ -107,6 +118,8 @@ def _forge_tool_relevant(name: str, prompt: str) -> bool:
         return any(term in text for term in ("sport", "game", "match", "team", "nfl", "nba", "nhl", "mlb", "mls", "wnba", "score", "standing", "schedule"))
     if name == "web_search":
         return any(term in text for term in ("today", "current", "latest", "recent", "right now", "this week", "this month", "live", "breaking", "news", "weather", "forecast", "temperature", "price", "stock", "market", "election", "event", "release", "launch", "update", "search", "look up", "find", "what is the", "what are the", "who won", "who is", "what happened", "google", "internet"))
+    if name == "weather_lookup":
+        return any(term in text for term in ("weather", "forecast", "temperature", "rain", "snow", "wind", "humidity", "heat", "cold"))
     return False
 
 
@@ -240,6 +253,7 @@ def _agent_for_palette(
     supplied_text: str = '',
     sports_data: dict | None = None,
     sports_live_evidence: str = '',
+    web_live_evidence: str = '',
 ) -> Agent:
     palette_text = ", ".join(palette) if palette else "(empty)"
     profile = get_profile(profile_id) or get_profile('forge')
@@ -251,7 +265,7 @@ def _agent_for_palette(
     session_manager = _native_session_manager(session_id)
 
     profile_tool_names = set(get_tool_names(profile_id))
-    profile_tools = [tool for tool in build_tools(palette, profile_id, sports_data, sports_live_evidence)
+    profile_tools = [tool for tool in build_tools(palette, profile_id, sports_data, sports_live_evidence, web_live_evidence)
                      if getattr(tool, "__name__", "") in profile_tool_names
                      and (profile_id != "forge"
                           or not supplied_text.strip()
@@ -371,10 +385,14 @@ async def invoke(payload: dict[str, Any], context: Any):
                 profile_tools = set(get_tool_names(profile_id))
                 sports_data = payload.get("sports_data") if "local_sports_lookup" in profile_tools else None
                 sports_live_evidence = payload.get("sports_live_evidence", "") if ("sports_prediction" in profile_tools or "local_sports_lookup" in profile_tools) else ""
-                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, sports_data, sports_live_evidence)
+                web_live_evidence = payload.get("web_live_evidence", "") if ("web_search" in profile_tools or "weather_lookup" in profile_tools) else ""
+                agent = _agent_for_palette(palette, requests_remaining, session_id, profile_id, history, supplied_text, sports_data, sports_live_evidence, web_live_evidence)
                 answer = await answer_request(
                     agent,
-                    _prompt_with_live_sports_evidence(prompt, sports_live_evidence),
+                    _prompt_with_live_web_evidence(
+                        _prompt_with_live_sports_evidence(prompt, sports_live_evidence),
+                        web_live_evidence,
+                    ),
                 )
                 if not native_sessions:
                     _save_messages(session_id, messages + [

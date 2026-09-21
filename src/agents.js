@@ -29,6 +29,7 @@ export function getAgentProfile(id = 'forge') {
 }
 
 const ROUTING_RULES = {
+  "weather-agent": [["weather", 5], ["forecast", 5], ["temperature", 4], ["rain", 3], ["snow", 3], ["wind", 2], ["humidity", 2]],
   "food-bank": [["food bank", 4], ["foodbank", 4], ["apple", 3], ["apples", 3], ["pantry", 3], ["donation", 2], ["pickup window", 3], ["volunteer shift", 3]],
   "nonprofit-helpdesk": [["nonprofit", 4], ["non-profit", 4], ["grant", 3], ["bylaws", 3], ["intake form", 3], ["meeting agenda", 3], ["operating plan", 3]],
   "mutual-aid": [["mutual aid", 5], ["ride", 2], ["groceries", 2], ["check-in", 2], ["translation help", 3], ["housing navigation", 3]],
@@ -43,6 +44,7 @@ export function inferAgentId(message, currentAgentId = "forge") {
   let bestId = "forge";
   let bestScore = 0;
   for (const [id, cues] of Object.entries(ROUTING_RULES)) {
+    if (id === 'weather-agent' && /\b(?:sport\w*|game|match|team|nfl|nba|nhl|mlb|mls|wnba)\b/i.test(text)) continue;
     const score = cues.reduce((total, [cue, weight]) => total + (text.includes(cue) ? weight : 0), 0);
     if (score > bestScore) { bestId = id; bestScore = score; }
   }

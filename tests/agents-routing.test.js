@@ -10,3 +10,9 @@ test('apples automatically route to the food-bank agent', () => {
 test('explicit Santa cues still route to Santa', () => {
   assert.equal(inferAgentId('Santa, I delivered the apple.'), 'santa-claus');
 });
+
+test('weather questions route to the weather agent', () => {
+  assert.equal(inferAgentId('What is the weather forecast in Vancouver tomorrow?'), 'weather-agent');
+  assert.equal(inferAgentId('Will it rain this afternoon?'), 'weather-agent');
+  assert.notEqual(inferAgentId('What is the sports forecast for the NFL?'), 'weather-agent');
+});

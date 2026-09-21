@@ -12,7 +12,7 @@ from forge_profiles import get_profile
 from conversation_policy import CONVERSATION_POLICY
 
 
-PROFILES = ["forge", "food-bank", "nonprofit-helpdesk", "mutual-aid", "civic-knowledge", "bob-dylan", "santa-claus", "orange-doctor-candidatus"]
+PROFILES = ["forge", "weather-agent", "food-bank", "nonprofit-helpdesk", "mutual-aid", "civic-knowledge", "bob-dylan", "santa-claus", "orange-doctor-candidatus"]
 
 
 class HarnessTests(unittest.TestCase):
@@ -100,6 +100,10 @@ class HarnessTests(unittest.TestCase):
     def test_forge_web_search_tool_relevance(self):
         self.assertTrue(main._forge_tool_relevant("web_search", "What is the latest weather forecast this week?"))
         self.assertFalse(main._forge_tool_relevant("web_search", "Please rewrite this sentence in plain language."))
+
+    def test_weather_tool_relevance(self):
+        self.assertTrue(main._forge_tool_relevant("weather_lookup", "Will it rain in Vancouver tomorrow?"))
+        self.assertFalse(main._forge_tool_relevant("weather_lookup", "Rewrite this note."))
 
     def test_stream_contract_and_profile_isolation(self):
         async def exercise():

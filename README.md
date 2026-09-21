@@ -117,6 +117,10 @@ Bee Chat/
 
 ## API Endpoints
 
+### Agents and live tools
+
+The runtime exposes these specialized agents through `/api/agents`: Good Neighbour Coordinator, Weather Agent, Food Bank Coordinator, Nonprofit Helpdesk, Mutual Aid Hub, Civic Knowledge Assistant, Bob Dylan, Santa Claus, and Orange Doctor Candidatus. Weather requests route to `weather-agent`, whose `weather_lookup` tool gathers current evidence through the configured live web providers. The general `web_search` tool remains available to authorized profiles for other current-information requests.
+
 ### POST `/api/chat`
 
 Send a message to Nova and get a response.

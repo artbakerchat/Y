@@ -13,7 +13,8 @@ export default {
         "calculate",
         "local_sports_lookup",
         "sports_prediction",
-        "web_search"
+        "web_search",
+        "weather_lookup"
       ],
       "skillNames": "*",
       "dailyRequestLimit": 10,
@@ -37,6 +38,21 @@ export default {
       "dailyRequestLimit": 10,
       "maxToolCallsPerRequest": 3,
       "specialist": "word_specialist"
+    },
+    "weather-agent": {
+      "id": "weather-agent",
+      "name": "Weather Agent",
+      "description": "Uses live web evidence to answer current weather and forecast questions.",
+      "systemPrompt": "You are Larboard's Weather Agent. Answer current weather and forecast questions using the weather lookup tool whenever the request concerns live conditions. Ask for a location only when it is missing. Preserve the requested date or range, state the source evidence and uncertainty briefly, and never invent temperature, alerts, precipitation, or severe-weather details. Weather information can change; distinguish a forecast from an observed condition and advise checking official emergency alerts for safety-critical decisions.",
+      "toolNames": [
+        "weather_lookup",
+        "web_search",
+        "calculate"
+      ],
+      "skillNames": "*",
+      "dailyRequestLimit": 10,
+      "maxToolCallsPerRequest": 3,
+      "specialist": null
     },
     "nonprofit-helpdesk": {
       "id": "nonprofit-helpdesk",
