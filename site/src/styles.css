@@ -40,9 +40,47 @@ body {
   margin-bottom: 4px;
 }
 
+.chat-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  max-width: 760px;
+  margin: 0 auto;
+}
+
 .chat-header p {
   font-size: 12px;
   color: #5f6368;
+}
+
+.agent-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #5f6368;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.agent-picker select {
+  max-width: 240px;
+  padding: 8px 28px 8px 10px;
+  border: 1px solid #dfe1e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #202124;
+  font: inherit;
+}
+
+.agent-picker select:focus {
+  outline: 2px solid #c5d9f7;
+  outline-offset: 1px;
+}
+
+.agent-description {
+  max-width: 760px;
+  margin: 4px auto 0;
 }
 
 .chat-messages {
@@ -219,6 +257,21 @@ body {
 
   .chat-header h1 {
     font-size: 20px;
+  }
+
+  .chat-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .agent-picker {
+    justify-content: space-between;
+  }
+
+  .agent-picker select {
+    flex: 1;
+    max-width: none;
   }
 
   .chat-messages {

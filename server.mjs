@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
 import 'dotenv/config';
 import { chat } from './api/chat.js';
+import { getAgentProfile, listAgentProfiles } from './src/agents.js';
 
 const __dirname = import.meta.url.split('/').slice(0, -1).join('/').slice(7);
 const port = Number(process.env.PORT || 3000);
@@ -26,11 +27,11 @@ async function loadSession(sessionId) {
     const file = join(sessionsDir, `${sessionId}.json`);
     const data = JSON.parse(await readFile(file, 'utf8'));
     if (data.expiresAt && data.expiresAt <= Date.now()) {
-      return { messages: [], expiresAt: Date.now() + sessionTtlMs };
+      return { agentId: 'forge', messages: [], expiresAt: Date.now() + sessionTtlMs };
     }
     return data;
   } catch {
-    return { messages: [], expiresAt: Date.now() + sessionTtlMs };
+    return { agentId: 'forge', messages: [], expiresAt: Date.now() + sessionTtlMs };
   }
 }
 
@@ -82,10 +83,21 @@ async function handleChatRequest(req, res, sessionId) {
 
   req.on('end', async () => {
     try {
-      const { message, history } = JSON.parse(body);
+      const payload = JSON.parse(body);
+      const message = typeof payload.prompt === 'string' ? payload.prompt : payload.message;
       const session = await loadSession(sessionId);
+      const requestedAgent = typeof payload.agent === 'string' ? payload.agent : session.agentId || 'forge';
+      if (!getAgentProfile(requestedAgent)) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Unknown agent' }));
+        return;
+      }
+      if (session.agentId !== requestedAgent) {
+        session.agentId = requestedAgent;
+        session.messages = [];
+      }
 
-      const result = await chat(message, session.messages);
+      const result = await chat(message, session.messages, requestedAgent);
 
       if (result.success) {
         session.messages.push({ role: 'user', content: message });
@@ -98,7 +110,7 @@ async function handleChatRequest(req, res, sessionId) {
           'Content-Type': 'application/json',
           'Set-Cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`,
         });
-        res.end(JSON.stringify({ content: result.content }));
+        res.end(JSON.stringify({ content: result.content, answer: result.content, agentId: result.agentId }));
       } else {
         res.writeHead(500, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: result.error }));
@@ -125,6 +137,38 @@ const server = http.createServer(async (req, res) => {
 
   if (req.url === '/' || req.url === '/index.html') {
     await serveFile(join(__dirname, 'site', 'dist', 'index.html'), res);
+  } else if (req.url === '/api/agents' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(listAgentProfiles()));
+  } else if (req.url === '/api/state' && req.method === 'GET') {
+    const session = await loadSession(sessionId);
+    res.writeHead(200, {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`,
+    });
+    res.end(JSON.stringify({ agentId: session.agentId || 'forge', messages: session.messages || [] }));
+  } else if (req.url === '/api/state' && req.method === 'POST') {
+    let body = '';
+    req.on('data', (chunk) => { body += chunk.toString(); });
+    req.on('end', async () => {
+      try {
+        const { agentId } = JSON.parse(body);
+        if (!getAgentProfile(agentId)) throw new Error('Unknown agent');
+        const session = await loadSession(sessionId);
+        session.agentId = agentId;
+        session.messages = [];
+        session.expiresAt = Date.now() + sessionTtlMs;
+        await saveSession(sessionId, session);
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Set-Cookie': `larboard_session=${sessionId}; Path=/; HttpOnly; SameSite=Lax`,
+        });
+        res.end(JSON.stringify({ agentId, messages: [] }));
+      } catch {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Invalid agent' }));
+      }
+    });
   } else if ((req.url.startsWith('/api/ask') || req.url.startsWith('/api/chat')) && req.method === 'POST') {
     await handleChatRequest(req, res, sessionId);
   } else if (req.url === '/api/messages' && req.method === 'GET') {

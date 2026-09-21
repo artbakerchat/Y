@@ -1,13 +1,35 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 
 type Message = { role: 'user' | 'assistant'; content: string };
+type AgentProfile = { id: string; name: string; description: string };
+type SessionState = { agentId?: string; messages?: Message[] };
 
 export function App() {
   const [messages, setMessages] = useState<Message[]>([]);
+  const [agents, setAgents] = useState<AgentProfile[]>([]);
+  const [agentId, setAgentId] = useState('forge');
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([fetch('/api/agents'), fetch('/api/state')])
+      .then(async ([agentsResponse, stateResponse]) => {
+        if (!agentsResponse.ok || !stateResponse.ok) throw new Error('Unable to load agents');
+        const availableAgents: AgentProfile[] = await agentsResponse.json();
+        const state: SessionState = await stateResponse.json();
+        if (!active) return;
+        setAgents(availableAgents);
+        if (state.agentId) setAgentId(state.agentId);
+        if (Array.isArray(state.messages)) setMessages(state.messages);
+      })
+      .catch(() => {
+        if (active) setError('Unable to load the available agents.');
+      });
+    return () => { active = false; };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -16,6 +38,23 @@ export function App() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const handleAgentChange = async (nextAgentId: string) => {
+    if (!nextAgentId || nextAgentId === agentId || loading) return;
+    setAgentId(nextAgentId);
+    setMessages([]);
+    setError('');
+    try {
+      const response = await fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId: nextAgentId }),
+      });
+      if (!response.ok) throw new Error('Unable to switch agents');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to switch agents');
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -33,7 +72,8 @@ export function App() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage,
+          prompt: userMessage,
+          agent: agentId,
           history: messages,
         }),
       });
@@ -56,8 +96,20 @@ export function App() {
   return (
     <div className="chat-container">
       <header className="chat-header">
-        <h1>Bee Chat</h1>
-        <p>Powered by Nova</p>
+        <div className="chat-heading">
+          <div>
+            <h1>Bee Chat</h1>
+            <p>Choose an agent for this conversation</p>
+          </div>
+          <label className="agent-picker">
+            <span>Agent</span>
+            <select value={agentId} onChange={(event) => handleAgentChange(event.target.value)} disabled={loading || !agents.length}>
+              {agents.length === 0 && <option value="forge">Loading agents…</option>}
+              {agents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}
+            </select>
+          </label>
+        </div>
+        <p className="agent-description">{agents.find((agent) => agent.id === agentId)?.description}</p>
       </header>
 
       <main className="chat-messages">

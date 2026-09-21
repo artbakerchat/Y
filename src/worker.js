@@ -1105,7 +1105,17 @@ export default {
       const sessionId = sessionIdFrom(request);
       if (url.pathname === '/api/feedback' && request.method === 'POST') return feedbackFromRequest(request, env.ASSETS, sessionId);
       if (url.pathname === '/api/state' && request.method === 'GET') return stateResponse(await loadState(env.ASSETS, sessionId), sessionId);
-      if (url.pathname === '/api/state' && request.method === 'POST') { const current = await loadState(env.ASSETS, sessionId); const next = cleanState({ ...current, ...(await request.json()) }); await saveState(env.ASSETS, sessionId, next); return stateResponse(next, sessionId); }
+      if (url.pathname === '/api/state' && request.method === 'POST') {
+        const current = await loadState(env.ASSETS, sessionId);
+        const requested = await request.json();
+        const next = cleanState({ ...current, ...requested });
+        if (requested?.agentId && requested.agentId !== current.agentId) {
+          next.messages = [];
+          next.pendingPrompt = '';
+        }
+        await saveState(env.ASSETS, sessionId, next);
+        return stateResponse(next, sessionId);
+      }
       if (url.pathname === '/api/ask' && request.method === 'POST') {
         const body = await request.json();
         const explicitAgentId = body?.agent || request.headers.get('x-agent-id');
