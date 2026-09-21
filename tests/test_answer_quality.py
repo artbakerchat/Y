@@ -94,7 +94,7 @@ class AnswerQualityTests(unittest.TestCase):
         specialist = AsyncMock(return_value='That was an interpretation.')
         async def run():
             with patch.object(main, '_load_messages', return_value=history), patch.object(main, '_save_messages') as save, patch.object(main, 'run_word_specialist', specialist):
-                events = [event async for event in main.invoke({'agent_id': 'word-specialist', 'prompt': 'Was that a fact?'}, SimpleNamespace(session_id='test'))]
+                events = [event async for event in main.invoke({'mode': 'advanced', 'agent_id': 'word-specialist', 'prompt': 'Was that a fact?'}, SimpleNamespace(session_id='test'))]
                 self.assertTrue(events)
                 self.assertEqual(specialist.call_args.args[1][0]['content'][0]['text'], 'Explain anchor.')
                 self.assertEqual(save.call_args.args[1][-1]['content'], 'That was an interpretation.')

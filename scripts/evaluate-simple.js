@@ -34,7 +34,7 @@ async function ask(agentId, prompt, session, history) {
     child.stderr.on('data', chunk => stderr += chunk);
     child.on('error', reject);
     child.on('close', code => { clearTimeout(timeout); if (code !== 0) return reject(Error(stderr.slice(-1200) || 'Python call timed out')); try { resolve(JSON.parse(stdout.trim().split('\n').at(-1))); } catch { reject(Error('Invalid Python result')); } });
-    child.stdin.end(JSON.stringify({ agent_id: agentId, prompt, session, palette: [] }));
+    child.stdin.end(JSON.stringify({ mode: 'advanced', agent_id: agentId, prompt, session, palette: [] }));
   });
   if (target === 'node' || agentId === 'word-specialist') return run({ agentId, prompt, history, palette: [] });
   const response = await fetch('https://larboard.ca/api/ask', { method: 'POST', headers: { 'content-type': 'application/json', cookie: `larboard_session=${session}` }, body: JSON.stringify({ agent: agentId, message: prompt }), signal: AbortSignal.timeout(95000) });

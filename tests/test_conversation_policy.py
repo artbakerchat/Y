@@ -48,7 +48,7 @@ class ConversationPolicyTests(unittest.TestCase):
         async def exercise():
             agent = SimpleNamespace(messages=[], invoke_async=AsyncMock(return_value='Thanks.'))
             with patch.object(main, '_agent_for_palette', return_value=agent), patch.object(main, '_load_messages', return_value=[]), patch.object(main, '_save_messages') as save, patch.object(main, '_load_palette', return_value=[]), patch.object(main, '_session_bucket', return_value=None):
-                events = [event async for event in main.invoke({'agent_id': 'bob-dylan', 'prompt': 'Give just one word.'}, SimpleNamespace(session_id='policy-format'))]
+                events = [event async for event in main.invoke({'mode': 'advanced', 'agent_id': 'bob-dylan', 'prompt': 'Give just one word.'}, SimpleNamespace(session_id='policy-format'))]
                 self.assertEqual(events[0]['event']['contentBlockDelta']['delta']['text'], 'Thanks.')
                 self.assertEqual(save.call_args.args[1][-1]['content'], 'Thanks.')
         asyncio.run(exercise())

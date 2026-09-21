@@ -64,7 +64,7 @@ async function ask(agentId, prompt, session, history) {
         if (code) return reject(new Error(stderr.slice(-1500)));
         try { resolve(JSON.parse(stdout.trim().split('\n').at(-1))); } catch { reject(new Error('Invalid Python output')); }
       });
-      child.stdin.end(JSON.stringify({ agent_id: agentId, prompt, session, palette: ['anchor', 'apple', 'horizon'] }));
+      child.stdin.end(JSON.stringify({ mode: 'advanced', agent_id: agentId, prompt, session, palette: ['anchor', 'apple', 'horizon'] }));
     });
   }
   if (target === 'local' || agentId === 'word-specialist') return run({ agentId, prompt, history, palette: ['anchor', 'apple', 'horizon'] });

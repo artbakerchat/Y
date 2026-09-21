@@ -231,7 +231,8 @@ async function invokeAgentCore(message, palette, history, env, browserSessionId,
   const encodedArn = encodeURIComponent(runtimeArn);
   const path = `/runtimes/${encodedArn}/invocations`;
   const query = 'qualifier=DEFAULT';
-  const body = JSON.stringify({ prompt: message, palette, requests_remaining: requestsRemaining, agent_id: agentId, sports_data: sportsData, sports_live_evidence: sportsLiveEvidence });
+  const mode = env.FORGE_ADVANCED_MODE === 'true' ? 'advanced' : 'simple';
+  const body = JSON.stringify({ prompt: message, mode, palette, requests_remaining: requestsRemaining, agent_id: agentId, sports_data: sportsData, sports_live_evidence: sportsLiveEvidence });
   const payloadHash = await sha256Hex(body);
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);

@@ -65,6 +65,12 @@ The user-facing interface in `site/` is a React + Vite app:
 
 ### Agent Infrastructure
 
+The AgentCore runtime defaults to a local-style single-agent request path:
+`prompt + session history -> shared policy -> one simple Forge agent -> response`.
+The existing profile/tool/skill path is retained as an explicit opt-in by sending
+`mode: "advanced"` to the runtime. The Worker selects this mode only when the
+`FORGE_ADVANCED_MODE` environment setting is exactly `true`.
+
 **Profiles (agentcore/profiles.js):**
 - Registry of agent personas (forge, food-bank, nonprofit-helpdesk, mutual-aid, civic-knowledge, bob-dylan, santa-claus, orange-doctor-candidatus, word-specialist)
 - Each profile defines: system prompt, allowed tools, skill names, rate limits, specialist tools

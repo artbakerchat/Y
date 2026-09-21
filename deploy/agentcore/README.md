@@ -1,6 +1,19 @@
 # AgentCore deployment
 
-This is the selected deployment target. Eight profiles run in the Python Strands runtime, with a nested language specialist. `agent_id: "word-specialist"` also invokes the specialist directly. The Node harness and EC2 files are optional alternatives.
+## Runtime modes
+
+The deployed runtime defaults to a simple local-style chat path: one Forge
+agent, the shared conversation policy, session history, and a Bedrock request.
+Profiles, tools, skills, palettes, and specialists remain available but are not
+used unless the invocation payload includes `"mode": "advanced"`.
+
+The public Worker sends `mode: "advanced"` only when its
+`FORGE_ADVANCED_MODE` setting is exactly `true`; otherwise it sends simple mode.
+
+This is the selected deployment target. Advanced mode retains the eight Python
+Strands profiles and nested language specialist. `agent_id: "word-specialist"`
+also invokes the specialist directly. The Node harness and EC2 files are
+optional alternatives.
 
 Verified deployment (2026-09-13): `larboard_forge_agents-5C4THCBvpZ`, version 3, is READY in `ca-central-1`, using the repository artifact `052b8922…`. Live website checks passed for AgentCore routing, conversation recall, and profile isolation. Offline checks passed: the repository JavaScript and Python harness suites (including all eight profile configurations).
 

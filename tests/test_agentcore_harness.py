@@ -73,6 +73,24 @@ class HarnessTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             main._profile_id_from({"agent_id": "unknown"})
 
+    def test_simple_mode_is_default_and_does_not_select_a_profile(self):
+        async def exercise():
+            class FakeAgent:
+                async def invoke_async(self, prompt):
+                    return "A simple answer."
+            with patch.object(main, "_simple_agent", return_value=FakeAgent()) as build, \
+                 patch.object(main, "_load_messages", return_value=[]), \
+                 patch.object(main, "_save_messages"):
+                events = [event async for event in main.invoke({"prompt": "Help"}, SimpleNamespace(session_id="simple-session"))]
+            self.assertEqual(events[0]["event"]["contentBlockDelta"]["delta"]["text"], "A simple answer.")
+            build.assert_called_once()
+            self.assertIsNone(request_budget.get())
+        asyncio.run(exercise())
+
+    def test_runtime_mode_requires_known_value(self):
+        with self.assertRaises(ValueError):
+            main._mode_from({"mode": "profile"})
+
     def test_live_sports_evidence_is_added_to_answer_request(self):
         prompt = main._prompt_with_live_sports_evidence("Today's NFL game?", "PROVIDER USAGE: Gemini Google Search=used.")
         self.assertIn("Today's NFL game?", prompt)
@@ -95,7 +113,7 @@ class HarnessTests(unittest.TestCase):
                 return FakeAgent()
             with patch.object(main, "_agent_for_palette", side_effect=build), patch.object(main, "_load_messages", return_value=[]), patch.object(main, "_save_messages"), patch.object(main, "_load_palette", return_value=[]):
                 for profile_id in ["forge", "food-bank"]:
-                    events = [event async for event in main.invoke({"prompt": "Help", "agent_id": profile_id, "requests_remaining": 0}, SimpleNamespace(session_id="same-user-session"))]
+                    events = [event async for event in main.invoke({"mode": "advanced", "prompt": "Help", "agent_id": profile_id, "requests_remaining": 0}, SimpleNamespace(session_id="same-user-session"))]
                     self.assertEqual(events[0]["event"]["contentBlockDelta"]["delta"]["text"], "A useful answer.")
             self.assertNotEqual(sessions[0], sessions[1])
             self.assertIsNone(request_budget.get())

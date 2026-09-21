@@ -30,7 +30,7 @@ async def evaluate(runtime_arn=None):
     failures = 0
     for profile_id, prompt in CASES:
         try:
-            payload = {"agent_id": profile_id, "prompt": prompt, "palette": ["anchor", "apple", "horizon"]}
+            payload = {"mode": "advanced", "agent_id": profile_id, "prompt": prompt, "palette": ["anchor", "apple", "horizon"]}
             session_id = str(uuid.uuid4())
             if client:
                 response = client.invoke_agent_runtime(agentRuntimeArn=runtime_arn, runtimeSessionId=session_id, payload=json.dumps(payload).encode())

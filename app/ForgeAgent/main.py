@@ -19,7 +19,7 @@ from forge_steering import PaletteReadyHandler
 from forge_harness import HarnessHook, RequestBudget, request_budget, configured_model
 from forge_specialists import consult_word_specialist, run_word_specialist
 from forge_profiles import get_profile, get_system_prompt, get_max_tool_calls as profile_max_tool_calls, get_tool_names
-from conversation_guidance import CONVERSATION_GUIDANCE
+from conversation_guidance import ANSWER_QUALITY_GUIDANCE, CONVERSATION_GUIDANCE
 from conversation_policy import with_conversation_policy
 from answering import answer_request
 from skill_guidance import select_skill_guidance
@@ -300,10 +300,41 @@ def _profile_id_from(payload: dict[str, Any]) -> str:
     return profile_id
 
 
+def _mode_from(payload: dict[str, Any]) -> str:
+    """Select the runtime path; the feature-rich Forge path is opt-in."""
+    mode = payload.get("mode", "simple")
+    if mode not in {"simple", "advanced"}:
+        raise ValueError("mode must be 'simple' or 'advanced'")
+    return mode
+
+
+def _simple_agent(messages: list[dict[str, Any]], supplied_text: str) -> Agent:
+    """Build the local-style single-agent path used by default.
+
+    This deliberately has no profiles, tools, skills, palettes, or external
+    session manager. The policy and request budget still apply through the
+    shared runtime controls.
+    """
+    return Agent(
+        model=configured_model(),
+        messages=messages,
+        callback_handler=None,
+        tools=[],
+        hooks=[HarnessHook("simple", supplied_text)],
+        conversation_manager=SlidingWindowConversationManager(window_size=20),
+        system_prompt=with_conversation_policy(
+            f"{CONVERSATION_GUIDANCE} {ANSWER_QUALITY_GUIDANCE} "
+            "Answer the current request directly. Use the conversation history "
+            "when relevant and do not mention internal runtime details."
+        ),
+    )
+
+
 @app.entrypoint
 async def invoke(payload: dict[str, Any], context: Any):
     prompt = _prompt_from(payload)
-    profile_id = _profile_id_from(payload)
+    mode = _mode_from(payload)
+    profile_id = _profile_id_from(payload) if mode == "advanced" else "simple"
     daily_limit = (get_profile(profile_id) or {}).get('dailyRequestLimit', 10)
     requests_remaining = max(0, min(daily_limit, int(payload.get("requests_remaining", daily_limit))))
     raw_session_id = _session_id(context)
@@ -313,7 +344,17 @@ async def invoke(payload: dict[str, Any], context: Any):
     token = request_budget.set(budget)
     try:
         async with asyncio.timeout(90):
-            if profile_id == "word-specialist":
+            if mode == "simple":
+                messages = _load_messages(session_id)
+                history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages]
+                supplied_text = "\n".join([prompt] + [item["content"] for item in messages if item["role"] == "user"])
+                agent = _simple_agent(history, supplied_text)
+                answer = await answer_request(agent, prompt)
+                _save_messages(session_id, messages + [
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": answer},
+                ])
+            elif profile_id == "word-specialist":
                 messages = _load_messages(session_id)
                 history = [{"role": item["role"], "content": [{"text": item["content"]}]} for item in messages[-20:]]
                 answer = await run_word_specialist(prompt, history, payload.get("aspect"))
