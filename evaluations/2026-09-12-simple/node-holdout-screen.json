@@ -1,0 +1,46 @@
+{
+  "summary": {
+    "total": 72,
+    "errors": 0,
+    "flagged": 0,
+    "agents": {
+      "food-bank": {
+        "total": 8,
+        "flagged": 0
+      },
+      "forge": {
+        "total": 8,
+        "flagged": 0
+      },
+      "nonprofit-helpdesk": {
+        "total": 8,
+        "flagged": 0
+      },
+      "mutual-aid": {
+        "total": 8,
+        "flagged": 0
+      },
+      "bob-dylan": {
+        "total": 8,
+        "flagged": 0
+      },
+      "civic-knowledge": {
+        "total": 8,
+        "flagged": 0
+      },
+      "santa-claus": {
+        "total": 8,
+        "flagged": 0
+      },
+      "orange-doctor-candidatus": {
+        "total": 8,
+        "flagged": 0
+      },
+      "word-specialist": {
+        "total": 8,
+        "flagged": 0
+      }
+    }
+  },
+  "flagged": []
+}

@@ -1,0 +1,101 @@
+[
+  {
+    "agentId": "food-bank",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:45.878Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4027
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:45.935Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4080
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:46.016Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4158
+  },
+  {
+    "agentId": "forge",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:46.164Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4320
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:50.190Z",
+    "surface": "local-python-agentcore",
+    "answer": "hi y’all! Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4253
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:50.271Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4254
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:50.291Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4409
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:50.316Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4151
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "heldout-sharing",
+    "prompt": "We have 37 oranges. Save five and share the rest among four people. How many each?",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "evaluatedAt": "2026-09-13T05:57:53.029Z",
+    "surface": "local-python-agentcore",
+    "answer": "Each person gets 8 oranges.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 2837
+  }
+]

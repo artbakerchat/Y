@@ -1,0 +1,1502 @@
+[
+  {
+    "agentId": "food-bank",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "86c78f4d-6563-484d-b640-0b3639cedab6",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:40.649Z",
+    "answer": "You have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 656
+  },
+  {
+    "agentId": "forge",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "332743eb-5a7d-4192-9971-c429565bf3eb",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:40.682Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 701
+  },
+  {
+    "agentId": "forge",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "332743eb-5a7d-4192-9971-c429565bf3eb",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.073Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 389
+  },
+  {
+    "agentId": "food-bank",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "86c78f4d-6563-484d-b640-0b3639cedab6",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.124Z",
+    "answer": "You have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 470
+  },
+  {
+    "agentId": "food-bank",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "c7ffde6e-1518-403b-be26-d9d38df909b4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.246Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "food-bank",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1250
+  },
+  {
+    "agentId": "forge",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "ff9980b4-70a3-4fdf-ad30-3eae490b02d7",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.331Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "forge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1338
+  },
+  {
+    "agentId": "food-bank",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "86c78f4d-6563-484d-b640-0b3639cedab6",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.537Z",
+    "answer": "You have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 409
+  },
+  {
+    "agentId": "forge",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "332743eb-5a7d-4192-9971-c429565bf3eb",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.728Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 652
+  },
+  {
+    "agentId": "forge",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "ff9980b4-70a3-4fdf-ad30-3eae490b02d7",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.743Z",
+    "answer": "There is 1 apple left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 409
+  },
+  {
+    "agentId": "food-bank",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "c7ffde6e-1518-403b-be26-d9d38df909b4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.908Z",
+    "answer": "1 apple is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 659
+  },
+  {
+    "agentId": "food-bank",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "86c78f4d-6563-484d-b640-0b3639cedab6",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:41.935Z",
+    "answer": "You have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 395
+  },
+  {
+    "agentId": "forge",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "332743eb-5a7d-4192-9971-c429565bf3eb",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.151Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 420
+  },
+  {
+    "agentId": "forge",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "ff9980b4-70a3-4fdf-ad30-3eae490b02d7",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.165Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 418
+  },
+  {
+    "agentId": "food-bank",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "c7ffde6e-1518-403b-be26-d9d38df909b4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.300Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "46753738-bc02-46e8-a17a-4d3b36ef535a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.327Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "forge",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "ff9980b4-70a3-4fdf-ad30-3eae490b02d7",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.562Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 395
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "46753738-bc02-46e8-a17a-4d3b36ef535a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.748Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 419
+  },
+  {
+    "agentId": "food-bank",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "c7ffde6e-1518-403b-be26-d9d38df909b4",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.760Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 458
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "2c2b4bc0-0ca7-4a82-9273-ba752a67b8e1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:42.943Z",
+    "answer": "You have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 379
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "46753738-bc02-46e8-a17a-4d3b36ef535a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.130Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 379
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "8d10fb1d-65bb-4f37-ae98-199c16cb344d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.179Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "nonprofit-helpdesk",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1027
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "2c2b4bc0-0ca7-4a82-9273-ba752a67b8e1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.431Z",
+    "answer": "You have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 484
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "46753738-bc02-46e8-a17a-4d3b36ef535a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.549Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 408
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "8d10fb1d-65bb-4f37-ae98-199c16cb344d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.678Z",
+    "answer": "There is 1 apple left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 486
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "2c2b4bc0-0ca7-4a82-9273-ba752a67b8e1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.841Z",
+    "answer": "You have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 407
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "f5516692-9da1-4ee0-b6b5-82e49e9cb763",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:43.927Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 376
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "8d10fb1d-65bb-4f37-ae98-199c16cb344d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.083Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 402
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "e0e1fad6-beda-46e2-ae47-eb64ac717e18",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.100Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "mutual-aid",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1338
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "2c2b4bc0-0ca7-4a82-9273-ba752a67b8e1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.243Z",
+    "answer": "You have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 396
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "f5516692-9da1-4ee0-b6b5-82e49e9cb763",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.333Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 403
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "e0e1fad6-beda-46e2-ae47-eb64ac717e18",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.492Z",
+    "answer": "1 apple is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 389
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "8d10fb1d-65bb-4f37-ae98-199c16cb344d",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.541Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 455
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "f5516692-9da1-4ee0-b6b5-82e49e9cb763",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.734Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 397
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "e0e1fad6-beda-46e2-ae47-eb64ac717e18",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.884Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 390
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "f8fcafb6-d6fd-4e82-8785-7632fd55feb2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:44.945Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 401
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "f5516692-9da1-4ee0-b6b5-82e49e9cb763",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.141Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 404
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "e0e1fad6-beda-46e2-ae47-eb64ac717e18",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.285Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 399
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "f8fcafb6-d6fd-4e82-8785-7632fd55feb2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.340Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 393
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "474a2b91-630e-4c16-a544-eaedda918de3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.396Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "civic-knowledge",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1150
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "621421dc-8bee-4abe-ad6b-35db7cbdad75",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.672Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 385
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "474a2b91-630e-4c16-a544-eaedda918de3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.794Z",
+    "answer": "There is 1 apple left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 395
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "f8fcafb6-d6fd-4e82-8785-7632fd55feb2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:45.807Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 459
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "621421dc-8bee-4abe-ad6b-35db7cbdad75",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.059Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 382
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "474a2b91-630e-4c16-a544-eaedda918de3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.188Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 391
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "f8fcafb6-d6fd-4e82-8785-7632fd55feb2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.215Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 406
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "621421dc-8bee-4abe-ad6b-35db7cbdad75",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.449Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 387
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "8b574d5a-e391-44c6-a829-838c1cdb5542",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.524Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "bob-dylan",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1377
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "474a2b91-630e-4c16-a544-eaedda918de3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.638Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 448
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "621421dc-8bee-4abe-ad6b-35db7cbdad75",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.833Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 382
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "8b574d5a-e391-44c6-a829-838c1cdb5542",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:46.917Z",
+    "answer": "There is 1 apple left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 389
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "210083bd-8647-4559-b1a5-7036c18e16bf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.048Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 406
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "06fa3e67-5077-4532-bf27-8af59c471934",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.132Z",
+    "answer": "Each person can get 2 apples. There will be 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "santa-claus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 915
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "210083bd-8647-4559-b1a5-7036c18e16bf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.425Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 374
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "06fa3e67-5077-4532-bf27-8af59c471934",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.521Z",
+    "answer": "There is 1 apple left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 384
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "8b574d5a-e391-44c6-a829-838c1cdb5542",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.810Z",
+    "answer": "Each person still gets 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 890
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "06fa3e67-5077-4532-bf27-8af59c471934",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.921Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 388
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "579933d7-7170-4d4b-af3a-6146c2226b42",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:47.953Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "orange-doctor-candidatus",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 1115
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "210083bd-8647-4559-b1a5-7036c18e16bf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:48.065Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 638
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "8b574d5a-e391-44c6-a829-838c1cdb5542",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:48.201Z",
+    "answer": "Each person gets 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 388
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "06fa3e67-5077-4532-bf27-8af59c471934",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:48.325Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 401
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "579933d7-7170-4d4b-af3a-6146c2226b42",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:48.334Z",
+    "answer": "1 apple is left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 378
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "210083bd-8647-4559-b1a5-7036c18e16bf",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:48.450Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 376
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "579933d7-7170-4d4b-af3a-6146c2226b42",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:48.714Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 377
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "apples",
+    "turn": 1,
+    "prompt": "We have 2 apples. How many apples do we have?",
+    "session": "f53116a8-be24-443f-8b1f-acbceae51e3a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:49.114Z",
+    "answer": "We have 2 apples.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "word-specialist",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 910
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "whole-items",
+    "turn": 1,
+    "prompt": "We have 5 apples for 2 people. Keep the apples whole. How many can each get?",
+    "session": "6efa634d-d7e4-469f-82e6-2ee15db0fae2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:49.320Z",
+    "answer": "Each person can get 2 apples, with 1 apple left over.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "word-specialist",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 1
+    },
+    "elapsedMs": 993
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "579933d7-7170-4d4b-af3a-6146c2226b42",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:49.633Z",
+    "answer": "Each person got 2 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 917
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "whole-items",
+    "turn": 2,
+    "prompt": "How many apples are left over?",
+    "session": "6efa634d-d7e4-469f-82e6-2ee15db0fae2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:49.696Z",
+    "answer": "There is 1 apple left over.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 373
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "apples",
+    "turn": 2,
+    "prompt": "I eat 1. How many are left?",
+    "session": "f53116a8-be24-443f-8b1f-acbceae51e3a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:49.810Z",
+    "answer": "We have 1 apple left.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 693
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "whole-items",
+    "turn": 3,
+    "prompt": "We save that apple. How many did each person get?",
+    "session": "6efa634d-d7e4-469f-82e6-2ee15db0fae2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:50.105Z",
+    "answer": "Each person got 2 apples, and 1 apple was saved.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 407
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "apples",
+    "turn": 3,
+    "prompt": "I get 2 more. How many now?",
+    "session": "f53116a8-be24-443f-8b1f-acbceae51e3a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:50.197Z",
+    "answer": "We have 3 apples now.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 383
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "apples",
+    "turn": 4,
+    "prompt": "Say the count in one short sentence.",
+    "session": "f53116a8-be24-443f-8b1f-acbceae51e3a",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:50.603Z",
+    "answer": "We have 3 apples.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 403
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "whole-items",
+    "turn": 4,
+    "prompt": "Say it simply, with no decimals.",
+    "session": "6efa634d-d7e4-469f-82e6-2ee15db0fae2",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "6cd7911b3e434c369e9a2d47162cf08c8ff7d108122e3c37d359eadf28fa7a11",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:18:50.783Z",
+    "answer": "Each person got 2 apples, and 1 apple was saved.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 676
+  }
+]

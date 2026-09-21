@@ -1,0 +1,68 @@
+[
+  {
+    "agentId": "forge",
+    "id": "draft",
+    "prompt": "Write a warm invite to a free meal on Saturday at noon. The place is not yet set.",
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "evaluatedAt": "2026-09-13T05:53:35.063Z",
+    "surface": "local-python-agentcore",
+    "answer": "Here's your invite:\n\n---\n\n**You're invited to a free meal!**\n\nJoin us this Saturday at noon for good food and good company. It's free, open to all, and a great chance to connect with neighbours.\n\n📍 Location: **[Venue TBD — check back soon!]**\n\nWe'd love to see you there.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 5485
+  },
+  {
+    "agentId": "forge",
+    "id": "arithmetic",
+    "prompt": "We have 24 apples for eight people. How many each, if we save six apples?",
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "evaluatedAt": "2026-09-13T05:53:39.812Z",
+    "surface": "local-python-agentcore",
+    "answer": "Save 6 first: 24 − 6 = 18 remaining. 18 ÷ 8 = **2.25 apples each.**",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4744
+  },
+  {
+    "agentId": "forge",
+    "id": "constraints",
+    "prompt": "Give exactly three low-cost ways to thank a volunteer. Use one short line for each.",
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "evaluatedAt": "2026-09-13T05:53:45.431Z",
+    "surface": "local-python-agentcore",
+    "answer": "1. Write a handwritten note naming one thing they did well.\n2. Give a public shout-out at your next meeting or newsletter.\n3. Offer a small treat — coffee, snack, or a gift card.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 5617
+  },
+  {
+    "agentId": "forge",
+    "id": "plain-language",
+    "prompt": "Rewrite this in plain English: We shall facilitate access to essential provisions.",
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "evaluatedAt": "2026-09-13T05:53:50.974Z",
+    "surface": "local-python-agentcore",
+    "answer": "\"We'll help people get what they need.\"\n\n**Change:** Swapped formal/legal phrasing for plain spoken words — same meaning, easier to read aloud.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 5541
+  },
+  {
+    "agentId": "forge",
+    "id": "music-fact",
+    "prompt": "Did Bob Dylan write Hallelujah? If not, who did?",
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "evaluatedAt": "2026-09-13T05:53:57.661Z",
+    "surface": "local-python-agentcore",
+    "answer": "No. **Leonard Cohen** wrote \"Hallelujah.\" He released it on his 1984 album *Various Positions*. Bob Dylan has performed it live, which may be the source of the mix-up. Jeff Buckley's 1994 cover is the version most people know best.",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 6685
+  },
+  {
+    "agentId": "forge",
+    "id": "uncertainty",
+    "prompt": "Our draft says the event is both Monday and Tuesday. Write an invite without guessing.",
+    "model": "global.anthropic.claude-sonnet-4-6",
+    "evaluatedAt": "2026-09-13T05:54:02.338Z",
+    "surface": "local-python-agentcore",
+    "answer": "What's the confirmed date (or dates) for the event?",
+    "runtime": "local-python-agentcore",
+    "elapsedMs": 4675
+  }
+]

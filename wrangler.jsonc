@@ -1,0 +1,50 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "larboard",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+  "triggers": {
+    "crons": ["0 * * * *"]
+  },
+  "vars": {
+    "AWS_REGION": "ca-central-1",
+    "BEDROCK_MODEL_ID": "ca.amazon.nova-lite-v1:0",
+    "MODEL_REQUESTS_ENABLED": "true"
+  },
+  "r2_buckets": [
+    {
+      "binding": "ASSETS",
+      "bucket_name": "larboard-assets"
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "REDIRECT_RATE_LIMITER",
+      "namespace_id": "1001",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    },
+    {
+      "name": "GATEWAY_RATE_LIMITER",
+      "namespace_id": "1002",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    }
+  ],
+  "routes": [
+    {
+      "pattern": "larboard.ca",
+      "custom_domain": true
+    }
+  ]
+}

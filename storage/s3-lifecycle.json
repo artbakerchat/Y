@@ -1,0 +1,10 @@
+{
+  "Rules": [
+    {
+      "ID": "ExpireForgePalettesAfterTwoDays",
+      "Status": "Enabled",
+      "Filter": { "Prefix": "palettes/" },
+      "Expiration": { "Days": 2 }
+    }
+  ]
+}

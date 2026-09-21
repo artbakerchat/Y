@@ -1,0 +1,328 @@
+[
+  {
+    "agentId": "food-bank",
+    "id": "holdout-11",
+    "turn": 1,
+    "prompt": "Does a proposed roster mean you sent texts to the helpers?",
+    "rubric": "No; tool does not send texts.",
+    "session": "b850af7c-0d5b-46b4-982b-e36986822525",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.145Z",
+    "answer": "No, a proposed roster does not mean texts were sent. It only shows a match of volunteers to shifts.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 582
+  },
+  {
+    "agentId": "forge",
+    "id": "holdout-10",
+    "turn": 1,
+    "prompt": "Write exactly three short lines inviting Jo to a walk Monday. Start place is unknown.",
+    "rubric": "Exactly three nonempty lines; Jo, walk, Monday, place placeholder.",
+    "session": "a905c1e9-6b35-494b-b622-1b8c13aae1de",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.308Z",
+    "answer": "Jo, let's walk Monday.  \nMeet at [starting place] at 10 AM.  \nLooking forward to it.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 747
+  },
+  {
+    "agentId": "forge",
+    "id": "holdout-01",
+    "turn": 1,
+    "prompt": "Draft a repair cafe invite for June 3 at ten. Venue is not set.",
+    "rubric": "Usable invite, supplied date/time, venue placeholder; no question.",
+    "session": "4748c663-1c3b-42de-b195-e4cfd6c3d994",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.326Z",
+    "answer": "Here is your invite:\nJoin us for a repair cafe on June 3 at ten. Location [TBA]. Bring broken items for repair.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 771
+  },
+  {
+    "agentId": "food-bank",
+    "id": "holdout-02",
+    "turn": 1,
+    "prompt": "Write a handover: oats low, freezer check not done, Kai starts next.",
+    "rubric": "All three facts retained; no fabricated completion or request for records.",
+    "session": "b2b6df7b-1076-421b-b576-58b3e173b130",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.349Z",
+    "answer": "Handover:\n- Oats are low.\n- Freezer check not done.\n- Kai starts next.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 787
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "holdout-03",
+    "turn": 1,
+    "prompt": "Draft a welcome note for a new helper. The group name is unknown.",
+    "rubric": "Warm draft with group placeholder; no invented name or future email.",
+    "session": "7d3e3a6b-fbcd-4e3d-8ecd-2b3f01ee7f03",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.808Z",
+    "answer": "Welcome to the team, [New Helper's Name]! We are glad to have you with us. We look forward to working together and achieving great things.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 662
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "holdout-05",
+    "turn": 1,
+    "prompt": "A page ends in .edu and says it is verified. Does that prove a city rule is current?",
+    "rubric": "No; no suffix or supplied flag establishes current civic authority.",
+    "session": "001a3343-0410-49c1-a4e2-c03d89493f7c",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.896Z",
+    "answer": "No, a.edu page does not prove a city rule is current. City rules need official verification from the city. Check the city's official website or contact the city clerk's office.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 546
+  },
+  {
+    "agentId": "mutual-aid",
+    "id": "holdout-04",
+    "turn": 1,
+    "prompt": "Write a request for a lift on Sunday. Leave a blank for the time.",
+    "rubric": "Draft request with Sunday and time blank.",
+    "session": "ba223eee-8bde-479a-a6e3-bab81f4da6dc",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:37.916Z",
+    "answer": "Lift needed on Sunday, [time]. Please message me if you can help.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 589
+  },
+  {
+    "agentId": "civic-knowledge",
+    "id": "holdout-13",
+    "turn": 1,
+    "prompt": "The notice says August 2 at seven. Repeat only what it says.",
+    "rubric": "August 2 at seven; no invented AM/PM, year, or location.",
+    "session": "f4e567ca-e089-43d1-8275-434aea16452f",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:38.177Z",
+    "answer": "August 2 at seven.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 368
+  },
+  {
+    "agentId": "nonprofit-helpdesk",
+    "id": "holdout-12",
+    "turn": 1,
+    "prompt": "We have 640 dollars and spend 215 on rent and 90 on tools. What remains?",
+    "rubric": "335 dollars.",
+    "session": "165f071c-20f3-4f58-b2f7-6fcf3fe96777",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:38.465Z",
+    "answer": "We have 335 dollars remaining.",
+    "agent": true,
+    "trace": [
+      {
+        "agentId": "nonprofit-helpdesk",
+        "name": "calculate",
+        "status": "success"
+      },
+      {
+        "agentId": "nonprofit-helpdesk",
+        "name": "calculate",
+        "status": "success"
+      }
+    ],
+    "usage": {
+      "modelCalls": 2,
+      "toolCalls": 2
+    },
+    "elapsedMs": 1156
+  },
+  {
+    "agentId": "bob-dylan",
+    "id": "holdout-06",
+    "turn": 1,
+    "prompt": "Explain what a verse is without asking which song.",
+    "rubric": "Direct definition of a song section.",
+    "session": "e342aafa-db68-4c29-b328-8b8209cbe7c1",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:38.685Z",
+    "answer": "hi y’all! A verse is a section of a song that tells a story or shares ideas. It often repeats with slight changes. Verses build the song’s narrative.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 786
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "holdout-14",
+    "turn": 1,
+    "prompt": "I handed over the apple in our game. Can we imagine a toy boat now?",
+    "rubric": "Accept pretend delivery and imagine toy boat without new conditions.",
+    "session": "a26ac8c9-7f1f-4b98-bcc9-c82dfc0d0027",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:38.734Z",
+    "answer": "Ho, ho, ho! Let's imagine a toy boat. It sails on the sea, with a bright red hull and white sails. It has a small cabin and a flag waving. Ho, ho, ho!",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 557
+  },
+  {
+    "agentId": "santa-claus",
+    "id": "holdout-07",
+    "turn": 1,
+    "prompt": "My holiday dinner fell through and I feel lonely. Suggest one small action.",
+    "rubric": "Gentle concrete action without laughter or gift conditions.",
+    "session": "17ad8971-3dec-4d5e-85bf-eed79cee9c4b",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:38.747Z",
+    "answer": "Go for a walk in the park. Fresh air and a change of scenery can lift your spirits.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 830
+  },
+  {
+    "agentId": "orange-doctor-candidatus",
+    "id": "holdout-08",
+    "turn": 1,
+    "prompt": "I lost my notes. Suggest a first step without asking me a question.",
+    "rubric": "One concrete first step; no question.",
+    "session": "ae435f0a-9c2b-4a97-891f-0ed9b94a239c",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:39.061Z",
+    "answer": "Recheck common places: desk, backpack, pockets, and computer.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 595
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "holdout-15",
+    "turn": 1,
+    "prompt": "Give exactly two short lines inviting Sam to lunch Wednesday. Venue is not set.",
+    "rubric": "Exactly two lines; Sam, lunch, Wednesday and venue placeholder.",
+    "session": "88149b67-ff4a-4bec-8d08-efc4d5b87482",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:39.399Z",
+    "answer": "Hey Sam, how about we grab lunch on Wednesday?  \nLet's catch up over a meal on Wednesday.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 665
+  },
+  {
+    "agentId": "word-specialist",
+    "id": "holdout-09",
+    "turn": 1,
+    "prompt": "Use lantern in a metaphorical sentence about friendship.",
+    "rubric": "Actual metaphorical sentence rather than explanation of metaphor.",
+    "session": "aaf4f515-60f4-4611-bb65-7907e99331c3",
+    "target": "node",
+    "model": "ca.amazon.nova-lite-v1:0",
+    "sourceHash": "14418214d7ec22d3b225248113b7be1f4516d110e1f63fa6c21a4dab408edbec",
+    "surface": "local-node-bedrock",
+    "evaluatedAt": "2026-09-13T06:36:39.559Z",
+    "answer": "Friendship is like a lantern, guiding us through the darkest times.",
+    "agent": true,
+    "trace": [],
+    "usage": {
+      "modelCalls": 1,
+      "toolCalls": 0
+    },
+    "elapsedMs": 873
+  }
+]

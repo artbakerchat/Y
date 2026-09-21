@@ -1,0 +1,95 @@
+{
+  "method": "Manual review; same 0/1/2 rubric. Final rerun of unchanged holdout suite; not an untouched blind test.",
+  "records": [
+    {
+      "agentId": "food-bank",
+      "id": "holdout-11",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "holdout-01",
+      "score": 0,
+      "reason": "Asks venue instead of drafting."
+    },
+    {
+      "agentId": "food-bank",
+      "id": "holdout-02",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "holdout-03",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "forge",
+      "id": "holdout-10",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "mutual-aid",
+      "id": "holdout-04",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "holdout-13",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "civic-knowledge",
+      "id": "holdout-05",
+      "score": 1,
+      "reason": "Rejects currentness but wrongly says the supplied verified label proves authenticity."
+    },
+    {
+      "agentId": "nonprofit-helpdesk",
+      "id": "holdout-12",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "bob-dylan",
+      "id": "holdout-06",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "holdout-14",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "santa-claus",
+      "id": "holdout-07",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "orange-doctor-candidatus",
+      "id": "holdout-08",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "holdout-09",
+      "score": 2,
+      "reason": "Meets the stated acceptance criterion."
+    },
+    {
+      "agentId": "word-specialist",
+      "id": "holdout-15",
+      "score": 1,
+      "reason": "Two lines but omits unknown venue placeholder."
+    }
+  ]
+}

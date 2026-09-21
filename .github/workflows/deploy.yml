@@ -1,0 +1,116 @@
+name: Deploy Larboard
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: larboard-production-deploy
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER_VERSION: 4.129.0
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify Cloudflare deployment secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=()
+          [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || missing+=(CLOUDFLARE_API_TOKEN)
+          [ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] || missing+=(CLOUDFLARE_ACCOUNT_ID)
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing required GitHub Actions secret(s): ${missing[*]}" >&2
+            echo "Add them under Settings > Secrets and variables > Actions before pushing to main." >&2
+            exit 1
+          fi
+
+      - name: Prevent AgentCore ARN exposure
+        shell: bash
+        run: |
+          set -euo pipefail
+          if rg -n --hidden --glob '!*.lock' --glob '!.git/**' 'arn:aws(-[^:]+)?:bedrock-agentcore:[0-9]{12}:runtime/' .; then
+            echo "A concrete AgentCore ARN must not be committed to GitHub." >&2
+            echo "Store it only as the AGENTCORE_RUNTIME_ARN secret on the Cloudflare Worker." >&2
+            exit 1
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Node dependencies
+        run: npm ci
+
+      - name: Install React site dependencies
+        run: npm --prefix site ci
+
+      - name: Build React site
+        run: npm --prefix site run build
+
+      - name: Validate Worker source
+        run: npm run check
+
+      - name: Validate Python AgentCore source
+        run: python3 -m py_compile app/ForgeAgent/*.py
+
+      - name: Build Worker (dry run)
+        run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy --dry-run
+
+      - name: Validate Markdown skills
+        run: node scripts/validate-skills.js
+
+      - name: Upload website assets to R2
+        run: |
+          set -euo pipefail
+          put_object() {
+            local key="$1" file="$2" content_type="$3" cache_control="$4"
+            npx --yes "wrangler@${WRANGLER_VERSION}" r2 object put "larboard-assets/$key" \
+              --file "$file" --content-type "$content_type" --cache-control "$cache_control" --remote
+          }
+
+          find skills -type f -name '*.md' -print0 | while IFS= read -r -d '' skill; do
+            put_object "$skill" "$skill" 'text/markdown; charset=utf-8' 'no-cache'
+          done
+
+          find site/dist -type f -print0 | while IFS= read -r -d '' asset; do
+            key="${asset#site/dist/}"
+            case "$asset" in
+              *.html) content_type='text/html; charset=utf-8' ;;
+              *.js) content_type='text/javascript; charset=utf-8' ;;
+              *.css) content_type='text/css; charset=utf-8' ;;
+              *.json) content_type='application/json; charset=utf-8' ;;
+              *) content_type='application/octet-stream' ;;
+            esac
+            # The Worker applies the final response policy. Keep the R2
+            # metadata conservative so direct/object-layer caches do not hold
+            # an old app shell or an unversioned asset after a deploy.
+            if [[ "$key" =~ -[A-Za-z0-9_-]{8,}\.[A-Za-z0-9]+$ ]]; then
+              asset_cache='public, max-age=31536000, immutable'
+            else
+              asset_cache='no-store, no-cache, must-revalidate'
+            fi
+            put_object "$key" "$asset" "$content_type" "$asset_cache"
+          done
+
+          # Keep the website's sports lookup on the same R2-backed dataset used
+          # by the local AgentCore tools. Sports records live under a namespace
+          # so they cannot collide with website assets or session state.
+          put_object "sports/sports_data.json" "app/ForgeAgent/sports_data.json" \
+            'application/json; charset=utf-8' 'no-cache'
+
+      - name: Deploy Worker
+        run: npx --yes "wrangler@${WRANGLER_VERSION}" deploy

@@ -1,0 +1,126 @@
+{
+  "league": "NFL",
+  "date": "2026-09-13",
+  "away": "Buffalo Bills",
+  "home": "Houston Texans",
+  "status": "final",
+  "away_score": 36,
+  "home_score": 31,
+  "events": [
+    {
+      "minute": "Q1 7:28",
+      "category": "goal",
+      "description": "Buffalo opened the scoring with Tyler Bass's 46-yard field goal after a four-play, four-yard drive."
+    },
+    {
+      "minute": "Q1 0:32",
+      "category": "goal",
+      "description": "Houston answered with David Montgomery's 1-yard rushing touchdown, finishing a 12-play, 76-yard drive."
+    },
+    {
+      "minute": "Q2 12:46",
+      "category": "goal",
+      "description": "Josh Allen broke a long Bills drive with a 21-yard rushing touchdown, putting Buffalo ahead 10-7."
+    },
+    {
+      "minute": "Q2 10:06",
+      "category": "attack",
+      "description": "C.J. Stroud converted a third-and-12 with a 15-yard scramble to the Buffalo 47, extending Houston's scoring possession."
+    },
+    {
+      "minute": "Q2 4:53",
+      "category": "goal",
+      "description": "Montgomery scored his second touchdown on an 18-yard run, moving Houston ahead 14-10."
+    },
+    {
+      "minute": "Q2 4:13",
+      "category": "foul",
+      "description": "Houston cornerback Kamari Lassiter was penalized for defensive pass interference, giving Buffalo 46 yards and a fresh set of downs."
+    },
+    {
+      "minute": "Q2 3:33",
+      "category": "foul",
+      "description": "Buffalo defensive holding erased a Houston incompletion and extended the Texans' drive."
+    },
+    {
+      "minute": "Q2 2:22",
+      "category": "other",
+      "description": "Houston punted from its own 39 after a short possession; Buffalo took over at its own 4."
+    },
+    {
+      "minute": "Q2 1:39",
+      "category": "goal",
+      "description": "Josh Allen hit D.J. Moore for a 43-yard touchdown, completing a 96-yard Bills drive and putting Buffalo up 24-14."
+    },
+    {
+      "minute": "Q2 0:31",
+      "category": "goal",
+      "description": "Stroud answered with a 12-yard touchdown pass to Nico Collins, cutting the halftime gap to 24-21."
+    },
+    {
+      "minute": "Q3 13:39",
+      "category": "foul",
+      "description": "A Houston chop-block penalty wiped out a six-yard conversion and backed the Texans up to third-and-20."
+    },
+    {
+      "minute": "Q3 8:42",
+      "category": "chance",
+      "description": "Houston's punt return and a penalty left Buffalo with favorable field position at the Houston 43."
+    },
+    {
+      "minute": "Q3 4:27",
+      "category": "goal",
+      "description": "Bass converted a 34-yard field goal after Buffalo reached the Houston 16, extending the lead to 27-21."
+    },
+    {
+      "minute": "Q4 13:39",
+      "category": "goal",
+      "description": "Montgomery caught a 7-yard touchdown pass from Stroud to complete a 13-play, 72-yard Texans drive; Houston moved ahead 28-27."
+    },
+    {
+      "minute": "Q4 10:36",
+      "category": "goal",
+      "description": "Buffalo answered with a 33-yard Bass field goal after Kincaid's 40-yard reception moved the Bills deep into Houston territory."
+    },
+    {
+      "minute": "Q4 6:48",
+      "category": "goal",
+      "description": "Fairbairn hit a 58-yard field goal, putting Houston back in front 31-30."
+    },
+    {
+      "minute": "Q4 6:38",
+      "category": "other",
+      "description": "Allen recovered an aborted snap at the Buffalo 18, preventing a turnover but putting the Bills in a difficult down-and-distance situation."
+    },
+    {
+      "minute": "Q4 3:13",
+      "category": "chance",
+      "description": "James Cook broke a 12-yard run but fumbled; Buffalo recovered at its own 19 and kept the decisive drive alive."
+    },
+    {
+      "minute": "Q4 1:36",
+      "category": "goal",
+      "description": "Allen found Joshua Palmer for the 34-yard go-ahead touchdown. Buffalo led 36-31 after the two-point try failed."
+    },
+    {
+      "minute": "Q4 0:44",
+      "category": "foul",
+      "description": "Buffalo defensive holding gave Houston five yards during the final possession and kept the comeback chance alive."
+    },
+    {
+      "minute": "Q4 0:25",
+      "category": "momentum",
+      "description": "Greg Rousseau sacked Stroud for a nine-yard loss on Houston's final possession, helping Buffalo close out the one-score win."
+    }
+  ],
+  "nfl_style_explanation": "Buffalo won a back-and-forth shootout by repeatedly answering Houston's scoring drives. Allen's mobility and explosive passing created the decisive late possession, while the defense bent through the fourth quarter but produced the final sack when Houston needed a touchdown drive.",
+  "uncertainty": "Play descriptions are a sourced game narrative assembled from the available play-by-play feed and recap; this file is not an official league gamebook.",
+  "source_urls": [
+    "https://picks-s6.cbssports.com/nfl/gametracker/recap/NFL_20260913_BUF%40HOU/",
+    "https://www.pro-football-reference.com/boxscores/202609130htx.htm",
+    "https://www.audacy.com/957thefan/sports/houston-texans/texans-drop-season-opener-vs-bills-36-31"
+  ],
+  "updated_at": "2026-09-14",
+  "generated_by": "Claude via Strands/Bedrock",
+  "data_contract": "verified play-by-play for an explicitly requested game"
+}

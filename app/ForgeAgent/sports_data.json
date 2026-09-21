@@ -1,0 +1,95 @@
+{
+  "updated_at": "2026-09-14",
+  "recaps": [
+    {
+      "section": "High-Stakes & Drama Finishers",
+      "games": [
+        "Detroit Lions 31, New Orleans Saints 30 (OT): Detroit built a 21–0 lead, but Saints QB Tyler Shough led a wild 30–10 rally to force overtime. After New Orleans answered Detroit’s OT touchdown, head coach Kellen Moore went for the game-winning 2-point conversion, but the Lions defense held firm.",
+        "Buffalo Bills 36, Houston Texans 31: Eight lead changes culminated in Josh Allen throwing a go-ahead 34-yard TD to Joshua Palmer with 1:36 left, followed by Greg Rousseau’s game-sealing strip-sack on C.J. Stroud inside Buffalo’s line.",
+        "Philadelphia Eagles 24, Washington Commanders 22: Jalen Hurts threw three touchdown passes, but Philadelphia had to survive a late Washington comeback when defensive tackle Moro Ojomo stuffed a 2-point shovel pass with 1:01 left.",
+        "Cincinnati Bengals 33, Tampa Bay Buccaneers 27: Cincinnati’s defense generated four crucial turnovers—including a scoop-and-score touchdown—to help Joe Burrow narrowly hold off a late fourth-quarter drive led by Baker Mayfield."
+      ]
+    },
+    {
+      "section": "Low-Margin Control Games",
+      "games": [
+        "Pittsburgh Steelers 20, Atlanta Falcons 13: A signature defensive battle where Pittsburgh capitalized on key red-zone stops and controlled the clock in the second half, holding Atlanta to zero touchdowns.",
+        "Arizona Cardinals 26, Los Angeles Chargers 14: Arizona pulled away late in the third quarter behind a dual-threat performance by Kyler Murray and an opportunistic secondary that forced two key second-half interceptions.",
+        "Las Vegas Raiders 27, Miami Dolphins 13: The Raiders dominated the line of scrimmage, holding Miami’s high-powered offense to under 250 total yards and controlling the tempo from start to finish."
+      ]
+    },
+    {
+      "section": "Runaways & Blowouts",
+      "games": [
+        "Chicago Bears 59, Carolina Panthers 37: A complete offensive explosion featuring 96 combined points. Chicago scored touchdowns on five consecutive drives, converting short fields off turnovers to put the game out of reach early in the second half.",
+        "Minnesota Vikings 39, Green Bay Packers 22: Minnesota jumped out early with back-to-back deep touchdown passes, forcing Green Bay into a single-dimensional game plan that yielded three interceptions.",
+        "Baltimore Ravens 41, Indianapolis Colts 23: Baltimore’s rushing attack proved unstoppable, amassing over 250 yards on the ground to wear down the Colts’ front seven and cruise to an 18-point win.",
+        "Jacksonville Jaguars 34, Cleveland Browns 10: Jacksonville's defense stifled Cleveland all afternoon, holding them to 10 points while turning three takeaways directly into short-field scoring drives.",
+        "New York Jets 23, Tennessee Titans 10: A suffocating performance by the Jets’ defense sacked Tennessee five times and limited them to just 180 total offensive yards."
+      ]
+    },
+    {
+      "section": "Sunday Night Football (In Progress)",
+      "games": [
+        "New York Giants 14, Dallas Cowboys 7 (2nd Quarter): The Giants currently hold a 7-point lead early behind a strong starting defense and a short-field rushing touchdown."
+      ]
+    }
+  ],
+  "games": [
+    {
+      "league": "NHL",
+      "date": "2026-09-14",
+      "away": "Edmonton Oilers",
+      "home": "Vancouver Canucks",
+      "status": "scheduled",
+      "venue": "Rogers Arena"
+    },
+    {
+      "league": "MLS",
+      "date": "2026-09-16",
+      "away": "Seattle Sounders FC",
+      "home": "Vancouver Whitecaps FC",
+      "status": "scheduled",
+      "venue": "BC Place"
+    },
+    {
+      "league": "MLS",
+      "date": "2026-09-13",
+      "away": "New England Revolution",
+      "home": "Chicago Fire FC",
+      "status": "final",
+      "away_score": 2,
+      "home_score": 1,
+      "venue": "Soldier Field"
+    },
+    {
+      "league": "MLS",
+      "date": "2026-09-13",
+      "away": "Austin FC",
+      "home": "Vancouver Whitecaps FC",
+      "status": "final",
+      "away_score": 2,
+      "home_score": 1,
+      "venue": "BC Place",
+      "commentary": "Austin scored twice through Christian Ramírez, once in each half, and held on for a 2-1 road win after Vancouver pulled one back through Brian White. The match commentary described Vancouver as controlling much of the possession and creating chances, while Austin defended deep and looked for counterattacks.",
+      "nfl_style_explanation": "Austin played an efficient road game: they took an early lead, added a second scoring drive after halftime, then protected a one-score advantage while Vancouver applied pressure. In NFL terms, it was a field-position and clock-management win built around timely scoring and bend-but-don't-break defense—not a blowout."
+    },
+    {
+      "league": "MLS",
+      "date": "2026-09-13",
+      "away": "Philadelphia Union",
+      "home": "San Diego FC",
+      "status": "final",
+      "away_score": 5,
+      "home_score": 0,
+      "venue": "Snapdragon Stadium"
+    }
+  ],
+  "standings": [
+    {"league": "NHL", "team": "Vancouver Canucks", "rank": 1, "points": 6, "wins": 2, "losses": 0},
+    {"league": "NHL", "team": "Edmonton Oilers", "rank": 2, "points": 4, "wins": 1, "losses": 1},
+    {"league": "NHL", "team": "Calgary Flames", "rank": 3, "points": 2, "wins": 1, "losses": 1},
+    {"league": "MLS", "team": "Vancouver Whitecaps FC", "rank": 1, "points": 9, "wins": 3, "losses": 0},
+    {"league": "MLS", "team": "Seattle Sounders FC", "rank": 2, "points": 6, "wins": 2, "losses": 1}
+  ]
+}

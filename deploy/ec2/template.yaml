@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Larboard eight agents and language specialist on one private-access EC2 host
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+  ImageId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+  Role:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub arn:${AWS::Partition}:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: AgentModelAndRelease
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: s3:GetObject
+                Resource: !Sub '${ArtifactBucket.Arn}/release.tgz'
+              - Effect: Allow
+                Action: bedrock:InvokeModel
+                Resource:
+                  - !Sub arn:${AWS::Partition}:bedrock:ca-*::foundation-model/amazon.nova-lite-v1:0
+                  - !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}:${AWS::AccountId}:inference-profile/ca.amazon.nova-lite-v1:0
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref Role]
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: No inbound ports; access via Systems Manager port forwarding
+      VpcId: !Ref VpcId
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref ImageId
+      InstanceType: t3.small
+      IamInstanceProfile: !Ref InstanceProfile
+      SubnetId: !Ref SubnetId
+      SecurityGroupIds: [!Ref SecurityGroup]
+      MetadataOptions:
+        HttpTokens: required
+        HttpPutResponseHopLimit: 1
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 20
+            VolumeType: gp3
+            Encrypted: true
+      Tags:
+        - Key: Name
+          Value: larboard-agents
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euo pipefail
+          dnf install -y docker
+          systemctl enable --now docker
+          mkdir -p /opt/larboard /var/lib/larboard
+          chown 1000:1000 /var/lib/larboard
+          cd /opt/larboard
+          for attempt in $(seq 1 120); do
+            if aws s3 cp s3://${ArtifactBucket}/release.tgz /opt/larboard/release.tgz --region ${AWS::Region}; then break; fi
+            sleep 10
+          done
+          tar -xzf release.tgz
+          docker build -f deploy/ec2/Dockerfile -t larboard:release .
+          docker run -d --name larboard --restart unless-stopped --network host \
+            --cap-drop ALL --security-opt no-new-privileges \
+            --read-only --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --log-opt max-size=10m --log-opt max-file=3 \
+            -v /var/lib/larboard:/app/.data \
+            -e AWS_REGION=${AWS::Region} -e BEDROCK_MODEL_ID=ca.amazon.nova-lite-v1:0 larboard:release
+Outputs:
+  ArtifactBucket:
+    Value: !Ref ArtifactBucket
+  InstanceId:
+    Value: !Ref Instance
