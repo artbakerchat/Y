@@ -2,7 +2,7 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
 import { createAgentHarness } from '../src/agent-harness.js';
 
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'ca-central-1' });
-const modelId = process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
+const modelId = process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0';
 
 export async function chat(message, history = [], agentId = 'forge') {
   try {

@@ -274,7 +274,7 @@ async function invokeAgentCore(message, palette, history, env, browserSessionId,
 // ---------------------------------------------------------------------------
 async function bedrockConverse(env, { system, messages, toolConfig, maxTokens = 700, temperature = 0.5 }) {
   const region = env.AWS_REGION || 'ca-central-1';
-  const modelId = env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
+  const modelId = env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0';
   const host = `bedrock-runtime.${region}.amazonaws.com`;
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -1073,7 +1073,7 @@ export default {
         const runtimeConfigured = Boolean(env.AGENTCORE_RUNTIME_ARN);
         const credentialsConfigured = Boolean(env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY);
         const requestsEnabled = env.MODEL_REQUESTS_ENABLED === 'true' || runtimeConfigured;
-        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
+        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);
@@ -1125,7 +1125,9 @@ export default {
         if (requestWordCount(message) > MAX_REQUEST_WORDS) return json({ error: `Requests are limited to ${MAX_REQUEST_WORDS} words.` }, 413);
         if (hasOversizedWord(message)) return json({ error: `Each word is limited to ${MAX_WORD_CHARACTERS} characters.` }, 413);
         const state = await loadState(env.ASSETS, sessionId);
-        const agentId = explicitAgentId || inferAgentId(message, state.agentId);
+        // Auto-route every message through keyword inference; the explicitly
+        // selected (or current) agent is the fallback when nothing matches.
+        const agentId = inferAgentId(message, explicitAgentId || state.agentId);
         const profile = getAgentProfile(agentId);
         if (!profile) return json({ error: 'Unknown agent.' }, 400);
         if (state.agentId !== profile.id) {

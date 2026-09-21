@@ -1,0 +1,92 @@
+From a5d4f2e89646a9c1bf5edcc48d785dba8afb3308 Mon Sep 17 00:00:00 2001
+From: Marley <marley@local>
+Date: Mon, 21 Sep 2026 12:14:56 -0700
+Subject: [PATCH] Auto-route agents on every message; fix Bedrock model ID
+ default
+
+- worker: always run inferAgentId, explicit selection is the fallback
+- site: picker follows the agent that actually answered
+- default BEDROCK_MODEL_ID ca.amazon.nova-lite-v1:0 -> us.amazon.nova-lite-v1:0 (no ca. profile exists)
+---
+ api/chat.js      | 2 +-
+ site/src/App.tsx | 3 +++
+ src/worker.js    | 8 +++++---
+ wrangler.jsonc   | 2 +-
+ 4 files changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/api/chat.js b/api/chat.js
+index 36751f8..8e5f6b8 100644
+--- a/api/chat.js
++++ b/api/chat.js
+@@ -2,7 +2,7 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
+ import { createAgentHarness } from '../src/agent-harness.js';
+ 
+ const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'ca-central-1' });
+-const modelId = process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
++const modelId = process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0';
+ 
+ export async function chat(message, history = [], agentId = 'forge') {
+   try {
+diff --git a/site/src/App.tsx b/site/src/App.tsx
+index 1cd0b8d..d736eac 100644
+--- a/site/src/App.tsx
++++ b/site/src/App.tsx
+@@ -83,6 +83,9 @@ export function App() {
+       }
+ 
+       const data = await response.json();
++      // Follow server-side auto-routing so the picker reflects the agent
++      // that actually answered.
++      if (data.agentId && data.agentId !== agentId) setAgentId(data.agentId);
+       setMessages(prev => [...prev, { role: 'assistant', content: data.answer ?? data.content }]);
+     } catch (err) {
+       const errorMsg = err instanceof Error ? err.message : 'Failed to get response';
+diff --git a/src/worker.js b/src/worker.js
+index 8c959dd..dff49ce 100644
+--- a/src/worker.js
++++ b/src/worker.js
+@@ -274,7 +274,7 @@ async function invokeAgentCore(message, palette, history, env, browserSessionId,
+ // ---------------------------------------------------------------------------
+ async function bedrockConverse(env, { system, messages, toolConfig, maxTokens = 700, temperature = 0.5 }) {
+   const region = env.AWS_REGION || 'ca-central-1';
+-  const modelId = env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
++  const modelId = env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0';
+   const host = `bedrock-runtime.${region}.amazonaws.com`;
+   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
+   const date = amzDate.slice(0, 8);
+@@ -1073,7 +1073,7 @@ export default {
+         const runtimeConfigured = Boolean(env.AGENTCORE_RUNTIME_ARN);
+         const credentialsConfigured = Boolean(env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY);
+         const requestsEnabled = env.MODEL_REQUESTS_ENABLED === 'true' || runtimeConfigured;
+-        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
++        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
+       }
+       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
+       if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);
+@@ -1125,7 +1125,9 @@ export default {
+         if (requestWordCount(message) > MAX_REQUEST_WORDS) return json({ error: `Requests are limited to ${MAX_REQUEST_WORDS} words.` }, 413);
+         if (hasOversizedWord(message)) return json({ error: `Each word is limited to ${MAX_WORD_CHARACTERS} characters.` }, 413);
+         const state = await loadState(env.ASSETS, sessionId);
+-        const agentId = explicitAgentId || inferAgentId(message, state.agentId);
++        // Auto-route every message through keyword inference; the explicitly
++        // selected (or current) agent is the fallback when nothing matches.
++        const agentId = inferAgentId(message, explicitAgentId || state.agentId);
+         const profile = getAgentProfile(agentId);
+         if (!profile) return json({ error: 'Unknown agent.' }, 400);
+         if (state.agentId !== profile.id) {
+diff --git a/wrangler.jsonc b/wrangler.jsonc
+index dda54c7..9bffb18 100644
+--- a/wrangler.jsonc
++++ b/wrangler.jsonc
+@@ -14,7 +14,7 @@
+   },
+   "vars": {
+     "AWS_REGION": "ca-central-1",
+-    "BEDROCK_MODEL_ID": "ca.amazon.nova-lite-v1:0",
++    "BEDROCK_MODEL_ID": "us.amazon.nova-lite-v1:0",
+     "MODEL_REQUESTS_ENABLED": "true"
+   },
+   "r2_buckets": [
+-- 
+2.43.0
+

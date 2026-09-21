@@ -83,6 +83,9 @@ export function App() {
       }
 
       const data = await response.json();
+      // Follow server-side auto-routing so the picker reflects the agent
+      // that actually answered.
+      if (data.agentId && data.agentId !== agentId) setAgentId(data.agentId);
       setMessages(prev => [...prev, { role: 'assistant', content: data.answer ?? data.content }]);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to get response';
