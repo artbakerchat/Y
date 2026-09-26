@@ -46,6 +46,13 @@ This is **Larboard**, a multi-agent system enforcing a shared conversational pol
 - `BEEPLEX_DEMO=1` uses sample memories (no Bee login)
 - Leave `BEEPLEX_LLM` unset: deterministic scoring only, so no model call
   bypasses the shared policy wrapper
+- **Node server only**: registration in `tools/index.js` is gated on
+  `process.versions.node`. The module is import-safe in the Cloudflare
+  Worker (all Node-only work is lazy), but a Worker agent simply has no
+  `bee_*` tools — Workers can't spawn subprocesses. The Worker deploy
+  broke on this once (2026-09-26): top-level `fileURLToPath(import.meta.url)`
+  threw during Cloudflare's bundle validation because `import.meta.url` is
+  undefined in the Workers runtime. Keep module top-level side-effect free.
 - Deploy note: needs a host with Python (Railway/EC2 fine; Vercel serverless is awkward for subprocesses)
 
 ### Bee Chat Frontend

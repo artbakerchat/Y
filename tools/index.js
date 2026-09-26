@@ -6,6 +6,13 @@ import { createSportsPredictionTool, createSportsTool, createWebSearchTool } fro
 import { createWeatherTool } from './weather-tools.js';
 import { createBeeMemoryTools } from './bee-memory-tools.js';
 
+// Bee memory tools spawn Python subprocesses, which only exist on the
+// Node.js server. The Cloudflare Worker bundles this module too, so gate
+// registration on a real Node runtime and keep the Worker's tool allow-list
+// free of tools that could never run there.
+const isNodeRuntime =
+  typeof process !== 'undefined' && !!process?.versions?.node;
+
 export function buildTools(palette, profileId = 'forge', options = {}) {
   const searchLive = options.searchLive || (async () => 'Live search is unavailable.');
   const searchLiveWeb = options.searchLiveWeb || searchLive;
@@ -14,6 +21,6 @@ export function buildTools(palette, profileId = 'forge', options = {}) {
   tools.push(createSportsPredictionTool(searchLive));
   tools.push(createWebSearchTool(searchLiveWeb));
   tools.push(createWeatherTool(searchLiveWeb));
-  tools.push(...createBeeMemoryTools());
+  if (isNodeRuntime) tools.push(...createBeeMemoryTools());
   return tools;
 }

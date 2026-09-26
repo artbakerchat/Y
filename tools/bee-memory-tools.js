@@ -5,6 +5,11 @@
 // spawns `python3 -m beeplex <command> --json` and returns the parsed JSON
 // payload. Same subprocess pattern as api/music.js.
 //
+// NODE ONLY: these tools spawn subprocesses, so they are registered only on
+// the Node.js server (see tools/index.js). The module itself is safe to
+// import in the Cloudflare Worker — all Node-only work is lazy — but the
+// tools are never added to the Worker's tool allow-list.
+//
 // Environment:
 //   BEEPLEX_DATA_DIR  Folder for reports, diary and profile.
 //                     Defaults to <Y>/beeplex-data (created on first use).
@@ -14,75 +19,136 @@
 //                     wrapper; scoring falls back to deterministic.
 // ---------------------------------------------------------------------------
 
-import { spawn } from 'child_process';
-import { mkdirSync } from 'fs';
-import { dirname, join } from 'path';
-import { fileURLToPath } from 'url';
+// Top-level code must not touch Node-only APIs: this module is also bundled
+// into the Cloudflare Worker, where import.meta.url is undefined and there
+// is no process, fs, or child_process.
+const isNodeRuntime =
+  typeof process !== 'undefined' && !!process?.versions?.node;
 
-const here = dirname(fileURLToPath(import.meta.url));
-const Y_ROOT = join(here, '..');
-const BEEPLEX_DIR = join(Y_ROOT, 'beeplex');
-const PYTHON = process.env.BEEPLEX_PYTHON || 'python3';
-const TIMEOUT_MS = Number(process.env.BEEPLEX_TIMEOUT_MS || 120000);
-const MAX_STDOUT_BYTES = 2 * 1024 * 1024;
-
-function dataDir() {
-  const dir = process.env.BEEPLEX_DATA_DIR || join(Y_ROOT, 'beeplex-data');
-  mkdirSync(dir, { recursive: true });
-  return dir;
+function getEnv(name, fallback) {
+  try {
+    if (typeof process !== 'undefined' && process.env) {
+      const value = process.env[name];
+      return value === undefined ? fallback : value;
+    }
+  } catch {
+    // Non-Node runtime: fall through to the fallback.
+  }
+  return fallback;
 }
 
-function runBeeplex(command, args = []) {
-  return new Promise((resolve) => {
-    const env = {
-      ...process.env,
-      BEEPLEX_DATA_DIR: dataDir(),
-      // Never inherit a stray LLM opt-in; deterministic unless explicitly set.
-      ...(process.env.BEEPLEX_LLM === '1' ? {} : { BEEPLEX_LLM: '' }),
+function getMetaUrl() {
+  try {
+    return import.meta.url;
+  } catch {
+    return undefined;
+  }
+}
+
+let cachedNodeLibs = null;
+async function nodeLibs() {
+  if (!cachedNodeLibs) {
+    const [childProcess, fs, path, url] = await Promise.all([
+      import('child_process'),
+      import('fs'),
+      import('path'),
+      import('url'),
+    ]);
+    cachedNodeLibs = {
+      spawn: childProcess.spawn,
+      mkdirSync: fs.mkdirSync,
+      dirname: path.dirname,
+      join: path.join,
+      fileURLToPath: url.fileURLToPath,
     };
-    const child = spawn(PYTHON, ['-m', 'beeplex', command, '--json', ...args], {
-      cwd: BEEPLEX_DIR,
-      env,
-    });
+  }
+  return cachedNodeLibs;
+}
 
-    let stdout = '';
-    let stderr = '';
-    let timedOut = false;
-    const timer = setTimeout(() => {
-      timedOut = true;
-      child.kill('SIGKILL');
-    }, TIMEOUT_MS);
-    timer.unref?.();
+let cachedDirs = null;
+async function runtimeDirs() {
+  if (cachedDirs) return cachedDirs;
+  const { mkdirSync, dirname, join, fileURLToPath } = await nodeLibs();
+  const metaUrl = getMetaUrl();
+  if (!metaUrl) {
+    throw new Error('Bee memory tools are unavailable in this runtime.');
+  }
+  const here = dirname(fileURLToPath(metaUrl));
+  const yRoot = join(here, '..');
+  const dataDir = getEnv('BEEPLEX_DATA_DIR', join(yRoot, 'beeplex-data'));
+  mkdirSync(dataDir, { recursive: true });
+  cachedDirs = { beeplexDir: join(yRoot, 'beeplex'), dataDir };
+  return cachedDirs;
+}
 
-    child.stdout.on('data', (chunk) => {
-      stdout += chunk.toString();
-      if (stdout.length > MAX_STDOUT_BYTES) child.kill('SIGKILL');
+const MAX_STDOUT_BYTES = 2 * 1024 * 1024;
+
+function runBeeplex(command, args = []) {
+  if (!isNodeRuntime) {
+    return Promise.resolve({
+      ok: false,
+      error:
+        'Bee memory tools run on the Node.js server only; they are not available in the Cloudflare Worker.',
     });
-    child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
+  }
+  return (async () => {
+    const { spawn } = await nodeLibs();
+    const { beeplexDir, dataDir } = await runtimeDirs();
+    const python = getEnv('BEEPLEX_PYTHON', 'python3');
+    const timeoutMs = Number(getEnv('BEEPLEX_TIMEOUT_MS', '120000')) || 120000;
+    return new Promise((resolve) => {
+      const env = {
+        ...process.env,
+        BEEPLEX_DATA_DIR: dataDir,
+        // Never inherit a stray LLM opt-in; deterministic unless explicitly set.
+        ...(getEnv('BEEPLEX_LLM', '') === '1' ? {} : { BEEPLEX_LLM: '' }),
+      };
+      const child = spawn(python, ['-m', 'beeplex', command, '--json', ...args], {
+        cwd: beeplexDir,
+        env,
+      });
+
+      let stdout = '';
+      let stderr = '';
+      let timedOut = false;
+      const timer = setTimeout(() => {
+        timedOut = true;
+        child.kill('SIGKILL');
+      }, timeoutMs);
+      if (typeof timer.unref === 'function') timer.unref();
+
+      child.stdout.on('data', (chunk) => {
+        stdout += chunk.toString();
+        if (stdout.length > MAX_STDOUT_BYTES) child.kill('SIGKILL');
+      });
+      child.stderr.on('data', (chunk) => {
+        stderr += chunk.toString();
+      });
+      child.on('error', (err) => {
+        clearTimeout(timer);
+        resolve({ ok: false, error: `Failed to start beeplex: ${err.message}` });
+      });
+      child.on('close', (code) => {
+        clearTimeout(timer);
+        if (timedOut) {
+          resolve({ ok: false, error: `beeplex ${command} timed out after ${timeoutMs}ms` });
+          return;
+        }
+        if (stdout.length > MAX_STDOUT_BYTES) {
+          resolve({ ok: false, error: `beeplex ${command} output exceeded size limit` });
+          return;
+        }
+        try {
+          const payload = JSON.parse(stdout);
+          resolve(code === 0
+            ? { ok: true, data: payload }
+            : { ok: false, error: stderr.trim().slice(-2000) || `beeplex ${command} exited with code ${code}` });
+        } catch {
+          resolve({ ok: false, error: `beeplex ${command} returned non-JSON output`, detail: (stderr || stdout).trim().slice(-2000) });
+        }
+      });
     });
-    child.on('error', (err) => {
-      clearTimeout(timer);
-      resolve({ ok: false, error: `Failed to start beeplex: ${err.message}` });
-    });
-    child.on('close', (code) => {
-      clearTimeout(timer);
-      if (timedOut) {
-        resolve({ ok: false, error: `beeplex ${command} timed out after ${TIMEOUT_MS}ms` });
-        return;
-      }
-      if (stdout.length > MAX_STDOUT_BYTES) {
-        resolve({ ok: false, error: `beeplex ${command} output exceeded size limit` });
-        return;
-      }
-      try {
-        const payload = JSON.parse(stdout);
-        resolve({ ok: code === 0, ...(code === 0 ? { data: payload } : { error: stderr.trim().slice(-2000) || `beeplex ${command} exited with code ${code}` }) });
-      } catch (err) {
-        resolve({ ok: false, error: `beeplex ${command} returned non-JSON output`, detail: (stderr || stdout).trim().slice(-2000) });
-      }
-    });
-  });
+  })().catch((err) => ({ ok: false, error: err instanceof Error ? err.message : String(err) }));
 }
 
 const limitArg = (input, fallback) => {
