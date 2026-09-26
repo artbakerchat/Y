@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bee Chat preview</title>
+    <link rel="stylesheet" href="./src/styles.css" />
+    <style>
+      body { margin: 0; }
+      #root { height: auto; }
+      .preview-page { min-height: 100dvh; }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="chat-container preview-page" id="empty-state">
+        <a class="skip-link" href="#conversation">Skip to conversation</a>
+        <header class="chat-header">
+          <div class="chat-heading">
+            <div>
+              <p class="product-kicker">Bee Chat</p>
+              <h1>Conversation</h1>
+              <p>Choose an agent, then ask a question</p>
+            </div>
+            <label class="agent-picker">
+              <span>Agent</span>
+              <select aria-describedby="agent-description">
+                <option selected>Forge</option>
+                <option>Weather</option>
+              </select>
+            </label>
+          </div>
+          <p id="agent-description" class="agent-description">
+            General-purpose helper for planning, writing, and getting unstuck.
+          </p>
+        </header>
+        <main id="conversation" class="chat-messages" tabindex="-1" aria-label="Conversation">
+          <div class="chat-welcome">
+            <p class="welcome-eyebrow">Forge</p>
+            <h2>Talk with Forge</h2>
+            <p>General-purpose helper for planning, writing, and getting unstuck.</p>
+            <div class="suggestion-row" aria-label="Suggested prompts">
+              <button type="button" class="suggestion-chip">What can Forge help me with?</button>
+              <button type="button" class="suggestion-chip">Give me a short example of your best work.</button>
+              <button type="button" class="suggestion-chip">Ask me a clarifying question, then get started.</button>
+            </div>
+          </div>
+        </main>
+        <footer class="chat-footer">
+          <form class="chat-input-form" action="#">
+            <label class="sr-only" for="chat-input">Message</label>
+            <textarea id="chat-input" class="chat-input" rows="1" placeholder="Message Forge"></textarea>
+            <button type="submit" class="chat-send-btn" aria-label="Send message" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M3.4 20.6 21 12 3.4 3.4 3.3 10l11.2 2-11.2 2z" />
+              </svg>
+            </button>
+          </form>
+          <p class="composer-hint">Enter to send · Shift+Enter for a new line</p>
+        </footer>
+      </div>
+    </div>
+  </body>
+</html>

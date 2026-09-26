@@ -32,6 +32,22 @@ This is **Larboard**, a multi-agent system enforcing a shared conversational pol
 
 **Key principle:** Policy is enforced at runtime. Agent personas, training data, and feedback can only refine behavior *within* the policy contract—they cannot amend it. Policy changes require explicit review (see AGENTS.md).
 
+### Bee Memory Tools (beeplex)
+
+`beeplex/` vendors the beeplex Python package. Agents get 11 `bee_*` chat tools
+(`tools/bee-memory-tools.js`, registered in `tools/index.js`) that spawn
+`python3 -m beeplex <command> --json` — same subprocess pattern as
+`api/music.js`. Setup:
+
+- `pip install -e beeplex` (needs `mcp`, `pydantic`; reports need `beeplex[reports]`)
+- Python 3.11+ must be on PATH (`BEEPLEX_PYTHON` overrides the binary)
+- Data lives in `BEEPLEX_DATA_DIR` (default `<repo>/beeplex-data/`, gitignored);
+  never commit it — it holds real Bee memories
+- `BEEPLEX_DEMO=1` uses sample memories (no Bee login)
+- Leave `BEEPLEX_LLM` unset: deterministic scoring only, so no model call
+  bypasses the shared policy wrapper
+- Deploy note: needs a host with Python (Railway/EC2 fine; Vercel serverless is awkward for subprocesses)
+
 ### Bee Chat Frontend
 
 The user-facing interface in `site/` is a React + Vite app:

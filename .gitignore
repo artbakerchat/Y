@@ -146,6 +146,10 @@ dist
 !.yarn/sdks
 !.yarn/versions
 
+# Bee memory tools (beeplex)
+# beeplex runtime data (Bee memories, reports, diary)
+beeplex-data/
+
 # Vite files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
