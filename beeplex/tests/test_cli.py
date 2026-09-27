@@ -34,7 +34,7 @@ def run_cli(tmp_path, *args, demo=True, **env):
         [
             sys.executable,
             "-m",
-            "beeplex",
+            "python",
             *(["--demo"] if demo else []),
             "--data-dir",
             str(tmp_path / "output"),
@@ -66,6 +66,7 @@ def test_demo_commands(tmp_path, args, keys, as_json, env_demo):
         BEEPLEX_DEMO="1" if env_demo else "0",
     )
     assert response.returncode == 0, response.stderr
+    assert "[MOCK]" not in response.stdout
     if as_json:
         payload = json.loads(response.stdout)
         assert payload["mode"] == "demo"
@@ -160,7 +161,7 @@ def test_legacy_flags(tmp_path):
     assert config.returncode == 0
     assert json.loads(config.stdout)["mcpServers"]["beeplex"]["args"] == [
         "-m",
-        "beeplex",
+        "python",
         "--demo",
         "--data-dir",
         str(tmp_path / "output"),
@@ -178,7 +179,7 @@ def test_flags_after_command_and_doctor_failures(tmp_path):
         demo=False,
     )
     assert response.returncode == 0
-    assert json.loads(response.stdout)["data_dir"] == str(tmp_path / "other" / "demo")
+    assert json.loads(response.stdout)["data_dir"] == str(tmp_path / "other")
     (tmp_path / "output").write_text("a file blocks the directory")
     response = run_cli(tmp_path, "doctor", "--json", demo=False)
     assert response.returncode == 0
@@ -187,3 +188,4 @@ def test_flags_after_command_and_doctor_failures(tmp_path):
     assert not payload["logged_in"]
     assert not payload["data_dir_writable"]
     assert payload["cli_error"]
+

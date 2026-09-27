@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 async def connect(tmp_path, *, demo=False, protocol="auto", **env):
     params = StdioServerParameters(
         command=sys.executable,
-        args=["-m", "beeplex"] + (["--demo"] if demo else []),
+        args=["-m", "python"] + (["--demo"] if demo else []),
         cwd=str(tmp_path),
         env={
             "BEE_CLI": str(ROOT / "simulator" / "bee"),
@@ -142,9 +142,7 @@ def test_conversational_workflow(tmp_path, demo, protocol):
             profile = await call(client, "user_profile", refresh=True, limit=1)
             assert Path(profile["file"]).is_file()
             assert (await call(client, "user_profile"))["data"] == profile["data"]
-            if demo:
-                assert (tmp_path / "output" / "demo" / "user.md").is_file()
-                assert not (tmp_path / "output" / "user.md").exists()
+            assert (tmp_path / "output" / "user.md").is_file()
 
     asyncio.run(scenario())
 
@@ -213,3 +211,4 @@ def test_disconnected_never_becomes_demo(tmp_path, env):
             assert not (tmp_path / "output").exists()
 
     asyncio.run(scenario())
+

@@ -3,7 +3,7 @@
 The tool implementations live here directly -- there is no separate
 "shared tools" layer. Every data call goes through ``beeplex.client.run``,
 the single subprocess path; in demo mode that subprocess is the bundled
-fake CLI (``beeplex/demo_cli.py``), so sample data flows through the exact
+fake CLI (``python/demo_cli.py``), so sample data flows through the exact
 same code as live data.
 """
 
@@ -283,7 +283,7 @@ def disagreement_view(limit: Limit = 10) -> dict[str, Any]:
 def generate_report(limit: Limit = 10) -> dict[str, Any]:
     """Export recent conversations to Word, Excel, PowerPoint and a dashboard.
 
-    Use when the user requests files. Saves under BEEPLEX_DATA_DIR, updates local
+    Use when the user requests files. Saves under family/ (default), updates local
     score history, and replaces reports for the same recording date. Returns all
     generated file paths, including replacements. Requires the reports extra.
     """

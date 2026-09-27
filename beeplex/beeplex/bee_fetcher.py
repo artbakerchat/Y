@@ -8,7 +8,7 @@ Two modes, one code path:
 * ``live`` - the ``bee`` binary is on PATH and authenticated
   (``bee me --json`` succeeds). Real transcripts are fetched.
 * ``demo`` - explicitly enabled with ``BEEPLEX_DEMO=1``. ``BEE_CLI`` is
-  forced to the bundled fake CLI (``beeplex/demo_cli.py``), which serves
+    forced to the bundled fake CLI (``python/demo_cli.py``), which serves
   clearly-labelled sample conversations through the exact same subprocess
   path as live mode. There is no separate mock branch: the demo exercises
   the real data handling. Live failures raise actionable errors; they
@@ -652,7 +652,7 @@ def _fetch_impl(limit, *, persist=True):
     _enrich_rows(rows, pairs)
 
     # Coaching dashboard: append this run's scores to the local trend
-    # history and regenerate BEEPLEX_DATA_DIR/dashboard.html. Automatic on every
+    # history and regenerate family/dashboard.html (default). Automatic on every
     # run; record_run appends only for live mode, so demo runs regenerate the
     # page from history (demo banner) without touching history.
     from .dashboard import record_run

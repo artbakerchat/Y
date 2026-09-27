@@ -49,7 +49,7 @@ Bee device → Bee cloud → Bee CLI (authenticated) → BeePlex → host → yo
 BeePlex never talks to the device directly. The **Bee CLI is the only
 bridge** to your data (`bee conversations list --json`, etc.), called as a
 subprocess. Demo mode (`--demo`) swaps in a fake CLI
-(`beeplex/demo_cli.py`) on the exact same code path — there is no separate
+(`python/demo_cli.py`) on the exact same code path — there is no separate
 mock branch, so switching to live data changes nothing but the source.
 
 ## Hosts can stack: the layered pattern
@@ -88,7 +88,7 @@ args = ["-m", "beeplex", "--demo"]
 
 [mcp_servers.beeplex_live]   # live — your real Bee data
 command = "/path/to/python"
-args = ["-m", "beeplex", "--data-dir", "/home/you/.beeplex"]
+args = ["-m", "beeplex"]  # defaults to ./family
 ```
 
 The host sees two tool sets and picks per request: "show me the demo"
@@ -101,3 +101,4 @@ Everyone is building agents. Agents are only as good as what they can see.
 BeePlex is the perception layer for personal AI — structured, honest,
 labelled memory that any agent can plug into. The scarce piece in the agent
 era is not another brain; it is trustworthy senses.
+
