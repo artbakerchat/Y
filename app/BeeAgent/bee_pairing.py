@@ -169,7 +169,10 @@ def pair_status(bee_bin: str, env: dict, config_dir: str) -> dict:
 def ensure_login(bee_bin: str, env: dict, config_dir: str, bee_token: str) -> dict:
     """Seed this session's config dir with the visitor's token (raw write,
     same bytes the CLI itself stores: token-prod, mode 0o600). Verifies with
-    `bee status` so a stale token fails fast instead of flailing."""
+    `bee me --json`: it fails fast on a bad token (socket closed), while
+    `bee status` instead retries "Network connection issue" up to 10 times.
+    Validity = stdout parses as JSON. A timeout or non-JSON output means the
+    token is stale and the visitor must reconnect."""
     token_path = os.path.join(config_dir, TOKEN_FILE)
     fd = os.open(token_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
     with os.fdopen(fd, "w", encoding="utf-8") as fh:
@@ -177,16 +180,19 @@ def ensure_login(bee_bin: str, env: dict, config_dir: str, bee_token: str) -> di
 
     try:
         proc = subprocess.run(
-            [bee_bin, "status"],
+            [bee_bin, "me", "--json"],
             env=env,
             capture_output=True,
             text=True,
-            timeout=LOGIN_TIMEOUT_S,
+            timeout=20,
         )
     except subprocess.TimeoutExpired:
-        return {"ok": False, "error": "bee status timed out; please reconnect"}
-    out = (proc.stdout or "") + (proc.stderr or "")
-    if "Not logged in" in out:
+        return {"ok": False, "error": "Bee token check timed out; please reconnect"}
+    try:
+        profile = json.loads(proc.stdout)
+    except ValueError:
+        return {"ok": False, "error": "Bee token no longer valid; please reconnect"}
+    if not isinstance(profile, dict) or not profile:
         return {"ok": False, "error": "Bee token no longer valid; please reconnect"}
     return {"ok": True}
 
@@ -211,16 +217,18 @@ def whoami(bee_bin: str, env: dict, config_dir: str) -> dict:
             env=env,
             capture_output=True,
             text=True,
-            timeout=LOGIN_TIMEOUT_S,
+            timeout=20,
         )
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": "bee me timed out"}
-    if proc.returncode != 0:
-        return {"ok": False, "error": "bee me failed: not logged in"}
+    # NOTE: `bee me` exits 0 even when the token is bad (it prints a socket
+    # error to stdout), so validity is judged by JSON parsing, not returncode.
     try:
         profile = json.loads(proc.stdout)
     except ValueError:
-        return {"ok": False, "error": "bee me returned non-JSON output"}
+        return {"ok": False, "error": "bee me failed: not logged in"}
+    if not isinstance(profile, dict) or not profile:
+        return {"ok": False, "error": "bee me failed: not logged in"}
     account_id = None
     if isinstance(profile, dict):
         for key in ("id", "userId", "user_id", "sub", "accountId", "email"):
