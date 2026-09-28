@@ -20,8 +20,8 @@
 // ---------------------------------------------------------------------------
 
 const WEEK_BUDGET_USD = 5;
-const NOVA_IN_PER_1M_USD = 0.06;
-const NOVA_OUT_PER_1M_USD = 0.24;
+const NOVA_IN_PER_1M_USD = 0.30;
+const NOVA_OUT_PER_1M_USD = 2.50;
 const FALLBACK_TURN_USD = 0.002;
 const CHAT_MIN_INTERVAL_MS = 3000;
 const CHAT_HOURLY_LIMIT = 100;

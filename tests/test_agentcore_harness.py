@@ -31,7 +31,7 @@ class HarnessTests(unittest.TestCase):
                 self.assertIn(get_profile(profile_id)["systemPrompt"], agent.system_prompt)
                 self.assertTrue(agent.system_prompt.startswith(CONVERSATION_POLICY))
                 self.assertEqual(set(agent.tool_names) - {"skills"}, set(get_profile(profile_id)["toolNames"]))
-                self.assertEqual(agent.model.config["model_id"], "ca.amazon.nova-lite-v1:0")
+                self.assertEqual(agent.model.config["model_id"], "global.amazon.nova-2-lite-v1:0")
 
     def test_shared_parent_and_specialist_budget(self):
         token = request_budget.set(RequestBudget())
@@ -64,10 +64,10 @@ class HarnessTests(unittest.TestCase):
 
     def test_usage_cost_report(self):
         usage = {"inputTokens": 1000, "outputTokens": 500, "totalTokens": 1500}
-        self.assertEqual(usage_cost("ca.amazon.nova-lite-v1:0", usage), 0.00018)
-        report = format_usage_report("ca.amazon.nova-lite-v1:0", usage)
+        self.assertEqual(usage_cost("global.amazon.nova-2-lite-v1:0", usage), 0.00155)
+        report = format_usage_report("global.amazon.nova-2-lite-v1:0", usage)
         self.assertIn("input_tokens=1000", report)
-        self.assertIn("estimated_bedrock_cost_usd=$0.000180", report)
+        self.assertIn("estimated_bedrock_cost_usd=$0.001550", report)
 
     def test_unknown_profile_rejected(self):
         with self.assertRaises(ValueError):
