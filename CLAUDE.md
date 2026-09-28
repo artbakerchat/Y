@@ -36,7 +36,7 @@ This is **Larboard**, a multi-agent system enforcing a shared conversational pol
 
 `beeplex/` vendors the beeplex Python package. Agents get 11 `bee_*` chat tools
 (`tools/bee-memory-tools.js`, registered in `tools/index.js`) that spawn
-`python3 -m beeplex <command> --json` — same subprocess pattern as
+`python3 -m python <command> --json` — same subprocess pattern as
 `api/music.js`. Setup:
 
 - `pip install -e beeplex` (needs `mcp`, `pydantic`; reports need `beeplex[reports]`)

@@ -1,0 +1,35 @@
+diff --git a/CLAUDE.md b/CLAUDE.md
+index e6f89cc..04757da 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -36,7 +36,7 @@ This is **Larboard**, a multi-agent system enforcing a shared conversational pol
+ 
+ `beeplex/` vendors the beeplex Python package. Agents get 11 `bee_*` chat tools
+ (`tools/bee-memory-tools.js`, registered in `tools/index.js`) that spawn
+-`python3 -m beeplex <command> --json` — same subprocess pattern as
++`python3 -m python <command> --json` — same subprocess pattern as
+ `api/music.js`. Setup:
+ 
+ - `pip install -e beeplex` (needs `mcp`, `pydantic`; reports need `beeplex[reports]`)
+diff --git a/tools/bee-memory-tools.js b/tools/bee-memory-tools.js
+index fd2e464..6803d02 100644
+--- a/tools/bee-memory-tools.js
++++ b/tools/bee-memory-tools.js
+@@ -2,7 +2,7 @@
+ // BEE MEMORY TOOLS (beeplex-backed)
+ //
+ // Thin Node wrappers around the vendored beeplex CLI (Y/beeplex/). Each tool
+-// spawns `python3 -m beeplex <command> --json` and returns the parsed JSON
++// spawns `python3 -m python <command> --json` and returns the parsed JSON
+ // payload. Same subprocess pattern as api/music.js.
+ //
+ // NODE ONLY: these tools spawn subprocesses, so they are registered only on
+@@ -103,7 +103,7 @@ function runBeeplex(command, args = []) {
+         // Never inherit a stray LLM opt-in; deterministic unless explicitly set.
+         ...(getEnv('BEEPLEX_LLM', '') === '1' ? {} : { BEEPLEX_LLM: '' }),
+       };
+-      const child = spawn(python, ['-m', 'beeplex', command, '--json', ...args], {
++      const child = spawn(python, ['-m', 'python', command, '--json', ...args], {
+         cwd: beeplexDir,
+         env,
+       });

@@ -2,7 +2,7 @@
 // BEE MEMORY TOOLS (beeplex-backed)
 //
 // Thin Node wrappers around the vendored beeplex CLI (Y/beeplex/). Each tool
-// spawns `python3 -m beeplex <command> --json` and returns the parsed JSON
+// spawns `python3 -m python <command> --json` and returns the parsed JSON
 // payload. Same subprocess pattern as api/music.js.
 //
 // NODE ONLY: these tools spawn subprocesses, so they are registered only on
@@ -103,7 +103,7 @@ function runBeeplex(command, args = []) {
         // Never inherit a stray LLM opt-in; deterministic unless explicitly set.
         ...(getEnv('BEEPLEX_LLM', '') === '1' ? {} : { BEEPLEX_LLM: '' }),
       };
-      const child = spawn(python, ['-m', 'beeplex', command, '--json', ...args], {
+      const child = spawn(python, ['-m', 'python', command, '--json', ...args], {
         cwd: beeplexDir,
         env,
       });
