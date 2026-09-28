@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "react-qr-code": "^2.2.0"
   },
   "devDependencies": {
     "@types/react": "latest",

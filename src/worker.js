@@ -8,6 +8,7 @@ import { getPaletteTemplate, detectPaletteContext } from './palettes.js';
 import { CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE } from './conversation-guidance.js';
 import { readAgentCoreResponse } from './agentcore-response.js';
 import { liveWebEvidence } from './live-search.js';
+import { handleBeeRoutes, beeScheduled } from './bee.js';
 export { GlobalTimer } from './legacy-global-timer.js';
 
 const CONTENT_TYPES = {
@@ -19,6 +20,7 @@ const CONTENT_TYPES = {
 
 const HTML_ROUTES = {
   '/': 'index.html',
+  '/bee': 'index.html',
 };
 
 const LEGACY_HTML_ASSETS = {
@@ -1065,6 +1067,7 @@ async function serveAsset(request, env) {
 export default {
   async scheduled(controller, env) {
     await purgeExpiredState(env.ASSETS);
+    await beeScheduled(env);
   },
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -1103,6 +1106,8 @@ export default {
         return this.fetch(forwarded, env);
       }
       const sessionId = sessionIdFrom(request);
+      const beeResponse = await handleBeeRoutes(request, env, url);
+      if (beeResponse) return beeResponse;
       if (url.pathname === '/api/feedback' && request.method === 'POST') return feedbackFromRequest(request, env.ASSETS, sessionId);
       if (url.pathname === '/api/state' && request.method === 'GET') return stateResponse(await loadState(env.ASSETS, sessionId), sessionId);
       if (url.pathname === '/api/state' && request.method === 'POST') {
