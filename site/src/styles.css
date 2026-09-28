@@ -121,6 +121,28 @@ body {
   white-space: nowrap;
 }
 
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.connect-bee-link {
+  display: inline-block;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.connect-bee-link:hover {
+  background: var(--accent-hover);
+}
+
 .agent-picker select {
   max-width: 240px;
   min-height: 40px;
@@ -136,7 +158,8 @@ body {
 .suggestion-chip:focus-visible,
 .chat-send-btn:focus-visible,
 .error-dismiss:focus-visible,
-.skip-link:focus-visible {
+.skip-link:focus-visible,
+.connect-bee-link:focus-visible {
   outline: 2px solid #c5d9f7;
   outline-offset: 2px;
 }

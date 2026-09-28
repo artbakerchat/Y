@@ -167,20 +167,23 @@ export function App() {
             <h1>Conversation</h1>
             <p>Choose an agent, then ask a question</p>
           </div>
-          <label className="agent-picker">
-            <span>Agent</span>
-            <select
-              value={agentId}
-              onChange={(event) => void handleAgentChange(event.target.value)}
-              disabled={loading || bootstrapping || !agents.length}
-              aria-describedby="agent-description"
-            >
-              {agents.length === 0 && <option value="forge">{bootstrapping ? 'Loading agents…' : 'No agents available'}</option>}
-              {agents.map((agent) => (
-                <option key={agent.id} value={agent.id}>{agent.name}</option>
-              ))}
-            </select>
-          </label>
+          <div className="header-actions">
+            <a className="connect-bee-link" href="/bee">Connect Bee</a>
+            <label className="agent-picker">
+              <span>Agent</span>
+              <select
+                value={agentId}
+                onChange={(event) => void handleAgentChange(event.target.value)}
+                disabled={loading || bootstrapping || !agents.length}
+                aria-describedby="agent-description"
+              >
+                {agents.length === 0 && <option value="forge">{bootstrapping ? 'Loading agents…' : 'No agents available'}</option>}
+                {agents.map((agent) => (
+                  <option key={agent.id} value={agent.id}>{agent.name}</option>
+                ))}
+              </select>
+            </label>
+          </div>
         </div>
         <p id="agent-description" className="agent-description">
           {bootstrapping
