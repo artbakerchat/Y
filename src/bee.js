@@ -255,6 +255,7 @@ async function beeConnect(request, env) {
   try {
     pairing = await invokeBeeRuntime(env, pairSession, { action: 'pair' }, 30000);
   } catch (e) {
+    console.error('beeConnect: runtime invoke failed:', e instanceof Error ? e.message : e);
     return json({ error: 'Could not start Bee pairing. Try again.' }, 502);
   }
   if (!pairing?.ok || !pairing.pairing_url) {
