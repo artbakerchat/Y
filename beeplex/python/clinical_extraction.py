@@ -808,4 +808,3 @@ def run_clinical(limit=10, out_dir=None):
 
 if __name__ == "__main__":
     run_clinical()
-

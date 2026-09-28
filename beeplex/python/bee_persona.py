@@ -591,4 +591,3 @@ def run_persona(limit=3):
     path = OUTPUT_DIR / f"Bee_{today_str}.md"
     path.write_text(md, encoding="utf-8")
     return str(path)
-

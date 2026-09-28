@@ -427,4 +427,3 @@ def create_aggregate(conversations, limit=50):
     )
     path.write_text(page, encoding="utf-8")
     return {"path": str(path), "scenarios": len(scenarios)}
-

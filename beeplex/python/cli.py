@@ -270,4 +270,3 @@ def dispatch(args: argparse.Namespace) -> int:
             )
         )
     return 0
-

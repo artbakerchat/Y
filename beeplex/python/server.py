@@ -1,7 +1,7 @@
 """MCP server for beeplex: conversation tools over the Bee CLI.
 
 The tool implementations live here directly -- there is no separate
-"shared tools" layer. Every data call goes through ``beeplex.client.run``,
+"shared tools" layer. Every data call goes through ``python.client.run``,
 the single subprocess path; in demo mode that subprocess is the bundled
 fake CLI (``python/demo_cli.py``), so sample data flows through the exact
 same code as live data.

@@ -431,4 +431,3 @@ def render_html(view):
     path = DATA_DIR / "disagreement.html"
     path.write_text(page, encoding="utf-8")
     return str(path)
-

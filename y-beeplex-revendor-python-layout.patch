@@ -1,0 +1,331 @@
+diff --git a/beeplex/README.md b/beeplex/README.md
+index 4ca79ee..6076a0d 100644
+--- a/beeplex/README.md
++++ b/beeplex/README.md
+@@ -66,7 +66,7 @@ For full Bee CLI commands and detailed usage, see [`.agents/skills/bee-cli/SKILL
+ 
+ ## Project Structure
+ 
+-- `beeplex/` — Core CLI, MCP server, analysis modules (`client.py`, `server.py`, `reports.py`, `llm_scoring.py`, etc.)
++- `python/` — Core CLI, MCP server, analysis modules (`client.py`, `server.py`, `reports.py`, `llm_scoring.py`, etc.)
+ - `tests/` — Comprehensive test suite
+ - `simulator/` — Benchmark harness and conversation replay
+ - `docs/` — Host agent guidelines
+diff --git a/beeplex/pyproject.toml b/beeplex/pyproject.toml
+index a0691c0..a6aca35 100644
+--- a/beeplex/pyproject.toml
++++ b/beeplex/pyproject.toml
+@@ -16,13 +16,13 @@ bedrock = ["boto3>=1.35,<2"]
+ dev = ["pytest>=8,<10", "ruff>=0.12,<1"]
+ 
+ [project.scripts]
+-beeplex = "beeplex.__main__:main"
++beeplex = "python.__main__:main"
+ 
+ [tool.hatch.build.targets.wheel]
+-packages = ["beeplex"]
++packages = ["python"]
+ 
+ [tool.hatch.build.targets.sdist]
+-include = ["/beeplex", "/tests", "/simulator", "/README.md", "/pyproject.toml", "/uv.lock"]
++include = ["/python", "/tests", "/simulator", "/README.md", "/pyproject.toml", "/uv.lock"]
+ 
+ [tool.pytest.ini_options]
+ testpaths = ["tests"]
+diff --git a/beeplex/beeplex/__init__.py b/beeplex/python/__init__.py
+similarity index 100%
+rename from beeplex/beeplex/__init__.py
+rename to beeplex/python/__init__.py
+diff --git a/beeplex/beeplex/__main__.py b/beeplex/python/__main__.py
+similarity index 97%
+rename from beeplex/beeplex/__main__.py
+rename to beeplex/python/__main__.py
+index 6bbee43..a03658f 100644
+--- a/beeplex/beeplex/__main__.py
++++ b/beeplex/python/__main__.py
+@@ -1,4 +1,4 @@
+-"""One entry point: beeplex (or python -m beeplex)."""
++"""One entry point: beeplex (or python -m python)."""
+ 
+ import argparse
+ import json
+@@ -59,7 +59,7 @@ def main() -> None:
+         os.environ["BEEPLEX_DATA_DIR"] = args.data_dir
+ 
+     if args.config:
+-        server_args = ["-m", "beeplex"]
++        server_args = ["-m", "python"]
+         if args.demo:
+             server_args.append("--demo")
+         if args.data_dir:
+diff --git a/beeplex/beeplex/bee_fetcher.py b/beeplex/python/bee_fetcher.py
+similarity index 98%
+rename from beeplex/beeplex/bee_fetcher.py
+rename to beeplex/python/bee_fetcher.py
+index 4ce8606..123d439 100644
+--- a/beeplex/beeplex/bee_fetcher.py
++++ b/beeplex/python/bee_fetcher.py
+@@ -43,7 +43,7 @@ MOCK_FORCED = DEMO
+ # one-call-per-row retries.
+ _LLM_NOT_FETCHED = object()
+ 
+-# Schema keys consumed by beeplex.reports (docx / xlsx / pptx builders).
++# Schema keys consumed by python.reports (docx / xlsx / pptx builders).
+ SCHEMA = [
+     "Recording_Date",
+     "Session_Title",
+@@ -478,7 +478,7 @@ def _resolve_source(conv):
+ 
+ 
+ def _row_from_source(source, parts, events, llm=_LLM_NOT_FETCHED, conv_id=None):
+-    """Map a resolved conversation payload onto the beeplex.reports report schema."""
++    """Map a resolved conversation payload onto the python.reports report schema."""
+     title = (
+         source.get("title")
+         or source.get("name")
+@@ -501,7 +501,7 @@ def _row_from_source(source, parts, events, llm=_LLM_NOT_FETCHED, conv_id=None):
+     )
+ 
+     return {
+-        # The actual Bee recording date - wired into report titles by beeplex.reports.
++        # The actual Bee recording date - wired into report titles by python.reports.
+         "Recording_Date": _recording_date(source),
+         "Session_Title": str(title)[:80],
+         "Source_Transcript_Snippet": snippet,
+@@ -517,7 +517,7 @@ def _row_from_source(source, parts, events, llm=_LLM_NOT_FETCHED, conv_id=None):
+ 
+ 
+ def conversation_to_row(conv, llm=_LLM_NOT_FETCHED):
+-    """Map one conversation payload onto the beeplex.reports report schema.
++    """Map one conversation payload onto the python.reports report schema.
+ 
+     Convenience wrapper: resolves the full conversation, then builds the
+     row. ``llm`` is a pre-fetched llm_engagement() result (or None); when
+diff --git a/beeplex/beeplex/bee_persona.py b/beeplex/python/bee_persona.py
+similarity index 99%
+rename from beeplex/beeplex/bee_persona.py
+rename to beeplex/python/bee_persona.py
+index 597061b..b5c8d57 100644
+--- a/beeplex/beeplex/bee_persona.py
++++ b/beeplex/python/bee_persona.py
+@@ -591,4 +591,3 @@ def run_persona(limit=3):
+     path = OUTPUT_DIR / f"Bee_{today_str}.md"
+     path.write_text(md, encoding="utf-8")
+     return str(path)
+-
+diff --git a/beeplex/beeplex/bee_sources.py b/beeplex/python/bee_sources.py
+similarity index 98%
+rename from beeplex/beeplex/bee_sources.py
+rename to beeplex/python/bee_sources.py
+index e225dc4..42f39d1 100644
+--- a/beeplex/beeplex/bee_sources.py
++++ b/beeplex/python/bee_sources.py
+@@ -1,7 +1,7 @@
+ """Read-only Bee CLI data sources for beeplex (the plumbing layer).
+ 
+ Thin wrappers over the official Bee CLI's *read* commands. Every call goes
+-through ``beeplex.client.run`` -- the single subprocess path. In demo mode
++through ``python.client.run`` -- the single subprocess path. In demo mode
+ (``beeplex --demo``) ``BEE_CLI`` points at the bundled fake CLI
+ (``python/demo_cli.py``), so the exact same code serves clearly-labelled
+ sample data; there is no separate mock branch.
+diff --git a/beeplex/beeplex/cli.py b/beeplex/python/cli.py
+similarity index 99%
+rename from beeplex/beeplex/cli.py
+rename to beeplex/python/cli.py
+index 3b92177..db74808 100644
+--- a/beeplex/beeplex/cli.py
++++ b/beeplex/python/cli.py
+@@ -270,4 +270,3 @@ def dispatch(args: argparse.Namespace) -> int:
+             )
+         )
+     return 0
+-
+diff --git a/beeplex/beeplex/client.py b/beeplex/python/client.py
+similarity index 100%
+rename from beeplex/beeplex/client.py
+rename to beeplex/python/client.py
+diff --git a/beeplex/beeplex/clinical_extraction.py b/beeplex/python/clinical_extraction.py
+similarity index 99%
+rename from beeplex/beeplex/clinical_extraction.py
+rename to beeplex/python/clinical_extraction.py
+index 3c5af30..4210093 100644
+--- a/beeplex/beeplex/clinical_extraction.py
++++ b/beeplex/python/clinical_extraction.py
+@@ -808,4 +808,3 @@ def run_clinical(limit=10, out_dir=None):
+ 
+ if __name__ == "__main__":
+     run_clinical()
+-
+diff --git a/beeplex/beeplex/config.py b/beeplex/python/config.py
+similarity index 99%
+rename from beeplex/beeplex/config.py
+rename to beeplex/python/config.py
+index b4f7a70..c9b86c8 100644
+--- a/beeplex/beeplex/config.py
++++ b/beeplex/python/config.py
+@@ -6,4 +6,3 @@ from pathlib import Path
+ DEMO = os.getenv("BEEPLEX_DEMO") == "1"
+ LLM_ENABLED = os.getenv("BEEPLEX_LLM") == "1" and not DEMO
+ DATA_DIR = Path(os.getenv("BEEPLEX_DATA_DIR", "family")).resolve()
+-
+diff --git a/beeplex/beeplex/dashboard.py b/beeplex/python/dashboard.py
+similarity index 99%
+rename from beeplex/beeplex/dashboard.py
+rename to beeplex/python/dashboard.py
+index d3d4c10..e022cf4 100644
+--- a/beeplex/beeplex/dashboard.py
++++ b/beeplex/python/dashboard.py
+@@ -517,4 +517,3 @@ def _write_dashboard(cards, info, history, now):
+     html = html.replace("__CARDS__", json.dumps(cards))
+     html = html.replace("__NRUNS__", str(len(history["runs"])))
+     DASHBOARD_PATH.write_text(html, encoding="utf-8")
+-
+diff --git a/beeplex/beeplex/demo_cli.py b/beeplex/python/demo_cli.py
+similarity index 99%
+rename from beeplex/beeplex/demo_cli.py
+rename to beeplex/python/demo_cli.py
+index f3b46b3..9480d61 100644
+--- a/beeplex/beeplex/demo_cli.py
++++ b/beeplex/python/demo_cli.py
+@@ -4,7 +4,7 @@
+ Speaks the same argv/JSON contract as the real Bee CLI but serves
+ sample memories and clearly indicates demo mode. Because the demo is a *CLI*, not a code
+ branch, it runs through the exact same subprocess path as live mode
+-(``beeplex.client.run``) -- there is no separate mock branch anywhere in
++(``python.client.run``) -- there is no separate mock branch anywhere in
+ beeplex, so the demo exercises the real data handling.
+ 
+ Invoked as ``demo_cli.py <command> [args] [--json]``; ``--json`` is
+diff --git a/beeplex/beeplex/disagreement.py b/beeplex/python/disagreement.py
+similarity index 99%
+rename from beeplex/beeplex/disagreement.py
+rename to beeplex/python/disagreement.py
+index dbbadc6..36c9313 100644
+--- a/beeplex/beeplex/disagreement.py
++++ b/beeplex/python/disagreement.py
+@@ -431,4 +431,3 @@ def render_html(view):
+     path = DATA_DIR / "disagreement.html"
+     path.write_text(page, encoding="utf-8")
+     return str(path)
+-
+diff --git a/beeplex/beeplex/llm_scoring.py b/beeplex/python/llm_scoring.py
+similarity index 100%
+rename from beeplex/beeplex/llm_scoring.py
+rename to beeplex/python/llm_scoring.py
+diff --git a/beeplex/beeplex/profile.py b/beeplex/python/profile.py
+similarity index 98%
+rename from beeplex/beeplex/profile.py
+rename to beeplex/python/profile.py
+index 30e68db..329fdb3 100644
+--- a/beeplex/beeplex/profile.py
++++ b/beeplex/python/profile.py
+@@ -24,9 +24,9 @@ candidate profile updates as JSON, merged defensively; without a key
+ the profile is built from structure alone.
+ 
+ Usage:
+-    python -m beeplex.profile            # incremental update
+-    python -m beeplex.profile --full     # rebuild from scratch
+-    python -m beeplex.profile --limit 50 # conversations considered on --full
++    python -m python.profile            # incremental update
++    python -m python.profile --full     # rebuild from scratch
++    python -m python.profile --limit 50 # conversations considered on --full
+ """
+ 
+ import json
+diff --git a/beeplex/beeplex/reports.py b/beeplex/python/reports.py
+similarity index 100%
+rename from beeplex/beeplex/reports.py
+rename to beeplex/python/reports.py
+diff --git a/beeplex/beeplex/server.py b/beeplex/python/server.py
+similarity index 99%
+rename from beeplex/beeplex/server.py
+rename to beeplex/python/server.py
+index 85f8fb5..bbf0cf9 100644
+--- a/beeplex/beeplex/server.py
++++ b/beeplex/python/server.py
+@@ -1,7 +1,7 @@
+ """MCP server for beeplex: conversation tools over the Bee CLI.
+ 
+ The tool implementations live here directly -- there is no separate
+-"shared tools" layer. Every data call goes through ``beeplex.client.run``,
++"shared tools" layer. Every data call goes through ``python.client.run``,
+ the single subprocess path; in demo mode that subprocess is the bundled
+ fake CLI (``python/demo_cli.py``), so sample data flows through the exact
+ same code as live data.
+diff --git a/beeplex/beeplex/temporal_scoring.py b/beeplex/python/temporal_scoring.py
+similarity index 100%
+rename from beeplex/beeplex/temporal_scoring.py
+rename to beeplex/python/temporal_scoring.py
+diff --git a/beeplex/beeplex/transcription_guidelines.py b/beeplex/python/transcription_guidelines.py
+similarity index 100%
+rename from beeplex/beeplex/transcription_guidelines.py
+rename to beeplex/python/transcription_guidelines.py
+diff --git a/beeplex/beeplex/voice_editor.py b/beeplex/python/voice_editor.py
+similarity index 99%
+rename from beeplex/beeplex/voice_editor.py
+rename to beeplex/python/voice_editor.py
+index daabb61..e4b67b4 100644
+--- a/beeplex/beeplex/voice_editor.py
++++ b/beeplex/python/voice_editor.py
+@@ -427,4 +427,3 @@ def create_aggregate(conversations, limit=50):
+     )
+     path.write_text(page, encoding="utf-8")
+     return {"path": str(path), "scenarios": len(scenarios)}
+-
+diff --git a/beeplex/beeplex/web_ui.py b/beeplex/python/web_ui.py
+similarity index 99%
+rename from beeplex/beeplex/web_ui.py
+rename to beeplex/python/web_ui.py
+index 7a8d0db..a1401f4 100644
+--- a/beeplex/beeplex/web_ui.py
++++ b/beeplex/python/web_ui.py
+@@ -157,4 +157,4 @@ def serve(port=8765, open_browser=True):
+     except KeyboardInterrupt:
+         print("\nBeePlex interface stopped.")
+     finally:
+-        httpd.server_close()
++        httpd.server_close()
+\ No newline at end of file
+diff --git a/beeplex/beeplex/web_ui_assets/app.js b/beeplex/python/web_ui_assets/app.js
+similarity index 99%
+rename from beeplex/beeplex/web_ui_assets/app.js
+rename to beeplex/python/web_ui_assets/app.js
+index 870126d..2e855db 100644
+--- a/beeplex/beeplex/web_ui_assets/app.js
++++ b/beeplex/python/web_ui_assets/app.js
+@@ -210,4 +210,4 @@ const token = document.body.dataset.token;
+       runAction("search", params);
+     });
+ 
+-    showPage("home");
++    showPage("home");
+\ No newline at end of file
+diff --git a/beeplex/beeplex/web_ui_assets/index.html b/beeplex/python/web_ui_assets/index.html
+similarity index 99%
+rename from beeplex/beeplex/web_ui_assets/index.html
+rename to beeplex/python/web_ui_assets/index.html
+index 285d03a..50d85c3 100644
+--- a/beeplex/beeplex/web_ui_assets/index.html
++++ b/beeplex/python/web_ui_assets/index.html
+@@ -39,4 +39,4 @@
+   </div>
+   <script src="/assets/app.js" defer></script>
+ </body>
+-</html>
++</html>
+\ No newline at end of file
+diff --git a/beeplex/beeplex/web_ui_assets/style.css b/beeplex/python/web_ui_assets/style.css
+similarity index 99%
+rename from beeplex/beeplex/web_ui_assets/style.css
+rename to beeplex/python/web_ui_assets/style.css
+index dcd1e4d..355c784 100644
+--- a/beeplex/beeplex/web_ui_assets/style.css
++++ b/beeplex/python/web_ui_assets/style.css
+@@ -116,4 +116,4 @@
+       .record .button { justify-self: start; }
+       .utterance { grid-template-columns: 1fr; gap: 4px; }
+       .action-row { align-items: flex-start; flex-direction: column; }
+-    }
++    }
+\ No newline at end of file

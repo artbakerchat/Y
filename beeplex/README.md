@@ -66,7 +66,7 @@ For full Bee CLI commands and detailed usage, see [`.agents/skills/bee-cli/SKILL
 
 ## Project Structure
 
-- `beeplex/` — Core CLI, MCP server, analysis modules (`client.py`, `server.py`, `reports.py`, `llm_scoring.py`, etc.)
+- `python/` — Core CLI, MCP server, analysis modules (`client.py`, `server.py`, `reports.py`, `llm_scoring.py`, etc.)
 - `tests/` — Comprehensive test suite
 - `simulator/` — Benchmark harness and conversation replay
 - `docs/` — Host agent guidelines

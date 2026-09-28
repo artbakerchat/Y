@@ -517,4 +517,3 @@ def _write_dashboard(cards, info, history, now):
     html = html.replace("__CARDS__", json.dumps(cards))
     html = html.replace("__NRUNS__", str(len(history["runs"])))
     DASHBOARD_PATH.write_text(html, encoding="utf-8")
-

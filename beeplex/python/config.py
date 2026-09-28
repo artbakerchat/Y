@@ -6,4 +6,3 @@ from pathlib import Path
 DEMO = os.getenv("BEEPLEX_DEMO") == "1"
 LLM_ENABLED = os.getenv("BEEPLEX_LLM") == "1" and not DEMO
 DATA_DIR = Path(os.getenv("BEEPLEX_DATA_DIR", "family")).resolve()
-
