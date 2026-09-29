@@ -3,7 +3,7 @@ import { BedrockRuntimeClient, ConverseCommand } from '@aws-sdk/client-bedrock-r
 import { createAgentHarness } from '../src/agent-harness.js';
 
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'ca-central-1', maxAttempts: 2 });
-const run = createAgentHarness({ modelId: process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0', converse: (input, options) => client.send(new ConverseCommand(input), options) });
+const run = createAgentHarness({ modelId: process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', converse: (input, options) => client.send(new ConverseCommand(input), options) });
 const cases = [
   ['forge', 'Help plan a small neighbourhood cleanup.'],
   ['food-bank', 'We have two volunteers but no confirmed shifts. What should we check?'],

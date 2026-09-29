@@ -42,7 +42,7 @@ const activeQuestions = option('suite') === 'holdout' ? [
   { id: 'heldout-sharing', prompt: 'We have 37 oranges. Save five and share the rest among four people. How many each?' },
 ] : questions;
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'ca-central-1', maxAttempts: 2 });
-const run = createAgentHarness({ modelId: process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0', converse: (input, options) => client.send(new ConverseCommand(input), options) });
+const run = createAgentHarness({ modelId: process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', converse: (input, options) => client.send(new ConverseCommand(input), options) });
 let records = [];
 try { records = JSON.parse(await readFile(output, 'utf8')); } catch (error) { if (error.code !== 'ENOENT') throw error; }
 await mkdir(dirname(output), { recursive: true });
@@ -90,7 +90,7 @@ async function worker() {
       let result;
       try { result = await ask(agentId, prompt, session, history); }
       catch (error) { result = { error: error.message }; }
-      records.push({ agentId, id: question.id, prompt, session, model: process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0', evaluatedAt: new Date().toISOString(), surface: target === 'python' ? 'local-python-agentcore' : target === 'local' || agentId === 'word-specialist' ? 'local-bedrock-harness' : 'larboard.ca', ...result, elapsedMs: Date.now() - start });
+      records.push({ agentId, id: question.id, prompt, session, model: process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', evaluatedAt: new Date().toISOString(), surface: target === 'python' ? 'local-python-agentcore' : target === 'local' || agentId === 'word-specialist' ? 'local-bedrock-harness' : 'larboard.ca', ...result, elapsedMs: Date.now() - start });
       await save();
       console.log(JSON.stringify({ count: records.length, agentId, id: question.id, answer: result.answer, error: result.error }));
     }

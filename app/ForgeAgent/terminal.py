@@ -45,7 +45,7 @@ from terminal_tools import (
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
 
-DEFAULT_CLAUDE_MODEL = "us.amazon.nova-micro-v1:0"
+DEFAULT_CLAUDE_MODEL = "ca.amazon.nova-lite-v1:0"
 _CURRENT_INFORMATION_TERMS = re.compile(
     r"\b(today|tomorrow(?:'s|s)?|yesterday|current|currently|latest|live|recent|upcoming|schedule|scheduled|"
     r"score|scores|news|weather|price|prices|stock|stocks|standings|forecast|"

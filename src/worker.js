@@ -276,7 +276,7 @@ async function invokeAgentCore(message, palette, history, env, browserSessionId,
 // ---------------------------------------------------------------------------
 async function bedrockConverse(env, { system, messages, toolConfig, maxTokens = 700, temperature = 0.5 }) {
   const region = env.AWS_REGION || 'ca-central-1';
-  const modelId = env.BEDROCK_MODEL_ID || 'us.amazon.nova-micro-v1:0';
+  const modelId = env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
   const host = `bedrock-runtime.${region}.amazonaws.com`;
   const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, '');
   const date = amzDate.slice(0, 8);
@@ -1076,7 +1076,7 @@ export default {
         const runtimeConfigured = Boolean(env.AGENTCORE_RUNTIME_ARN);
         const credentialsConfigured = Boolean(env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY);
         const requestsEnabled = env.MODEL_REQUESTS_ENABLED === 'true' || runtimeConfigured;
-        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'us.amazon.nova-micro-v1:0', agents: listAgentProfiles() });
+        return json({ ok: true, available: requestsEnabled && credentialsConfigured, region: env.AWS_REGION || 'ca-central-1', model: env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0', agents: listAgentProfiles() });
       }
       if (url.pathname === '/api/agents' && request.method === 'GET') return json(listAgentProfiles());
       if (url.pathname === '/api/feedback/export' && request.method === 'GET') return exportFeedback(request, env);

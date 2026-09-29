@@ -14,7 +14,7 @@ const option = (name) => process.argv.find(arg => arg.startsWith(`--${name}=`))?
 const followups = option('followups') ? JSON.parse(await readFile(option('followups'), 'utf8')) : null;
 const turnLimit = Number(option('turns') || (followups ? 5 : 4));
 if (![1,2,3,4,5].includes(turnLimit)) throw Error('Use 1–5 turns');
-const model = process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0';
+const model = process.env.BEDROCK_MODEL_ID || 'ca.amazon.nova-lite-v1:0';
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'ca-central-1', maxAttempts: 2 });
 const run = createAgentHarness({ modelId: model, converse: (input, options) => client.send(new ConverseCommand(input), options) });
 const sourceFiles = target === 'python' ? ['app/ForgeAgent/main.py', 'app/ForgeAgent/answering.py', 'app/ForgeAgent/conversation_guidance.py', 'app/ForgeAgent/forge_specialists.py', 'app/ForgeAgent/forge_harness.py', 'app/ForgeAgent/profiles.json'] : ['src/agent-harness.js', 'src/answer-format.js', 'src/tool-controls.js', 'src/clean-answer.js', 'src/conversation-guidance.js', 'agentcore/profiles.js'];

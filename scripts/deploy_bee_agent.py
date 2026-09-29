@@ -120,7 +120,7 @@ def main():
         roleArn=args.role_arn,
         networkConfiguration={'networkMode': 'PUBLIC'},
         protocolConfiguration={'serverProtocol': 'HTTP'},
-        environmentVariables={'BEDROCK_MODEL_ID': os.getenv('BEDROCK_MODEL_ID', 'us.amazon.nova-lite-v1:0')},
+        environmentVariables={'BEDROCK_MODEL_ID': os.getenv('BEDROCK_MODEL_ID', 'ca.amazon.nova-lite-v1:0')},
         description='Y public website: Bee device pairing + beeplex chat agent',
     )
     if existing:
