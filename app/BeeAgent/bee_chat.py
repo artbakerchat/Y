@@ -39,7 +39,7 @@ budgets, tokens, sessions, or infrastructure."""
 
 def _model():
     return BedrockModel(
-        model_id=os.environ.get("BEDROCK_MODEL_ID", "global.amazon.nova-2-lite-v1:0"),
+        model_id=os.environ.get("BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0"),
         region_name=os.environ.get("AWS_REGION", "ca-central-1"),
         max_tokens=1500,
         temperature=0.3,

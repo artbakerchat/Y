@@ -47,7 +47,7 @@ ENDPOINT = (
 BEDROCK_REGION = (
     os.environ.get("BEDROCK_REGION") or os.environ.get("AWS_REGION") or "ca-central-1"
 )
-BEDROCK_MODEL = os.environ.get("BEDROCK_MODEL", "global.amazon.nova-2-lite-v1:0")
+BEDROCK_MODEL = os.environ.get("BEDROCK_MODEL", "us.amazon.nova-lite-v1:0")
 TIMEOUT = 30
 MAX_CHARS = 12_000
 

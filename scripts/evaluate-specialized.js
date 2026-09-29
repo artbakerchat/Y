@@ -12,7 +12,7 @@ import { specializedHoldout } from './specialized-holdout.js';
 const [target, output] = process.argv.slice(2);
 if (!['live', 'python', 'node'].includes(target) || !output) throw Error('Usage: node scripts/evaluate-specialized.js live|python|node output.json');
 const option = (name) => process.argv.find(arg => arg.startsWith(`--${name}=`))?.split('=').slice(1).join('=');
-const model = process.env.BEDROCK_MODEL_ID || 'global.amazon.nova-2-lite-v1:0';
+const model = process.env.BEDROCK_MODEL_ID || 'us.amazon.nova-lite-v1:0';
 const client = new BedrockRuntimeClient({ region: process.env.AWS_REGION || 'ca-central-1', maxAttempts: 2 });
 const run = createAgentHarness({ modelId: model, converse: (input, options) => client.send(new ConverseCommand(input), options) });
 const sourceFiles = target === 'python' ? ['app/ForgeAgent/main.py', 'app/ForgeAgent/answering.py', 'app/ForgeAgent/conversation_guidance.py', 'app/ForgeAgent/forge_specialists.py', 'app/ForgeAgent/forge_harness.py', 'app/ForgeAgent/profiles.json', 'app/ForgeAgent/community_tools.py', 'scripts/specialized-questions.js', 'scripts/specialized-holdout.js'] : ['src/agent-harness.js', 'src/task-guidance.js', 'src/answer-format.js', 'src/tool-controls.js', 'src/clean-answer.js', 'src/conversation-guidance.js', 'agentcore/profiles.js', 'tools/community-tools.js', 'tools/word-specialist-tool.js', 'scripts/specialized-questions.js', 'scripts/specialized-holdout.js'];

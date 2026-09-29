@@ -54,7 +54,7 @@ def main():
         roleArn=args.role_arn,
         networkConfiguration={'networkMode': 'PUBLIC'},
         protocolConfiguration={'serverProtocol': 'HTTP'},
-        environmentVariables={'BEDROCK_MODEL_ID': os.getenv('BEDROCK_MODEL_ID', 'global.amazon.nova-2-micro-v1:0')},
+        environmentVariables={'BEDROCK_MODEL_ID': os.getenv('BEDROCK_MODEL_ID', 'us.amazon.nova-micro-v1:0')},
         description='Larboard eight agent profiles and bounded language specialist',
     )
     if existing:
