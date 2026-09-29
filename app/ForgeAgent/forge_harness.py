@@ -29,7 +29,7 @@ def configured_model(model_id=None, region_name=None, max_tokens=700):
     deployment default used by the AgentCore runtime.
     """
     return BedrockModel(
-        model_id=model_id or os.getenv("BEDROCK_MODEL_ID", "global.amazon.nova-2-lite-v1:0"),
+        model_id=model_id or os.getenv("BEDROCK_MODEL_ID", "global.amazon.nova-2-micro-v1:0"),
         region_name=region_name or os.getenv("AWS_REGION", "ca-central-1"),
         max_tokens=max_tokens,
         temperature=0.2,
