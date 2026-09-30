@@ -38,6 +38,21 @@
         "dynamodb:DeleteItem"
       ],
       "Resource": "arn:aws:dynamodb:*:*:table/*"
+    },
+    {
+      "Sid": "ForgeNovaInference",
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream",
+        "bedrock:Converse",
+        "bedrock:ConverseStream",
+        "bedrock:GetInferenceProfile"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*:*:inference-profile/ca.amazon.nova-lite-v1:0",
+        "arn:aws:bedrock:*::foundation-model/amazon.nova-lite-v1:0"
+      ]
     }
   ]
 }

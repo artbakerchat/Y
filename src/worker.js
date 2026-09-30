@@ -1171,9 +1171,21 @@ export default {
         const webLiveEvidence = profile.toolNames.includes('weather_lookup') && (profile.id === 'weather-agent' || isLiveWebRequest(message, state.messages))
           ? await liveWebEvidence(message, env)
           : '';
-        const answer = env.AGENTCORE_RUNTIME_ARN
-          ? await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence, webLiveEvidence)
-          : await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
+        let answer;
+        if (env.AGENTCORE_RUNTIME_ARN) {
+          try {
+            answer = await invokeAgentCore(message, state.palette, state.messages, env, sessionId, profile.dailyRequestLimit - state.rate.count - 1, profile.id, sportsData, sportsLiveEvidence, webLiveEvidence);
+          } catch (error) {
+            console.error(JSON.stringify({
+              message: 'AgentCore invocation failed; using direct Bedrock fallback',
+              error: error instanceof Error ? error.message : 'unknown AgentCore error',
+              agentId: profile.id,
+            }));
+            answer = await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
+          }
+        } else {
+          answer = await askBedrock(message, state.palette, state.messages, env, profile.dailyRequestLimit - state.rate.count - 1, profile, sportsLiveEvidence);
+        }
         answer.answer = cleanAnswer(answer.answer);
         answer.agentId = profile.id;
 
