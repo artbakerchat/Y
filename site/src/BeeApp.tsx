@@ -81,6 +81,8 @@ export function BeeApp() {
     setError('');
     setPhase('pairing');
     setPairingUrl('');
+    setExpiresAt('');
+    setSecondsLeft(0);
     try {
       const response = await fetch('/api/bee/connect', { method: 'POST' });
       const data = await response.json().catch(() => ({}));
