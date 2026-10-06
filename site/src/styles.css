@@ -205,11 +205,10 @@ body {
   gap: 8px;
 }
 
-.hero-banner {
+.site-banner {
+  display: block;
   width: 100%;
   height: auto;
-  border-radius: 16px;
-  margin-bottom: 12px;
 }
 
 .welcome-eyebrow {
