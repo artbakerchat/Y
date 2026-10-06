@@ -198,11 +198,18 @@ body {
   align-items: center;
   justify-content: center;
   min-height: 100%;
-  max-width: 560px;
+  max-width: 720px;
   margin: 0 auto;
   text-align: center;
   color: var(--muted);
   gap: 8px;
+}
+
+.hero-banner {
+  width: 100%;
+  height: auto;
+  border-radius: 16px;
+  margin-bottom: 12px;
 }
 
 .welcome-eyebrow {

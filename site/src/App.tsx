@@ -203,6 +203,11 @@ export function App() {
       >
         {messages.length === 0 && !loading && (
           <div className="chat-welcome">
+            <img
+              className="hero-banner"
+              src="/banner.png"
+              alt="Bee Chat — Mobile AI chat powered by Nova"
+            />
             <p className="welcome-eyebrow">{bootstrapping ? 'Getting ready' : currentAgent?.name || 'Bee Chat'}</p>
             <h2>{bootstrapping ? 'Loading Bee Chat' : `Talk with ${currentAgent?.name || 'an agent'}`}</h2>
             <p>
