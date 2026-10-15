@@ -9,6 +9,7 @@ import { CONVERSATION_GUIDANCE, ANSWER_QUALITY_GUIDANCE } from './conversation-g
 import { readAgentCoreResponse } from './agentcore-response.js';
 import { liveWebEvidence } from './live-search.js';
 import { handleBeeRoutes, beeScheduled } from './bee.js';
+import { handleMcp } from './mcp.js';
 export { GlobalTimer } from './legacy-global-timer.js';
 
 const CONTENT_TYPES = {
@@ -1072,6 +1073,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     try {
+      if (url.pathname === '/mcp') return handleMcp(request, env);
       if (url.pathname === '/api/health' && request.method === 'GET') {
         const runtimeConfigured = Boolean(env.AGENTCORE_RUNTIME_ARN);
         const credentialsConfigured = Boolean(env.AWS_ACCESS_KEY_ID && env.AWS_SECRET_ACCESS_KEY);

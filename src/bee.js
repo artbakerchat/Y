@@ -434,6 +434,10 @@ export async function handleBeeRoutes(request, env, url) {
   return null;
 }
 
+// Exported for the MCP server (src/mcp.js), which reuses these flows so the
+// budget, rate-limit, and ban machinery applies unchanged over MCP.
+export { beeConnect, beeStatus, beeChat, beeDisconnect };
+
 // --- scheduled maintenance (called from the Worker's cron) -------------------
 
 export async function beeScheduled(env) {
